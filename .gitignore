@@ -1,0 +1,39 @@
+# Python and uv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.keylog
+sslkeylog.log
+fixtures/keylogs/
+fixtures/pki/private/
+fixtures/**/*.key
+
+# Captures are ignored except reviewed controlled fixtures
+*.pcap
+*.pcapng
+!fixtures/pcaps/
+!fixtures/pcaps/**
+
+# Generated analysis output
+output/
+outputs/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

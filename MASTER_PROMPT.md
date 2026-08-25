@@ -30,7 +30,7 @@ Then load only the documents required for the active task:
 |---|---|
 | Official requirements or scope/acceptance | `docs/OFFICIAL_PS159.md`, `docs/PRD.md` |
 | Architecture, protocol, TLS, X.509, evidence, data model | `context/architecture.md`, relevant `docs/SYSTEM_DESIGN.md` sections |
-| Coding or review | `context/code-standards.md`, `context/ai-workflow-rules.md`, relevant feature in `docs/FEATURE_BREAKDOWN.md` |
+| Coding or review | `context/code-standards.md`, `context/rules.md`, relevant feature in `docs/FEATURE_BREAKDOWN.md` |
 | Environment, CI, review tools | `docs/TOOLING.md` |
 | HTML/dashboard work | `context/ui-context.md` |
 | First full project audit or conflicting documents | Read all foundation documents |

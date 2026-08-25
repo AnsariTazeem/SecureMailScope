@@ -1,0 +1,43 @@
+[project]
+name = "securemailscope"
+version = "0.1.0"
+description = "Evidence-backed passive cryptographic posture analysis for SMTP, IMAP, and POP3 PCAPs."
+readme = "README.md"
+authors = [
+    { name = "Tazeem Ansari" },
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "cryptography>=50.0.0",
+    "jinja2>=3.1.6",
+    "joblib>=1.5.3",
+    "jsonschema>=4.26.0",
+    "pydantic>=2.13.4",
+    "pyyaml>=6.0.3",
+    "scikit-learn>=1.9.0",
+    "typer>=0.27.1",
+]
+
+[project.scripts]
+securemailscope = "securemailscope.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.4",
+]

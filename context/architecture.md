@@ -177,7 +177,7 @@ SecureMailScope/
     project-overview.md
     architecture.md
     code-standards.md
-    ai-workflow-rules.md
+    rules.md
     ui-context.md
     progress-tracker.md
   docs/

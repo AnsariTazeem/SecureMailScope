@@ -1,9 +1,12 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 25 August 2026  
-**Current phase:** Repository foundation prepared before repository creation  
-**Implementation status:** Not started  
-**POC verdict:** Not evaluated
+**Last updated:** 25 August 2026
+
+**Current phase:** Step 1 (Environment) complete; Step 2 (SMTP evidence spike) next
+
+**Implementation status:** Started — environment/bootstrap and `securemailscope doctor` milestone PASS
+
+**POC verdict:** Not evaluated (only the environment/bootstrap milestone is assessed; see below)
 
 ## Completed preparation
 
@@ -20,31 +23,27 @@
 - [x] Master AI prompt and response contract prepared.
 - [x] Official-source tooling decision record prepared.
 
+## Verified milestone — environment/bootstrap and doctor (PASS, 2026-08-25)
+
+Only the environment/bootstrap / doctor milestone is marked PASS. Every POC analysis criterion remains UNTESTED.
+
+Evidence recorded on 2026-08-25:
+
+- `securemailscope doctor` implemented (Typer CLI; deterministic prerequisite checks in `tooling.py`).
+- 10 unit tests passed in 0.84 seconds.
+- Ruff lint passed.
+- Ruff formatting check passed.
+- `git diff --check` passed.
+- Real doctor run result: `READY`.
+- 11/11 prerequisite checks passed.
+- JSON validation of the doctor report returned true.
+- Real doctor exit code: 0 (`EXIT_OK`).
+
+Scope of this PASS: environment bootstrap and the doctor command only. The following remain UNTESTED with no evidence collected: protocol identification (SMTP/IMAP/POP3), STARTTLS upgrade/rejection handling, TCP/email reconstruction, TLS handshake/version/cipher/key-establishment evidence, Forward Secrecy determination, X.509 extraction/validation, TLS 1.3 certificate invisibility, policy-risk findings/scoring, ML anomaly scoring, analyzer JSON report validation, and HTML report generation. No controlled email PCAP fixtures T01–T08 have been created or analyzed yet. The earlier temporary generic TCP capture was only an environment/capture smoke test and is not evidence for any POC gate.
+
 ## Current next action
 
-Create the empty repository and copy the complete repository-foundation pack. Do not create the analyzer or UI in the same step.
-
-Suggested repository start:
-
-```text
-SecureMailScope/
-  MASTER_PROMPT.md
-  context/
-    project-overview.md
-    architecture.md
-    code-standards.md
-    ai-workflow-rules.md
-    ui-context.md
-    progress-tracker.md
-  docs/
-    OFFICIAL_PS159.md
-    PRD.md
-    SYSTEM_DESIGN.md
-    FEATURE_BREAKDOWN.md
-    TOOLING.md
-```
-
-After copying them, configure the chosen AI tool to start with `MASTER_PROMPT.md`; that file requires `project-overview.md` and `progress-tracker.md` on every task and routes the AI to only the detailed documents relevant to the active task. Read the entire foundation for the first audit, architecture/scope changes, or suspected conflicts. Then make the first commit containing only this documentation foundation.
+Begin Step 2 (SMTP evidence spike): create the controlled CA/certificate, run the SMTP endpoint on port 2525, capture the split-STARTTLS TLS 1.2 ECDHE PCAP, and record endpoint logs, hashes, and manual TShark evidence per the sequence table below.
 
 ## Exact step-by-step sequence after repository creation
 
@@ -102,4 +101,4 @@ If that evidence chain cannot be produced after normal setup corrections, record
 
 ## Blockers
 
-None yet. Tool availability must be checked only after the repository is created on the developer's WSL/Linux environment.
+None. Tool availability was verified on 2026-08-25 by the real doctor run (11/11 prerequisite checks passed, verdict `READY`, exit code 0).
