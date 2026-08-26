@@ -47,6 +47,7 @@ REQUIRED_TSHARK_FIELDS: tuple[str, ...] = (
     "tls.handshake.extensions_key_share_group",
     "tls.handshake.extensions_key_share_selected_group",
     "tls.handshake.extensions_supported_groups",
+    "tls.handshake.server_named_curve",
 )
 
 _DUMPCAP_INTERFACE_PATTERN = re.compile(r"^\s*\d+\.\s*(\S+)")

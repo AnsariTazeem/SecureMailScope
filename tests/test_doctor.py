@@ -217,6 +217,11 @@ def test_cli_plain_output_reports_summary_and_exit_codes(
     assert "NOT READY" in not_ready_result.stdout
 
 
+def test_required_fields_include_server_named_curve() -> None:
+    assert "tls.handshake.server_named_curve" in REQUIRED_TSHARK_FIELDS
+    assert len(set(REQUIRED_TSHARK_FIELDS)) == len(REQUIRED_TSHARK_FIELDS)
+
+
 def test_models_reject_unknown_fields() -> None:
     with pytest.raises(ValidationError):
         DoctorCheck(
