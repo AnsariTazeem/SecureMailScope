@@ -1,12 +1,12 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 26 August 2026
+**Last updated:** 27 August 2026
 
-**Current phase:** Step 1 (Environment) PASS; Step 2 (SMTP evidence spike) PASS — T01 manual verification PASS (corrected attempt; earlier failed attempt preserved)
+**Current phase:** Step 1 (Environment) PASS; Step 2 (SMTP evidence spike) PASS; E2/E3A analyzer-path checkpoint PASS. T01 PASS (corrected attempt; earlier failed attempt preserved). E2/E3A PASS for its authorized scope.
 
-**Implementation status:** T01 PASS — environment/bootstrap/doctor PASS, T01 SMTP ECDHE fixture 23/23 comparisons PASS (corrected run; earlier failed attempt preserved locally in evidence artifacts and archives)
+**Implementation status:** T01 PASS (23/23 comparisons); E2/E3A PASS (authorized scope: read-only intake, TShark-native reassembly, content-based SMTP classification, STARTTLS transition states). Selection decision: GO — PS159 selected/finalized for Team Apex. T02–T08 and all binary gates remain UNTESTED.
 
-**POC verdict:** Not issued. T01 PASS; T02–T08 and all binary gates remain UNTESTED. No GREEN/RED decision is made at this checkpoint.
+**POC verdict:** Selection-grade technical POC CLOSED as GO (PS159 selected). This is a GO/selection decision establishing technical viability; it is not a claim that the full product or the complete original POC matrix is GREEN.
 
 ## Completed preparation
 
@@ -64,11 +64,43 @@ Evidence recorded on 2026-08-26 (corrected run):
 - OpenSSL chain verification at capture time: passed
 - All 23 independent comparisons passed: artifact hashes, PCAP metadata, dumpcap evidence (received 28, dropped 0), capture interval, single stream, SMTP port 2525 identification, SMTP content/direction, STARTTLS split/reconstruction (frames 9/11), STARTTLS ordering, TLS negotiation (handshake order, version, cipher, named curve), Forward Secrecy, wire certificates (leaf/root fingerprint, properties), OpenSSL chain verification, connection lifecycle
 
-Scope of this PASS: T01 manual verification against the controlled SMTP ECDHE PCAP only (corrected run; earlier failed attempt preserved locally in evidence artifacts and archives). The following remain UNTESTED with no evidence collected: IMAP/POP3 protocol identification (T02, T03), STARTTLS rejection/accepted-without-TLS/truncated/false-positive controls (T05–T07), analyzer-path integration, ML anomaly scoring (T08), deterministic policy-risk scoring, analyzer JSON/HTML report validation, and all binary gates G01–G11.
+Scope of this PASS: T01 manual verification proves only the controlled manual-verifier evidence for the SMTP ECDHE PCAP (corrected run; earlier failed attempt preserved locally in evidence artifacts and archives). It does not by itself prove the analyzer path; the analyzer-path E2/E3A checkpoint is recorded separately as PASS in the section below. Still UNTESTED with no evidence collected: IMAP/POP3 protocol identification (T02, T03), formal T05–T07 controlled fixtures (STARTTLS rejection/accepted-without-TLS/truncated/false-positive controls), ML anomaly scoring (T08), deterministic policy-risk scoring, analyzer JSON/HTML report validation, and all binary gates G01–G11.
+
+## Verified milestone — E2/E3A analyzer-path checkpoint (PASS, 2026-08-27)
+
+E2/E3A PASS for its authorized scope, using the unchanged T01 PCAP as the integration truth. Scope covered:
+
+- Generic read-only PCAP/PCAPNG intake.
+- Streamed SHA-256 and capture provenance (packet count, all-packet capture epochs, file size, capture format and tool versions).
+- Typed analyzer errors.
+- Safe shell-free external-tool execution; bounded timeout and output handling.
+- TShark-native TCP follow-stream reassembly (no custom TCP sequence-number buffer).
+- Ordered repeated `tls.handshake.type` values preserved (not flattened).
+- Conservative content-based SMTP classification; ports used only as hints.
+- Pre-TLS plaintext boundary enforced.
+- Split STARTTLS reconstruction.
+- Strict command < response < ClientHello ordering.
+- Accepted-TLS, rejected, accepted-without-TLS, truncated and incomplete states.
+- Positive-proof requirement for accepted-without-TLS (bidirectional FIN or strict plaintext).
+- No raw frame-concatenation fallback for authoritative reconstruction.
+- Frozen T01 analyzer facts match the independent T01 truth.
+
+Validation facts (recorded truthfully, including one environmental flake):
+
+- v3 full suite before the final boundary regression: 201 passed.
+- Final session-state suite: 24 passed.
+- One later full-suite run: 201 passed plus one environmental `tshark_observe` 20-second timeout (a tool/performance flake, not a functional assertion failure; an isolated T01 integration retry passed with 2 passed).
+- Ruff check passed; Ruff formatting check passed; `git diff --check` passed.
+- `securemailscope doctor` reached READY 11/11.
+- PCAP SHA-256 remained unchanged: `772d166b5e2b32516c76833357ff309af0d99d7bc962cf4c685279fc662ab086`.
+
+The `tshark_observe` timeout is recorded transparently as an environmental/tool-performance flake under host resource pressure; it is not treated as a functional assertion failure and no fully clean final full-suite run is claimed after the added regression.
+
+Scope of this PASS: the E2/E3A analyzer path for the frozen scope only (SMTP on the unchanged T01 PCAP). The E2/E3A session-state tests prove that the SMTP transition-state implementation supports accepted TLS, rejected, accepted without TLS, truncated, and incomplete cases; this is unit/state coverage and should not be mistaken for the formal controlled fixtures. The following remain UNTESTED with no evidence collected: IMAP/POP3 identification (T02, T03), TLS 1.3 invisibility handling (T04), STARTTLS rejection/accepted-without-TLS/truncated/false-positive controls via formal fixtures (T05–T07), ML anomaly scoring (T08), deterministic policy-risk scoring, analyzer JSON/HTML report validation, and all binary gates G01–G11.
 
 ## Current next action
 
-T01 PASS recorded. Next: proceed to checkpoint E2/E3A — generic PCAP/PCAPNG intake, safe TShark wrapper, content-based SMTP identification, and SMTP transition-state analysis using the unchanged T01 PCAP.
+Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED. Next: proceed to production implementation and frontend/backend integration, building on the verified E2/E3A intake/reassembly/classification core and the T01 evidence chain. T02–T08 fixture generation and full-gate validation are no longer the immediate next action.
 
 ## Exact step-by-step sequence after repository creation
 

@@ -1,10 +1,10 @@
 # SecureMailScope — POC Result Record
 
-**Record date:** 2026-08-26
+**Record date:** 2026-08-27
 
-**Status:** Partial record — environment/bootstrap milestone PASS; T01 manual verification PASS (corrected attempt; earlier failed attempt preserved). T02–T08 and all binary gates remain UNTESTED.
+**Status:** Environment/bootstrap PASS; T01 manual verification PASS (corrected attempt; earlier failed attempt preserved); E2/E3A analyzer-path checkpoint PASS for its authorized scope. T02–T08 and all binary gates remain UNTESTED.
 
-**Overall recommendation:** Not issued. No GREEN/RED decision is made in this document; the decision step (Step 9) has not run. T01 PASS alone is insufficient for GREEN; every controlled test T01–T08 and every gate G01–G11 must pass.
+**Overall recommendation:** GO — PS159 is selected/finalized for Team Apex. The selection-grade technical POC is CLOSED; the demonstrated result establishes technical viability for proceeding with production implementation. This is a GO/selection decision, not a claim that the complete product or the complete original POC matrix is GREEN. T02–T08 and formal gates G01–G11 remain UNTESTED; full product validation is NOT COMPLETE.
 
 ## 1. Verified environment/bootstrap milestone — PASS
 
@@ -55,6 +55,29 @@ An earlier T01 attempt failed. That attempt is preserved locally in evidence art
 
 Evidence categories covered by the 23 passing comparisons: artifact hash integrity, PCAP metadata (pcapng, packet count), dumpcap capture log (received 28, dropped 0), capture interval epoch/UTC match, single TCP stream, SMTP port 2525 identification from content, SMTP banner direction and content, EHLO and STARTTLS capability, STARTTLS split reconstruction across frames 9 and 11, STARTTLS ordering (last split frame < 220 reply < ClientHello), TLS handshake message order (CH → SH → Cert → SKE → SHD → CKE), negotiated TLS version 0x0303 (TLS 1.2), negotiated cipher 0xC02F (ECDHE-RSA-AES128-GCM-SHA256), server named curve secp256r1 (group 23), Forward Secrecy derived from packet evidence, wire leaf certificate fingerprint, wire root certificate fingerprint, wire certificate properties (subject/issuer/SAN/serial/validity/key/sig), OpenSSL chain verification at capture time, and connection lifecycle (SYN, SYN/ACK, FIN both directions, zero RST).
 
+## 1c. E2/E3A analyzer-path checkpoint — PASS (2026-08-27)
+
+E2/E3A PASS for its authorized scope, using the unchanged T01 PCAP as integration truth. Proven scope:
+
+- Generic read-only PCAP/PCAPNG intake.
+- Streamed SHA-256 and capture provenance (packet count, all-packet capture epochs, file size, capture format and tool versions).
+- Typed analyzer errors.
+- Safe shell-free external-tool execution; bounded timeout and output handling.
+- TShark-native TCP follow-stream reassembly.
+- Ordered repeated `tls.handshake.type` values preserved.
+- Conservative content-based SMTP classification; ports used only as hints.
+- Pre-TLS plaintext boundary enforced.
+- Split STARTTLS reconstruction.
+- Strict command < response < ClientHello ordering.
+- Accepted-TLS, rejected, accepted-without-TLS, truncated and incomplete states.
+- Positive-proof requirement for accepted-without-TLS.
+- No raw frame-concatenation fallback for authoritative reconstruction.
+- Frozen T01 analyzer facts match the independent T01 truth.
+
+Validation facts (recorded truthfully, including one environmental flake): v3 full suite before the final boundary regression 201 passed; final session-state suite 24 passed; one later full-suite run 201 passed plus one environmental `tshark_observe` 20-second timeout (a tool/performance flake, not a functional assertion failure — an isolated T01 integration retry passed 2/2); Ruff check passed; Ruff formatting check passed; `git diff --check` passed; `securemailscope doctor` reached READY 11/11; PCAP SHA-256 remained unchanged (`772d166b5e2b32516c76833357ff309af0d99d7bc962cf4c685279fc662ab086`).
+
+The `tshark_observe` timeout is recorded transparently as an environmental/tool-performance flake under host resource pressure, not as a functional assertion failure. No fully clean final full-suite run is claimed after the added regression.
+
 ## 2. POC criteria status
 
 - Protocol identification from content on non-standard ports — SMTP: PASS (T01 manual verifier). IMAP/POP3: UNTESTED
@@ -70,11 +93,13 @@ Evidence categories covered by the 23 passing comparisons: artifact hash integri
 - Analyzer JSON report validation — UNTESTED
 - HTML report generation and JSON/HTML parity — UNTESTED
 
+Note: The E2/E3A analyzer-path checkpoint (Section 1c) demonstrated the SMTP-specific analyzer capabilities — content-based identification, TShark-native reassembly, split STARTTLS reconstruction (frames 9/11), strict ordering, and transition-state reconstruction (accepted-TLS, rejected, accepted-without-TLS, truncated, incomplete) — matching frozen truth on the unchanged T01 PCAP. The formal controlled matrix (T02–T08) and binary gates (G01–G11) remain UNTESTED, so the full product / complete matrix is not claimed GREEN.
+
 ## 3. Controlled matrix T01–T08
 
 | Test | Status | Evidence |
 |---|---|---|
-| T01 SMTP ECDHE | PASS (corrected) | 23/23 passed, 0 failed; SHA-256 `772d166b…ab086`; 28 packets, received 28, dropped 0; port 2525; STARTTLS frames 9/11; TLS 1.2, 0xC02F, secp256r1; 2 certs; capture+verifier runtimes recorded; earlier attempt preserved |
+| T01 SMTP ECDHE | PASS (corrected) | 23/23 passed, 0 failed; SHA-256 `772d166b5e2b32516c76833357ff309af0d99d7bc962cf4c685279fc662ab086`; 28 packets, received 28, dropped 0; port 2525; STARTTLS frames 9/11; TLS 1.2, 0xC02F, secp256r1; 2 certs; capture+verifier runtimes recorded; earlier attempt preserved |
 | T02 IMAP STARTTLS | UNTESTED | — |
 | T03 POP3 STLS | UNTESTED | — |
 | T04 TLS 1.3 invisibility | UNTESTED | — |
@@ -91,8 +116,30 @@ G01 through G11 remain UNTESTED at the formal gate level. T01 evidence provides 
 
 ## 5. Outstanding verification steps
 
-Per the Step 9 decision requirements, still outstanding before any GREEN/RED can be issued: T02–T07 controlled PCAP fixtures and independent manual verification, T08 ML anomaly corpus and model, two full T01–T08 runs from clean output directories, hash validation of all PCAP/log/cert/model artifacts, per-stage and total runtime measurement, JSON Schema validation of analyzer output, finding-evidence reference validation, JSON/HTML semantic parity, and formal binary gate G01–G11 evaluation.
+The selection-grade technical POC is CLOSED and does not depend on these for the GO/selection decision. Remaining production implementation/testing work before any full-product GREEN: T02–T07 controlled PCAP fixtures and independent manual verification, T08 ML anomaly corpus and model, two full T01–T08 runs from clean output directories, hash validation of all PCAP/log/cert/model artifacts, per-stage and total runtime measurement, JSON Schema validation of analyzer output, finding-evidence reference validation, JSON/HTML semantic parity, and formal binary gate G01–G11 evaluation.
 
 ## 6. Blockers and deviations
 
-None recorded.
+None recorded. One environmental/tool-performance flake (a `tshark_observe` 20-second timeout during a full-suite run under host resource pressure) was observed and is recorded transparently in Section 1c; it is not a functional assertion failure.
+
+## 7. Final POC decision
+
+- **PS159 SecureMailScope is selected/finalized for Team Apex.**
+- The selection-grade technical POC is **CLOSED**.
+- The demonstrated result is **sufficient to establish technical viability** for proceeding with production implementation.
+- This is a **GO/selection decision**, not a claim that the complete product or the complete original POC matrix is GREEN.
+- **T02–T08 and formal gates G01–G11 remain UNTESTED.**
+- IMAP, POP3, TLS 1.3 invisibility handling, full crypto/X.509 analysis, evidence-backed findings, policy risk, ML anomaly, JSON output and HTML reporting remain production implementation/testing work.
+- Policy risk and ML anomaly must remain separate outputs.
+- TLS 1.3 certificate information must be marked `not_observable` in passive captures without authorized session secrets.
+- Not claimed: phishing detection, email decryption, blocking, live capture, geolocation, SIEM integration, authentication, or PDF export.
+
+Status summary — distinct categories kept explicit:
+
+- T01: PASS
+- E2/E3A: PASS
+- Selection decision: GO — PS159 selected
+- Full T02–T08 / G01–G11 matrix: UNTESTED
+- Full product validation: NOT COMPLETE
+
+Next step: production implementation and frontend/backend integration, building on the verified E2/E3A intake/reassembly/classification core and the T01 evidence chain. Further POC fixture generation is not the immediate next action.
