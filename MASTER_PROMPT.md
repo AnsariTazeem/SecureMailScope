@@ -6,15 +6,22 @@ You are assisting the primary solo developer of **SecureMailScope**, SIH 2026 PS
 
 The objective is not to make the project look complete. It is to produce independently verifiable protocol/cryptographic evidence and an honest GREEN/RED recommendation.
 
-## Current starting status
+## Current objective and status
 
-At the time this foundation was prepared:
+- This document retains **historical POC planning and integrity rules**, which remain binding for the frozen POC records and relevant POC work.
+- **Current work is production Chain-of-Proof development** on branch `feat/production-backend`.
+- **Current implementation truth comes from `context/progress-tracker.md`** (with the production section of `context/architecture.md`), not from historical planning text.
+- The selection **GREEN/RED decision has already closed as GO at `cf055cf`**. Do not rewrite that historical decision; do not re-issue a POC recommendation.
+
+## Current starting status (historical)
+
+This section is **historical** — it describes the state when the POC foundation was first prepared:
 
 - The repository had not been created.
 - No implementation or PCAP fixture existed.
 - No technical gate had passed or failed.
 
-The current truth is always the repository plus `context/progress-tracker.md`. Never claim that a planned file or feature exists without checking.
+It does **not** describe current status. The production-development mode section below, together with `context/progress-tracker.md`, defines current implementation status. The POC capability matrix and starting-status sections in this document are historical planning text. Never claim that a planned file or feature exists without checking.
 
 ## Context-loading rule
 
@@ -47,13 +54,15 @@ Do not repeatedly load every document for a small task. If two documents conflic
 
 If a new instruction would weaken a frozen gate or falsify evidence, identify the conflict and request an explicit decision before changing the contract.
 
-## Product summary
+## Product summary (historical POC plan)
+
+The description below is **historical POC-planning text**. The selection POC closed after T01 (23/23) and E2/E3A viability evidence only; it did not prove the full planned capability list or pass all eleven gates. Current verified status is in `context/progress-tracker.md` and the production section.
 
 SecureMailScope passively analyzes PCAP/PCAPNG files containing SMTP, IMAP, and POP3 traffic. The POC must prove content-based protocol identification, STARTTLS/STLS validation, TCP/email/TLS timeline reconstruction, TLS/cipher/key-establishment/Forward-Secrecy facts, observable X.509 extraction and validation, honest TLS 1.3 limitations, evidence-backed policy findings, a separate ML anomaly signal, canonical JSON, and minimal HTML.
 
 The PRD translates the official statement into the requested POC without replacing it. The exact controlled matrix T01–T08, functional requirements, and binary gates G01–G11 are defined in the PRD and feature breakdown. All eleven gates must pass for GREEN.
 
-The official final solution also requires PDF and an interactive dashboard. Those requirements are preserved but deferred until PS159 is selected.
+The official problem statement historically mentions a final solution that includes PDF and an interactive dashboard. Under the **currently authorized production scope**, **PDF export is not part of that scope**; the optional PDF-related schema field in the Chain-of-Proof contract does not authorize implementation. An explicit developer decision is required before changing this rule. The interactive frontend remains a separate, frozen workstream.
 
 ## Frozen POC stack
 
@@ -68,7 +77,9 @@ The official final solution also requires PDF and an interactive dashboard. Thos
 
 Do not replace the stack without demonstrating a blocker and obtaining developer approval.
 
-## Frozen architecture
+## Frozen architecture (historical POC plan)
+
+The pipeline below is **historical POC-planning text** describing the full planned analyzer. Not every stage (TLS/X.509 facts, policy, ML, canonical JSON, HTML) was proven by the closed selection POC; the verified analyzer scope is in `context/progress-tracker.md` and the production section.
 
 ```text
 PCAP intake/provenance
@@ -177,3 +188,30 @@ At completion, `docs/POC_RESULT.md` must record environment/versions, commit, co
 ## Active task
 
 The developer supplies one active task. Do not invent or begin work from this placeholder.
+
+## Production-development mode (post-selection, `feat/production-backend`)
+
+The PS159 selection POC is **closed (GO) at `cf055cf`** and the repository is now in a **production-development phase** on branch `feat/production-backend`. The historical POC rules above are retained and remain binding; production work additionally follows the rules in this section.
+
+### Authority and scope
+
+- The frozen POC records are authoritative and must not be rewritten, reinterpreted, weakened, or extended: `docs/POC_RESULT.md`, `docs/PRD.md`, `docs/SYSTEM_DESIGN.md`, the frozen capture fixtures, and POC expected outputs.
+- The active production contract is the **Chain of Proof** in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`). Read it before any production chain work. Do not silently alter its technical content; report any conflict for an explicit decision.
+- The existing analyzer remains stable. `src/securemailscope/chain` is the versioned domain contract. The next layer is a **pure POC-result adapter** (Commit 2). API, frontend, policy, ML, and reports are later milestones.
+- The frontend is **separate and frozen**; do not redesign it during backend milestones.
+- **Policy risk and ML anomaly remain separate** outputs; never present their sum or average as an independently validated fact.
+
+### Production discipline
+
+- Do not claim policy, ML, API, frontend, live capture, decryption, phishing detection, blocking, authentication, geolocation, or SIEM support unless a verified implementation exists.
+- **PDF export remains excluded** from the authorized production scope unless it is explicitly reauthorized by an explicit developer scope decision. The optional PDF schema field is not authorization or an implementation claim.
+- Do not turn planning material into implemented-feature claims.
+- Do not fabricate evidence. Never derive ground truth from the analyzer being evaluated, and never edit evidence JSON, manifests, logs, or reports to convert a failure into a pass.
+- Use `PASS`, `FAIL`, `BLOCKED`, and `UNTESTED` precisely. Record only what actually ran.
+- Never stage, commit, amend, rebase, push, or create a pull request unless explicitly requested.
+- Update `context/progress-tracker.md` only after a material, verified state change, preserving the entire POC verification history.
+- Plan/review/test/commit the smallest authorized slice against the frozen requirement and the Chain-of-Proof contract.
+
+### Production verification
+
+Run the required verification commands (see `AGENTS.md`) and record only real results. Production chain work must satisfy the graph invariants and definition of done in `docs/CHAIN_OF_PROOF_SPECIFICATION.md`.

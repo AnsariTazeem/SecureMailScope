@@ -1,6 +1,6 @@
 # SecureMailScope — Proposed POC Architecture
 
-**Status:** Frozen for the POC but not implemented.  
+**Status:** Historical POC-planning text (not implemented at time of writing). This section was the POC plan; it is not current implementation status. For the active production phase and current verified status, read the production architecture section below and `context/progress-tracker.md`.
 **Goal:** Use the smallest reliable architecture that proves packet/session reconstruction and cryptographic truth within one focused day, while remaining reusable if PS159 is selected.
 
 ## Selected technology stack
@@ -233,3 +233,64 @@ SecureMailScope/
 ```
 
 This is the canonical POC layout, not evidence that the files or features already exist. Do not add alternate orchestration or combined-scoring modules; orchestration belongs in `pipeline.py`, the CLI remains thin, and policy/ML remain separate files.
+
+# Production architecture (post-selection, `feat/production-backend`)
+
+**Status:** Active production development building on the frozen POC core. This section documents the production backend phase; it does not rewrite the frozen POC plan above.
+
+## Phase boundaries
+
+- The PS159 selection POC is closed (GO) at `cf055cf`. The POC plan above is historical POC-planning text; the production section and `context/progress-tracker.md` define current status.
+- The **existing analyzer core** (verified by the closed POC) remains stable and covers:
+  - intake/provenance;
+  - safe bounded TShark execution;
+  - native TCP reassembly;
+  - conservative content-based SMTP classification;
+  - SMTP STARTTLS transition analysis;
+  - ordered TLS handshake-type observations;
+  - typed results/errors.
+- The active production work introduces a **versioned domain contract** for the Chain of Proof, defined in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`).
+- The next production layer after the contract is a **pure POC-result adapter** (Commit 2) that maps verified analyzer output into the chain without losing evidence.
+- API, policy, ML, and reports are **later milestones**, not current scope. None is claimed as implemented or authorized by this document alone.
+
+## Analyzer boundary (verified scope)
+
+The current `AnalyzeResult` exposes: provenance, tool records, streams, classifications, SMTP transitions, and warnings. It does **not** expose a negotiated TLS version, cipher suite, key-exchange result, Forward Secrecy, or certificate contents.
+
+- A TLS handshake-message observation (the ordered `tls_handshake_types` per stream) proves **message presence only**; it is not a TLS/cipher/key-exchange/FS/certificate fact.
+- The Commit 2 adapter must **not** import manual-verifier or ground-truth values into the chain. It maps only verified observable POC results and invents no evidence.
+
+## Layering (production)
+
+```text
+existing POC analyzer core (stable, verified scope above)
+  -> src/securemailscope/chain  : versioned Chain-of-Proof domain contract (Commit 1)
+  -> pure POC-result adapter    : maps verified analyzer output into the chain (Commit 2, next)
+  -> later milestones           : policy findings, ML anomaly, API, frontend, reports
+```
+
+## Production sequence
+
+The Chain-of-Proof contract in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` defines an authorized implementation order. Current verified state is recorded in `context/progress-tracker.md`:
+
+- **Commit 1 — contract** (completed at `57fe930`): versioned Chain-of-Proof domain contract.
+- **Commit 2 — existing POC adapter** (next, UNVERIFIED): map the verified SMTP analysis into the chain.
+- **Commit 3 — deterministic event/state/fact derivation**.
+- **Commit 4 — policy findings/risk/recommendations**.
+- **Commit 5 — presentation/API/artifact boundary, subject to explicit task and product-scope authorization**.
+- **IMAP/POP3 expansion and ML** occur only after the vertical slice.
+
+Commits 3–5, IMAP/POP3, and ML are listed as the contract's declared order, not as implemented or already-authorized work. Each remains its own milestone requiring the plan/review/test/commit discipline in `AGENTS.md`.
+
+## Component placement
+
+- `src/securemailscope/chain` holds the **versioned domain contract**: enums, Pydantic models, stable ID helpers, JSON Schema, invariant tests, and example chain fixtures.
+- The adapter layer (Commit 2) must be **pure**: it transforms verified POC results into chain objects, performs no re-analysis of the capture, and invents no evidence.
+- Policy, ML anomaly, API, frontend, and report rendering remain separate later layers and are not folded into the chain contract or the adapter.
+
+## Invariants carried into production
+
+- Policy risk and ML anomaly remain **separate** outputs; never present their sum or average as an independently validated fact.
+- TLS 1.3 certificate invisibility in secretless passive captures stays `not_observable`/`session_secrets_required`/`not_observable_encrypted_tls13`; never fabricated.
+- Ports are hints only; classification requires direction-consistent content evidence.
+- The frontend renders canonical state and never derives protocol-security conclusions independently; the frontend is separate and frozen.

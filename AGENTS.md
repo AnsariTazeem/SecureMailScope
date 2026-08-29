@@ -2,16 +2,27 @@
 
 ## Purpose
 
-SecureMailScope is the strict technical proof-of-concept for SIH 2026 PS159:
-AI-assisted cryptographic security posture assessment of email communications.
+SecureMailScope is **currently in production-backend development** on branch
+`feat/production-backend`, building on a closed selection POC for SIH 2026
+PS159: AI-assisted cryptographic security posture assessment of email
+communications.
 
-The POC passively analyzes controlled PCAP/PCAPNG files containing SMTP, IMAP,
-and POP3 sessions. It reconstructs observable protocol and TLS evidence, assesses
-cryptographic posture, and produces evidence-backed JSON and minimal HTML.
+The selection POC was a **technical viability/kill test** and **closed as GO at
+`cf055cf`**. Its verified analyzer scope is limited to: generic capture
+intake/provenance, safe bounded TShark, native TCP reassembly, conservative
+content-based SMTP classification, SMTP STARTTLS transition analysis, typed
+models/errors, the T01 manual verification PASS (23/23), and the E2/E3A
+analyzer-path checkpoint PASS.
 
-This is a six-day technical kill test, not a polished product. Correctness,
-reproducibility, evidence integrity, and honest limitations take precedence over
-feature breadth or presentation polish.
+IMAP/POP3 and the remaining cryptographic/report capabilities describe
+**target or historical planned scope**, not current implemented scope. They are
+not claimed as implemented.
+
+**Chain Commit 1** (`feat: add chain-of-proof domain contract`) is complete at
+`57fe930`; **Commit 2** (the pure POC-result adapter) is next and **UNVERIFIED**.
+
+Correctness, reproducibility, evidence integrity, and honest limitations take
+precedence over feature breadth or presentation polish.
 
 ## Mandatory startup sequence
 
@@ -26,8 +37,9 @@ Before planning or changing code:
 6. Inspect the relevant implementation and tests before editing.
 
 Do not infer completion from a planned directory, unchecked checklist, design
-document, or generated artifact. Current verified status is recorded only in
-`context/progress-tracker.md` and `docs/POC_RESULT.md`.
+document, or generated artifact. `context/progress-tracker.md` is the current
+production implementation truth; `docs/POC_RESULT.md` is the frozen
+selection-POC evidence record.
 
 ## Canonical repository documents
 
@@ -37,18 +49,81 @@ document, or generated artifact. Current verified status is recorded only in
 - `docs/FEATURE_BREAKDOWN.md`: implementation order and checkpoints
 - `docs/TOOLING.md`: approved tools and dependency rationale
 - `context/project-overview.md`: concise project context
-- `context/architecture.md`: frozen architecture and technical decisions
+- `context/architecture.md`: historical POC architecture plus active production architecture
 - `context/rules.md`: detailed AI workflow and code rules
 - `context/progress-tracker.md`: current verified implementation status
 - `context/ui-context.md`: minimal report/UI rules when relevant
 - `docs/POC_RESULT.md`: evidence record and final GREEN/RED recommendation
+- `docs/CHAIN_OF_PROOF_SPECIFICATION.md`: approved Chain-of-Proof production contract (schema `1.0.0`)
 
 When documents appear inconsistent, do not silently reinterpret them. Stop and
 report the exact conflict. The official statement defines the original problem;
 the PRD defines the strict POC subset and acceptance gates; the progress tracker
 and POC result define what has actually been verified.
 
-## Mandatory POC proof
+## Authority boundaries: frozen POC versus production
+
+The repository contains a **frozen POC history** and an **active production
+backend** on branch `feat/production-backend`:
+
+- The PS159 selection POC is **closed** and frozen at `cf055cf`. Do not rewrite,
+  reinterpret, weaken, or extend the frozen POC records: `docs/POC_RESULT.md`,
+  `docs/PRD.md`, `docs/SYSTEM_DESIGN.md`, the frozen capture fixtures, and the
+  POC expected outputs.
+- Production development builds on the verified POC core. The production target
+  phase is governed by the approved Chain-of-Proof contract in
+  `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`) and by
+  `context/architecture.md` (production section).
+- The active production branch is `feat/production-backend`. The frontend is a
+  separate, **frozen** workstream; do not redesign or extend it during backend
+  milestones.
+- Preserve the entire POC verification history in `context/progress-tracker.md`
+  when appending production progress.
+
+## Required Chain specification
+
+Before any production Chain-of-Proof work, read
+`docs/CHAIN_OF_PROOF_SPECIFICATION.md`. It is the approved production contract
+(schema `1.0.0`) and defines the domain models, graph invariants, observability
+and confidence enums, protocol-transition semantics, TLS/X.509 evidence rules,
+policy-as-code contract, risk/anomaly separation, integrity rules, the Commit
+sequence, and the definition of done. Do not silently alter its technical
+content; report any conflict for an explicit decision.
+
+### Contract shape versus verified status
+
+- The Chain specification defines the **contract shape**; it does **not** prove
+  that every optional capability it mentions is implemented or currently
+  authorized. For example, an optional PDF-related field does not authorize PDF
+  implementation.
+- `context/progress-tracker.md` defines **verified implementation status**.
+- Current explicit product constraints control whether optional features such
+  as PDF are authorized.
+- **PDF export remains excluded** unless it is explicitly reauthorized by an
+  explicit developer scope decision.
+
+## Plan/review/test/commit workflow (production)
+
+1. Plan the smallest authorized slice against the frozen requirement and the
+   Chain-of-Proof contract; confirm it is authorized by the current request.
+2. Implement without rewriting or weakening the frozen POC contract.
+3. Review the change against the existing implementation and tests before
+   committing; never stage, commit, or push unless explicitly requested.
+4. Run the required verification (see below) and record only what actually ran.
+5. Append verified progress to `context/progress-tracker.md` only after a
+   material, verified state change.
+6. Do not fabricate evidence. Never derive ground truth from the analyzer being
+   evaluated, and never edit evidence JSON, manifests, logs, or reports to
+   convert a failure into a pass.
+7. The frontend is frozen; do not redesign it as part of a backend change.
+
+## Historical planned POC proof matrix
+
+This is the original planned T01–T08/G01–G11 matrix. It is preserved as
+historical requirements and does **not** claim the closed selection POC
+completed the matrix. Current production milestones use the Chain specification
+(`docs/CHAIN_OF_PROOF_SPECIFICATION.md`) and their separately authorized
+acceptance tests.
 
 The controlled test matrix must prove:
 
@@ -70,7 +145,10 @@ The controlled test matrix must prove:
 11. Schema-validated canonical JSON and minimal HTML rendered only from that
     JSON.
 
-## Explicit POC exclusions
+## Historical POC exclusions
+
+The following historical POC exclusions are preserved. Their safety restrictions
+remain applicable where still relevant to production work.
 
 Do not build authentication, a large dashboard, general live capture, PDF
 export, SIEM integration, unrelated phishing detection, or other scope not
@@ -112,7 +190,7 @@ capture attempt.
 - Use `uv` for dependency management, locking, environments, and Python
   command execution.
 - Keep `uv.lock` synchronized and do not add dependencies without a concrete
-  POC requirement and documented justification.
+  authorized task requirement and documented justification.
 - Use TShark as the packet-dissection source and OpenSSL/`cryptography` for the
   defined independent certificate checks.
 - Invoke external commands with explicit argument lists, bounded output,
@@ -188,5 +266,10 @@ For every completed task, report:
 5. Failures, blockers, or remaining limitations
 6. Recommended next action
 
-Never issue the final GREEN/RED POC recommendation until all frozen decision
-requirements in the PRD and `docs/POC_RESULT.md` have been evaluated.
+Never issue the final GREEN/RED POC recommendation.
+
+The selection decision is **already closed as GO at `cf055cf`**; do not rewrite
+that historical decision. Never claim the complete original matrix is GREEN
+unless every frozen gate in the PRD and `docs/POC_RESULT.md` has actually been
+evaluated. Production milestone PASS/FAIL is governed by that milestone's
+authorized contract and tests, not by a re-issued POC recommendation.

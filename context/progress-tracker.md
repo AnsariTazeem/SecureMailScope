@@ -1,8 +1,8 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 27 August 2026
+**Last updated:** 29 August 2026
 
-**Current phase:** Step 1 (Environment) PASS; Step 2 (SMTP evidence spike) PASS; E2/E3A analyzer-path checkpoint PASS. T01 PASS (corrected attempt; earlier failed attempt preserved). E2/E3A PASS for its authorized scope.
+**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Commit 2 (POC-result adapter) is the next milestone. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
 
 **Implementation status:** T01 PASS (23/23 comparisons); E2/E3A PASS (authorized scope: read-only intake, TShark-native reassembly, content-based SMTP classification, STARTTLS transition states). Selection decision: GO — PS159 selected/finalized for Team Apex. T02–T08 and all binary gates remain UNTESTED.
 
@@ -100,7 +100,7 @@ Scope of this PASS: the E2/E3A analyzer path for the frozen scope only (SMTP on 
 
 ## Current next action
 
-Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED. Next: proceed to production implementation and frontend/backend integration, building on the verified E2/E3A intake/reassembly/classification core and the T01 evidence chain. T02–T08 fixture generation and full-gate validation are no longer the immediate next action.
+Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is now active on `feat/production-backend`. T02–T08 fixture generation and full-gate validation are no longer the immediate next action; the immediate next action is production Commit 2 (the pure POC-result adapter that maps verified analysis into the Chain-of-Proof contract).
 
 ## Exact step-by-step sequence after repository creation
 
@@ -159,3 +159,21 @@ If that evidence chain cannot be produced after normal setup corrections, record
 ## Blockers
 
 None. Tool availability was verified on 2026-08-25 by the real doctor run (11/11 prerequisite checks passed, verdict `READY`, exit code 0).
+
+## Production phase — Chain of Proof commit history
+
+The PS159 selection POC is closed (GO/selection at `cf055cf`). Production development continues on branch `feat/production-backend` under the approved Chain-of-Proof contract (schema `1.0.0`). The frozen POC verification history above is preserved unchanged; production work does not rewrite it.
+
+### Verified milestone — Chain Commit 1: domain contract (PASS, 2026-08-29)
+
+- Commit: `feat: add chain-of-proof domain contract` at `57fe930`.
+- Commit 1 **implemented the versioned Chain-of-Proof domain contract** under `src/securemailscope/chain` from the **approved external specification**, including typed domain models and invariant coverage for the contract.
+- The **repository copy** of that specification, `docs/CHAIN_OF_PROOF_SPECIFICATION.md`, is **being added by the subsequent documentation synchronization** (this task), not by Commit 1. Its checksum matches the approved reference (SHA-256 `fa7b14d077a6e71c9e172898e410de08be7b0b87a237fec56e1c76c817f9bb25`).
+- Existing analyzer remains stable; the contract layer is additive and does not alter frozen POC analysis, schemas, PCAPs, or expected outputs.
+- No policy, ML, API, frontend, PDF, live capture, decryption, phishing detection, blocking, authentication, geolocation, or SIEM support is claimed at this commit.
+
+Scope of this PASS: the Chain-of-Proof domain contract only. Commit 2 (the pure POC-result adapter that maps verified SMTP analysis into the chain) is the next milestone and remains **UNVERIFIED**. API, policy, ML, and report layers are later milestones.
+
+## Production blockers and status
+
+No production blockers recorded at Commit 1. Commit 2 (POC-result adapter) is the immediate next action. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.

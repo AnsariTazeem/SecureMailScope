@@ -1,0 +1,2 @@
+# Preserve intentional Markdown hard breaks in the frozen byte-identical specification.
+docs/CHAIN_OF_PROOF_SPECIFICATION.md whitespace=-blank-at-eol
