@@ -1,0 +1,1930 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:securemailscope:schema:chain-of-proof:1.0.0",
+  "$defs": {
+    "AnalysisExecution": {
+      "additionalProperties": false,
+      "description": "Volatile execution envelope, separate from reproducible chain content.\n\nThis whole node is excluded from the canonical content hash. It records\ntool versions and stage diagnostics without claiming to be reproducible\nevidence.",
+      "properties": {
+        "tool_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Tool Versions",
+          "type": "object"
+        },
+        "stage_diagnostics": {
+          "items": {
+            "$ref": "#/$defs/StageDiagnostic"
+          },
+          "title": "Stage Diagnostics",
+          "type": "array"
+        },
+        "note": {
+          "default": "Execution envelope; not part of reproducible chain content.",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "title": "AnalysisExecution",
+      "type": "object"
+    },
+    "AnalysisLimitation": {
+      "additionalProperties": false,
+      "description": "A typed, reason-coded limitation on a value or conclusion.\n\nUsed wherever the chain must state *why* something is not observable,\nincomplete, secret-protected, or not assessable instead of guessing.",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/LimitationCode"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "summary"
+      ],
+      "title": "AnalysisLimitation",
+      "type": "object"
+    },
+    "AnalysisManifest": {
+      "additionalProperties": false,
+      "description": "Identifies a reproducible analysis execution (spec §4.1).",
+      "properties": {
+        "analysis_id": {
+          "pattern": "^ana_[0-9a-f]{16}$",
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "chain_schema_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Chain Schema Version",
+          "type": "string"
+        },
+        "analysis_status": {
+          "$ref": "#/$defs/AnalysisStatus"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completed At"
+        },
+        "analyzer_version": {
+          "title": "Analyzer Version",
+          "type": "string"
+        },
+        "tshark_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Tshark Version"
+        },
+        "rule_engine_status": {
+          "$ref": "#/$defs/EngineStatus"
+        },
+        "rule_pack_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rule Pack Id"
+        },
+        "rule_pack_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rule Pack Version"
+        },
+        "ml_engine_status": {
+          "$ref": "#/$defs/EngineStatus"
+        },
+        "model_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model Id"
+        },
+        "model_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model Version"
+        },
+        "configuration_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Configuration Digest",
+          "type": "string"
+        },
+        "tls13_authorized_secrets": {
+          "$ref": "#/$defs/Tls13SecretsStatus"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "analysis_id",
+        "chain_schema_version",
+        "analysis_status",
+        "created_at",
+        "started_at",
+        "completed_at",
+        "analyzer_version",
+        "tshark_version",
+        "rule_engine_status",
+        "rule_pack_id",
+        "rule_pack_version",
+        "ml_engine_status",
+        "model_id",
+        "model_version",
+        "configuration_digest",
+        "tls13_authorized_secrets",
+        "limitations"
+      ],
+      "title": "AnalysisManifest",
+      "type": "object"
+    },
+    "AnalysisStatus": {
+      "description": "Overall status of a reproducible analysis execution.",
+      "enum": [
+        "complete",
+        "partial",
+        "failed"
+      ],
+      "title": "AnalysisStatus",
+      "type": "string"
+    },
+    "AnomalyBand": {
+      "description": "Calibrated ML anomaly bands, separate from policy risk.",
+      "enum": [
+        "normal",
+        "attention",
+        "elevated",
+        "anomalous"
+      ],
+      "title": "AnomalyBand",
+      "type": "string"
+    },
+    "AnomalyResult": {
+      "additionalProperties": false,
+      "description": "View of a model-dependent anomaly score, separate from policy risk.",
+      "properties": {
+        "anomaly_result_id": {
+          "pattern": "^anm_[0-9a-f]{16}$",
+          "title": "Anomaly Result Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "model_id": {
+          "title": "Model Id",
+          "type": "string"
+        },
+        "model_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Model Version",
+          "type": "string"
+        },
+        "feature_schema_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Feature Schema Version",
+          "type": "string"
+        },
+        "feature_snapshot": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Feature Snapshot",
+          "type": "object"
+        },
+        "raw_score": {
+          "title": "Raw Score",
+          "type": "number"
+        },
+        "normalized_score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Normalized Score",
+          "type": "number"
+        },
+        "threshold": {
+          "title": "Threshold",
+          "type": "number"
+        },
+        "band": {
+          "$ref": "#/$defs/AnomalyBand"
+        },
+        "unusual_feature_indicators": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unusual Feature Indicators",
+          "type": "array"
+        },
+        "linked_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Linked Fact Ids",
+          "type": "array"
+        },
+        "linked_observation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Linked Observation Ids",
+          "type": "array"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "interpretation_note": {
+          "const": "Anomalous behavior is not proof of malicious activity.",
+          "title": "Interpretation Note",
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "anomaly_result_id",
+        "session_id",
+        "model_id",
+        "model_version",
+        "feature_schema_version",
+        "feature_snapshot",
+        "raw_score",
+        "normalized_score",
+        "threshold",
+        "band",
+        "unusual_feature_indicators",
+        "interpretation_note",
+        "limitations"
+      ],
+      "title": "AnomalyResult",
+      "type": "object"
+    },
+    "ArtifactManifest": {
+      "additionalProperties": false,
+      "description": "Tamper-evident hashes and version metadata for produced artifacts.",
+      "properties": {
+        "artifact_manifest_id": {
+          "pattern": "^art_[0-9a-f]{16}$",
+          "title": "Artifact Manifest Id",
+          "type": "string"
+        },
+        "analysis_id": {
+          "pattern": "^ana_[0-9a-f]{16}$",
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "capture_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Capture Sha256",
+          "type": "string"
+        },
+        "canonical_json_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Canonical Json Sha256",
+          "type": "string"
+        },
+        "html_report_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Html Report Sha256"
+        },
+        "pdf_report_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pdf Report Sha256"
+        },
+        "rule_pack_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rule Pack Sha256"
+        },
+        "model_artifact_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model Artifact Sha256"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "signature_algorithm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Signature Algorithm"
+        },
+        "signature": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Signature"
+        }
+      },
+      "required": [
+        "artifact_manifest_id",
+        "analysis_id",
+        "capture_sha256",
+        "canonical_json_sha256",
+        "html_report_sha256",
+        "pdf_report_sha256",
+        "rule_pack_sha256",
+        "model_artifact_sha256",
+        "generated_at",
+        "signature_algorithm",
+        "signature"
+      ],
+      "title": "ArtifactManifest",
+      "type": "object"
+    },
+    "AutomationStatus": {
+      "description": "What SecureMailScope may do automatically.\n\nFor v1 this is always ``advisory_only``; the tool never alters\ninfrastructure.",
+      "enum": [
+        "advisory_only"
+      ],
+      "title": "AutomationStatus",
+      "type": "string"
+    },
+    "CaptureFormat": {
+      "description": "Capture container format recognised from actual tool inspection.",
+      "enum": [
+        "pcap",
+        "pcapng",
+        "unknown"
+      ],
+      "title": "CaptureFormat",
+      "type": "string"
+    },
+    "CaptureProvenance": {
+      "additionalProperties": false,
+      "description": "Immutable capture provenance as computed by the intake stage (spec §4.2).",
+      "properties": {
+        "capture_id": {
+          "pattern": "^cap_[0-9a-f]{16}$",
+          "title": "Capture Id",
+          "type": "string"
+        },
+        "original_filename_sanitized": {
+          "title": "Original Filename Sanitized",
+          "type": "string"
+        },
+        "format": {
+          "$ref": "#/$defs/CaptureFormat"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "packet_count": {
+          "minimum": 0,
+          "title": "Packet Count",
+          "type": "integer"
+        },
+        "captured_at_start": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Captured At Start"
+        },
+        "captured_at_end": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Captured At End"
+        },
+        "link_layer_types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Link Layer Types",
+          "type": "array"
+        },
+        "snaplen": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Snaplen"
+        },
+        "truncated_packet_count": {
+          "minimum": 0,
+          "title": "Truncated Packet Count",
+          "type": "integer"
+        },
+        "capture_warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Capture Warnings",
+          "type": "array"
+        },
+        "ingestion_tool_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Ingestion Tool Versions",
+          "type": "object"
+        }
+      },
+      "required": [
+        "capture_id",
+        "original_filename_sanitized",
+        "format",
+        "size_bytes",
+        "sha256",
+        "packet_count",
+        "captured_at_start",
+        "captured_at_end",
+        "link_layer_types",
+        "snaplen",
+        "truncated_packet_count",
+        "capture_warnings",
+        "ingestion_tool_versions"
+      ],
+      "title": "CaptureProvenance",
+      "type": "object"
+    },
+    "ChainObservability": {
+      "description": "Observability of a chain node, exactly as defined by spec §6.1.\n\n``session_secrets_required`` describes protected TLS evidence (for example\nthe encrypted TLS 1.3 certificate) that requires authorized session secrets\nto interpret. It is a valid result, never a value to be guessed.",
+      "enum": [
+        "observed",
+        "derived",
+        "policy_inferred",
+        "not_observable",
+        "incomplete_capture",
+        "session_secrets_required",
+        "not_applicable"
+      ],
+      "title": "ChainObservability",
+      "type": "string"
+    },
+    "CompleteStatus": {
+      "description": "Completeness/observability of a reconstructed analysis result.",
+      "enum": [
+        "complete",
+        "capture_incomplete",
+        "insufficient"
+      ],
+      "title": "CompleteStatus",
+      "type": "string"
+    },
+    "ConfidenceLevel": {
+      "description": "Confidence with an explicit basis (spec §6.2).",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "not_scored"
+      ],
+      "title": "ConfidenceLevel",
+      "type": "string"
+    },
+    "CryptoObservation": {
+      "additionalProperties": false,
+      "description": "Observable TLS/X.509 fact without policy judgment (spec §4.6).",
+      "properties": {
+        "observation_id": {
+          "pattern": "^obs_[0-9a-f]{16}$",
+          "title": "Observation Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ObservationKind"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "normalized_value": {
+          "title": "Normalized Value",
+          "type": "string"
+        },
+        "observability": {
+          "$ref": "#/$defs/ChainObservability"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "observation_id",
+        "session_id",
+        "kind",
+        "value",
+        "normalized_value",
+        "observability",
+        "evidence_ids",
+        "limitations"
+      ],
+      "title": "CryptoObservation",
+      "type": "object"
+    },
+    "DerivedFact": {
+      "additionalProperties": false,
+      "description": "A deterministic conclusion from observations/events (spec §4.7).",
+      "properties": {
+        "fact_id": {
+          "pattern": "^fact_[0-9a-f]{16}$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "fact_type": {
+          "title": "Fact Type",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "derivation_id": {
+          "title": "Derivation Id",
+          "type": "string"
+        },
+        "derivation_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Derivation Version",
+          "type": "string"
+        },
+        "source_event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Event Ids",
+          "type": "array"
+        },
+        "source_observation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Observation Ids",
+          "type": "array"
+        },
+        "source_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Fact Ids",
+          "type": "array"
+        },
+        "observability": {
+          "$ref": "#/$defs/ChainObservability"
+        },
+        "confidence_level": {
+          "$ref": "#/$defs/ConfidenceLevel"
+        },
+        "confidence_basis": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Confidence Basis",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fact_id",
+        "session_id",
+        "fact_type",
+        "value",
+        "derivation_id",
+        "derivation_version",
+        "source_event_ids",
+        "source_observation_ids",
+        "source_fact_ids",
+        "observability",
+        "confidence_level",
+        "confidence_basis",
+        "limitations"
+      ],
+      "title": "DerivedFact",
+      "type": "object"
+    },
+    "Direction": {
+      "description": "Inferred direction of a frame relative to the analysed TCP stream.",
+      "enum": [
+        "client_to_server",
+        "server_to_client",
+        "unknown"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "Endpoint": {
+      "additionalProperties": false,
+      "description": "One transport endpoint of a reconstructed session.",
+      "properties": {
+        "ip": {
+          "title": "Ip",
+          "type": "string"
+        },
+        "port": {
+          "maximum": 65535,
+          "minimum": 0,
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ip",
+        "port"
+      ],
+      "title": "Endpoint",
+      "type": "object"
+    },
+    "EngineStatus": {
+      "description": "Believability of a versioned sub-engine output.\n\n``not_run`` is used when no rule pack or model was evaluated. A typed\nstatus is used instead of magic-string \"-none\" sentinel values.",
+      "enum": [
+        "not_run",
+        "complete",
+        "partial",
+        "failed",
+        "unavailable"
+      ],
+      "title": "EngineStatus",
+      "type": "string"
+    },
+    "EventStatus": {
+      "description": "How an event relates to directly observed evidence.",
+      "enum": [
+        "observed",
+        "inferred",
+        "incomplete_capture",
+        "not_observable"
+      ],
+      "title": "EventStatus",
+      "type": "string"
+    },
+    "EvidenceRedaction": {
+      "description": "Redaction applied to a safe excerpt or normalized value.\n\n``none`` means the value contains no sensitive material by construction.",
+      "enum": [
+        "none",
+        "redacted_local_part",
+        "redacted_credential",
+        "hashed",
+        "excerpt_only"
+      ],
+      "title": "EvidenceRedaction",
+      "type": "string"
+    },
+    "EvidenceReference": {
+      "additionalProperties": false,
+      "description": "A precise reference back to directly observable capture evidence.\n\n(spec §4.4). An EvidenceReference is constrained to *directly observed*\nevidence: it must always be ``observability=observed``. Non-observed states\nare represented on the events/observations that reference it, never by\nfabricating a non-observed evidence entry. This is what makes the\nobservability invariants internally consistent (there is no\n``evidence.limitations`` field).",
+      "properties": {
+        "evidence_id": {
+          "pattern": "^ev_[0-9a-f]{16}$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "capture_id": {
+          "pattern": "^cap_[0-9a-f]{16}$",
+          "title": "Capture Id",
+          "type": "string"
+        },
+        "capture_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Capture Sha256",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "frame_numbers": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Frame Numbers",
+          "type": "array"
+        },
+        "occurrence_index": {
+          "minimum": 0,
+          "title": "Occurrence Index",
+          "type": "integer"
+        },
+        "timestamp_start": {
+          "format": "date-time",
+          "title": "Timestamp Start",
+          "type": "string"
+        },
+        "timestamp_end": {
+          "format": "date-time",
+          "title": "Timestamp End",
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/Direction"
+        },
+        "source_kind": {
+          "$ref": "#/$defs/EvidenceSourceKind"
+        },
+        "source_field": {
+          "title": "Source Field",
+          "type": "string"
+        },
+        "normalized_value": {
+          "title": "Normalized Value",
+          "type": "string"
+        },
+        "safe_excerpt": {
+          "title": "Safe Excerpt",
+          "type": "string"
+        },
+        "display_filter": {
+          "title": "Display Filter",
+          "type": "string"
+        },
+        "observability": {
+          "const": "observed",
+          "title": "Observability",
+          "type": "string"
+        },
+        "redaction": {
+          "$ref": "#/$defs/EvidenceRedaction"
+        },
+        "extractor_version": {
+          "title": "Extractor Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "capture_id",
+        "capture_sha256",
+        "session_id",
+        "frame_numbers",
+        "occurrence_index",
+        "timestamp_start",
+        "timestamp_end",
+        "direction",
+        "source_kind",
+        "source_field",
+        "normalized_value",
+        "safe_excerpt",
+        "display_filter",
+        "observability",
+        "redaction",
+        "extractor_version"
+      ],
+      "title": "EvidenceReference",
+      "type": "object"
+    },
+    "EvidenceSourceKind": {
+      "description": "Provenance kind of an evidence extraction (spec §4.4).",
+      "enum": [
+        "capinfos",
+        "tshark_field",
+        "tshark_follow_stream",
+        "tshark_expert",
+        "cryptography_library",
+        "derived_state_machine"
+      ],
+      "title": "EvidenceSourceKind",
+      "type": "string"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "description": "A versioned policy output linked to evidence (spec §4.9).",
+      "properties": {
+        "finding_id": {
+          "pattern": "^fnd_[0-9a-f]{16}$",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "stable_finding_key": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Stable Finding Key",
+          "type": "string"
+        },
+        "analysis_id": {
+          "pattern": "^ana_[0-9a-f]{16}$",
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "rule_evaluation_id": {
+          "pattern": "^eval_[0-9a-f]{16}$",
+          "title": "Rule Evaluation Id",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/FindingCategory"
+        },
+        "severity": {
+          "$ref": "#/$defs/SeverityLevel"
+        },
+        "policy_risk_contribution": {
+          "minimum": 0,
+          "title": "Policy Risk Contribution",
+          "type": "integer"
+        },
+        "evidence_confidence": {
+          "$ref": "#/$defs/ConfidenceLevel"
+        },
+        "observability": {
+          "$ref": "#/$defs/ChainObservability"
+        },
+        "fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Fact Ids",
+          "type": "array"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "impact": {
+          "title": "Impact",
+          "type": "string"
+        },
+        "recommendation_id": {
+          "pattern": "^REC-[A-Z0-9]+(-[A-Z0-9]+)*$",
+          "title": "Recommendation Id",
+          "type": "string"
+        },
+        "standards_references": {
+          "items": {
+            "$ref": "#/$defs/StandardsReference"
+          },
+          "title": "Standards References",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "stable_finding_key",
+        "analysis_id",
+        "session_id",
+        "rule_evaluation_id",
+        "rule_id",
+        "rule_version",
+        "title",
+        "category",
+        "severity",
+        "policy_risk_contribution",
+        "evidence_confidence",
+        "observability",
+        "fact_ids",
+        "evidence_ids",
+        "rationale",
+        "impact",
+        "recommendation_id",
+        "standards_references",
+        "limitations",
+        "created_at"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingCategory": {
+      "description": "Stable finding categories used by the v1 rule surface.",
+      "enum": [
+        "encryption_transition",
+        "tls_version",
+        "key_exchange",
+        "certificate_validity",
+        "certificate_identity",
+        "authentication",
+        "sensitive_data",
+        "configuration",
+        "not_classified"
+      ],
+      "title": "FindingCategory",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "LimitationCode": {
+      "description": "Stable reason codes for limitations on evidence and conclusions.\n\nThe codes preserve the exact vocabulary used by the earlier analyzer\noutput plus the explicit TLS 1.3 and capture-boundary reasons.",
+      "enum": [
+        "derived_from_observed",
+        "not_observable_encrypted_tls13",
+        "not_present",
+        "capture_incomplete",
+        "unknown_insufficient_evidence",
+        "session_secrets_required",
+        "field_unavailable",
+        "not_assessed",
+        "not_applicable"
+      ],
+      "title": "LimitationCode",
+      "type": "string"
+    },
+    "ObservationKind": {
+      "description": "Observable TLS/X.509 fact kinds (spec §4.6), plus the explicit\nunobservable-certificate kind for passive TLS 1.3 captures.",
+      "enum": [
+        "tls_negotiated_version",
+        "selected_cipher_suite",
+        "record_layer_legacy_version",
+        "supported_versions",
+        "key_share_group",
+        "psk_key_exchange_mode",
+        "signature_algorithm",
+        "public_key_algorithm",
+        "public_key_length",
+        "certificate_subject",
+        "certificate_issuer",
+        "certificate_san",
+        "certificate_validity_window",
+        "certificate_fingerprint",
+        "certificate_chain_structure",
+        "certificate_serial_number",
+        "certificate_basic_constraints",
+        "certificate_key_usage",
+        "certificate_structure_parsed",
+        "certificate_signature_chain_checked",
+        "certificate_trusted_path_validated",
+        "certificate_service_identity_validated",
+        "certificate_revocation_checked",
+        "session_resumption_indicator",
+        "tls13_certificate_unavailable"
+      ],
+      "title": "ObservationKind",
+      "type": "string"
+    },
+    "PolicyRiskContribution": {
+      "additionalProperties": false,
+      "description": "One rule's declared contribution to capture-wide policy risk.\n\nScoring rules belong to a later commit. This model stores the declared\ninputs: severity, confidence, contribution, factor, and adjusted points.",
+      "properties": {
+        "contribution_id": {
+          "pattern": "^plc_[0-9a-f]{16}$",
+          "title": "Contribution Id",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "finding_id": {
+          "pattern": "^fnd_[0-9a-f]{16}$",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/SeverityLevel"
+        },
+        "policy_risk_contribution": {
+          "minimum": 0,
+          "title": "Policy Risk Contribution",
+          "type": "integer"
+        },
+        "evidence_confidence": {
+          "$ref": "#/$defs/ConfidenceLevel"
+        },
+        "confidence_factor": {
+          "exclusiveMinimum": 0.0,
+          "title": "Confidence Factor",
+          "type": "number"
+        },
+        "confidence_adjusted_points": {
+          "minimum": 0,
+          "title": "Confidence Adjusted Points",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "contribution_id",
+        "rule_id",
+        "rule_version",
+        "finding_id",
+        "severity",
+        "policy_risk_contribution",
+        "evidence_confidence",
+        "confidence_factor",
+        "confidence_adjusted_points"
+      ],
+      "title": "PolicyRiskContribution",
+      "type": "object"
+    },
+    "PolicyRiskSummary": {
+      "additionalProperties": false,
+      "description": "Separate deterministic policy-risk summary (independent of ML anomaly).",
+      "properties": {
+        "policy_risk_id": {
+          "pattern": "^polr_[0-9a-f]{16}$",
+          "title": "Policy Risk Id",
+          "type": "string"
+        },
+        "analysis_id": {
+          "pattern": "^ana_[0-9a-f]{16}$",
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "profile_id": {
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "uncapped_score": {
+          "minimum": 0,
+          "title": "Uncapped Score",
+          "type": "integer"
+        },
+        "capped_score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Capped Score",
+          "type": "integer"
+        },
+        "contributions": {
+          "items": {
+            "$ref": "#/$defs/PolicyRiskContribution"
+          },
+          "title": "Contributions",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "policy_risk_id",
+        "analysis_id",
+        "profile_id",
+        "uncapped_score",
+        "capped_score",
+        "contributions",
+        "limitations"
+      ],
+      "title": "PolicyRiskSummary",
+      "type": "object"
+    },
+    "Protocol": {
+      "description": "Content-classified mail transport protocol (SMTP only in E2/E3A).",
+      "enum": [
+        "smtp",
+        "imap",
+        "pop3",
+        "unknown"
+      ],
+      "title": "Protocol",
+      "type": "string"
+    },
+    "ProtocolEvent": {
+      "additionalProperties": false,
+      "description": "An ordered protocol or TLS transition (spec §4.5).",
+      "properties": {
+        "event_id": {
+          "pattern": "^eve_[0-9a-f]{16}$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "sequence_index": {
+          "minimum": 0,
+          "title": "Sequence Index",
+          "type": "integer"
+        },
+        "event_type": {
+          "$ref": "#/$defs/ProtocolEventType"
+        },
+        "protocol": {
+          "$ref": "#/$defs/Protocol"
+        },
+        "state_before": {
+          "$ref": "#/$defs/ProtocolState"
+        },
+        "state_after": {
+          "$ref": "#/$defs/ProtocolState"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/Direction"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "event_status": {
+          "$ref": "#/$defs/EventStatus"
+        },
+        "observability": {
+          "$ref": "#/$defs/ChainObservability"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_id",
+        "session_id",
+        "sequence_index",
+        "event_type",
+        "protocol",
+        "state_before",
+        "state_after",
+        "timestamp",
+        "direction",
+        "evidence_ids",
+        "event_status",
+        "observability",
+        "limitations"
+      ],
+      "title": "ProtocolEvent",
+      "type": "object"
+    },
+    "ProtocolEventType": {
+      "description": "Ordered protocol or TLS transition event types (spec §4.5).",
+      "enum": [
+        "tcp_connected",
+        "server_greeting",
+        "capability_request",
+        "capability_advertised",
+        "tls_upgrade_requested",
+        "tls_upgrade_accepted",
+        "tls_upgrade_rejected",
+        "client_hello",
+        "server_hello",
+        "certificate_message",
+        "key_exchange_observed",
+        "handshake_finished",
+        "encrypted_application_data",
+        "plaintext_command_after_tls_offer",
+        "session_closed",
+        "capture_boundary_reached"
+      ],
+      "title": "ProtocolEventType",
+      "type": "string"
+    },
+    "ProtocolState": {
+      "description": "Reconstructed protocol state used for transition before/after values.",
+      "enum": [
+        "connection_open",
+        "greeting",
+        "ready",
+        "tls_offered",
+        "tls_requested",
+        "tls_negotiating",
+        "tls_active",
+        "tls_failed",
+        "closed",
+        "unknown"
+      ],
+      "title": "ProtocolState",
+      "type": "string"
+    },
+    "Recommendation": {
+      "additionalProperties": false,
+      "description": "Remediation guidance for findings, advisory-only for submission (spec §4.11).",
+      "properties": {
+        "recommendation_id": {
+          "pattern": "^REC-[A-Z0-9]+(-[A-Z0-9]+)*$",
+          "title": "Recommendation Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "priority": {
+          "$ref": "#/$defs/RecommendationPriority"
+        },
+        "affected_finding_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affected Finding Ids",
+          "type": "array"
+        },
+        "action_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Action Steps",
+          "type": "array"
+        },
+        "verification_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Verification Steps",
+          "type": "array"
+        },
+        "standards_references": {
+          "items": {
+            "$ref": "#/$defs/StandardsReference"
+          },
+          "title": "Standards References",
+          "type": "array"
+        },
+        "scope": {
+          "$ref": "#/$defs/RecommendationScope"
+        },
+        "automation_status": {
+          "$ref": "#/$defs/AutomationStatus"
+        }
+      },
+      "required": [
+        "recommendation_id",
+        "title",
+        "summary",
+        "priority",
+        "affected_finding_ids",
+        "action_steps",
+        "verification_steps",
+        "standards_references",
+        "scope",
+        "automation_status"
+      ],
+      "title": "Recommendation",
+      "type": "object"
+    },
+    "RecommendationPriority": {
+      "description": "Recommendation priority tiers.",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "RecommendationPriority",
+      "type": "string"
+    },
+    "RecommendationScope": {
+      "description": "Scope a recommendation applies to.",
+      "enum": [
+        "session",
+        "capture",
+        "service",
+        "deployment"
+      ],
+      "title": "RecommendationScope",
+      "type": "string"
+    },
+    "RuleEvaluation": {
+      "additionalProperties": false,
+      "description": "Complete evaluation of one versioned policy rule (spec §4.8).",
+      "properties": {
+        "evaluation_id": {
+          "pattern": "^eval_[0-9a-f]{16}$",
+          "title": "Evaluation Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "profile_id": {
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "evaluated_at": {
+          "format": "date-time",
+          "title": "Evaluated At",
+          "type": "string"
+        },
+        "input_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Fact Ids",
+          "type": "array"
+        },
+        "input_snapshot": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Input Snapshot",
+          "type": "object"
+        },
+        "outcome": {
+          "$ref": "#/$defs/RuleOutcome"
+        },
+        "reason_code": {
+          "$ref": "#/$defs/RuleReasonCode"
+        },
+        "generated_finding_id": {
+          "anyOf": [
+            {
+              "pattern": "^fnd_[0-9a-f]{16}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Generated Finding Id"
+        }
+      },
+      "required": [
+        "evaluation_id",
+        "session_id",
+        "rule_id",
+        "rule_version",
+        "profile_id",
+        "evaluated_at",
+        "input_fact_ids",
+        "input_snapshot",
+        "outcome",
+        "reason_code",
+        "generated_finding_id"
+      ],
+      "title": "RuleEvaluation",
+      "type": "object"
+    },
+    "RuleOutcome": {
+      "description": "Policy-rule evaluation outcomes (spec §4.8).",
+      "enum": [
+        "matched",
+        "not_matched",
+        "not_applicable",
+        "insufficient_evidence",
+        "suppressed_by_profile"
+      ],
+      "title": "RuleOutcome",
+      "type": "string"
+    },
+    "RuleReasonCode": {
+      "description": "Machine-readable reason for a rule evaluation outcome.",
+      "enum": [
+        "rule_matched",
+        "rule_not_matched",
+        "not_applicable_protocol",
+        "facts_missing",
+        "evidence_incomplete",
+        "profile_suppressed"
+      ],
+      "title": "RuleReasonCode",
+      "type": "string"
+    },
+    "Session": {
+      "additionalProperties": false,
+      "description": "One reconstructed transport session (spec §4.3).",
+      "properties": {
+        "session_id": {
+          "pattern": "^ses_[0-9a-f]{16}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "stable_session_key": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Stable Session Key",
+          "type": "string"
+        },
+        "capture_id": {
+          "pattern": "^cap_[0-9a-f]{16}$",
+          "title": "Capture Id",
+          "type": "string"
+        },
+        "tcp_stream_id": {
+          "minimum": 0,
+          "title": "Tcp Stream Id",
+          "type": "integer"
+        },
+        "source_endpoint": {
+          "$ref": "#/$defs/Endpoint"
+        },
+        "destination_endpoint": {
+          "$ref": "#/$defs/Endpoint"
+        },
+        "first_frame": {
+          "minimum": 1,
+          "title": "First Frame",
+          "type": "integer"
+        },
+        "last_frame": {
+          "minimum": 1,
+          "title": "Last Frame",
+          "type": "integer"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "ended_at": {
+          "format": "date-time",
+          "title": "Ended At",
+          "type": "string"
+        },
+        "packet_count": {
+          "minimum": 0,
+          "title": "Packet Count",
+          "type": "integer"
+        },
+        "byte_count": {
+          "minimum": 0,
+          "title": "Byte Count",
+          "type": "integer"
+        },
+        "protocol": {
+          "$ref": "#/$defs/Protocol"
+        },
+        "protocol_confidence": {
+          "$ref": "#/$defs/ConfidenceLevel"
+        },
+        "classification_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Classification Evidence Ids",
+          "type": "array"
+        },
+        "capture_completeness": {
+          "$ref": "#/$defs/CompleteStatus"
+        },
+        "limitations": {
+          "items": {
+            "$ref": "#/$defs/AnalysisLimitation"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "session_id",
+        "stable_session_key",
+        "capture_id",
+        "tcp_stream_id",
+        "source_endpoint",
+        "destination_endpoint",
+        "first_frame",
+        "last_frame",
+        "started_at",
+        "ended_at",
+        "packet_count",
+        "byte_count",
+        "protocol",
+        "protocol_confidence",
+        "classification_evidence_ids",
+        "capture_completeness",
+        "limitations"
+      ],
+      "title": "Session",
+      "type": "object"
+    },
+    "SeverityLevel": {
+      "description": "Finding severity (policy-risk points derived deterministically).",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "SeverityLevel",
+      "type": "string"
+    },
+    "StageDiagnostic": {
+      "additionalProperties": false,
+      "description": "Typed runtime diagnostic for one analysis stage.",
+      "properties": {
+        "stage": {
+          "$ref": "#/$defs/StageId"
+        },
+        "status": {
+          "$ref": "#/$defs/StageStatus"
+        },
+        "limitation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnalysisLimitation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "runtime_seconds": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Runtime Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "stage",
+        "status"
+      ],
+      "title": "StageDiagnostic",
+      "type": "object"
+    },
+    "StageId": {
+      "description": "Short identifiers for analysis stages used in typed diagnostics.",
+      "enum": [
+        "intake",
+        "capture_provenance",
+        "stream_reconstruction",
+        "event_reconstruction",
+        "tls_extraction",
+        "fact_derivation",
+        "policy_evaluation",
+        "anomaly_scoring",
+        "report_generation",
+        "artifact_manifest"
+      ],
+      "title": "StageId",
+      "type": "string"
+    },
+    "StageStatus": {
+      "description": "Status of one analysis stage inside the execution envelope.",
+      "enum": [
+        "complete",
+        "partial",
+        "failed",
+        "not_run",
+        "skipped"
+      ],
+      "title": "StageStatus",
+      "type": "string"
+    },
+    "StandardsReference": {
+      "additionalProperties": false,
+      "description": "A standard citation used by findings/recommendations.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "section": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "StandardsReference",
+      "type": "object"
+    },
+    "Tls13SecretsStatus": {
+      "description": "Whether authorized TLS 1.3 session secrets were supplied for a capture.\n\nThe contract records only *that* authorized secrets were supplied, never the\nsecret material itself. ``not_supplied`` forces TLS 1.3 certificate details\nto ``session_secrets_required``/``not_observable``; ``authorized_supplied``\npermits observed certificate details that reference actual evidence.",
+      "enum": [
+        "not_supplied",
+        "authorized_supplied"
+      ],
+      "title": "Tls13SecretsStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The versioned canonical chain-of-proof document (spec §1, §4).",
+  "properties": {
+    "schema_id": {
+      "const": "urn:securemailscope:schema:chain-of-proof:1.0.0",
+      "title": "Schema Id",
+      "type": "string"
+    },
+    "chain_schema_version": {
+      "const": "1.0.0",
+      "title": "Chain Schema Version",
+      "type": "string"
+    },
+    "analysis": {
+      "$ref": "#/$defs/AnalysisManifest"
+    },
+    "execution": {
+      "$ref": "#/$defs/AnalysisExecution"
+    },
+    "captures": {
+      "items": {
+        "$ref": "#/$defs/CaptureProvenance"
+      },
+      "minItems": 1,
+      "title": "Captures",
+      "type": "array"
+    },
+    "sessions": {
+      "items": {
+        "$ref": "#/$defs/Session"
+      },
+      "title": "Sessions",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/EvidenceReference"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "protocol_events": {
+      "items": {
+        "$ref": "#/$defs/ProtocolEvent"
+      },
+      "title": "Protocol Events",
+      "type": "array"
+    },
+    "crypto_observations": {
+      "items": {
+        "$ref": "#/$defs/CryptoObservation"
+      },
+      "title": "Crypto Observations",
+      "type": "array"
+    },
+    "derived_facts": {
+      "items": {
+        "$ref": "#/$defs/DerivedFact"
+      },
+      "title": "Derived Facts",
+      "type": "array"
+    },
+    "rule_evaluations": {
+      "items": {
+        "$ref": "#/$defs/RuleEvaluation"
+      },
+      "title": "Rule Evaluations",
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "policy_risk": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PolicyRiskSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "anomaly_results": {
+      "items": {
+        "$ref": "#/$defs/AnomalyResult"
+      },
+      "title": "Anomaly Results",
+      "type": "array"
+    },
+    "recommendations": {
+      "items": {
+        "$ref": "#/$defs/Recommendation"
+      },
+      "title": "Recommendations",
+      "type": "array"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/ArtifactManifest"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_id",
+    "chain_schema_version",
+    "analysis",
+    "execution",
+    "captures",
+    "sessions",
+    "evidence",
+    "protocol_events",
+    "crypto_observations",
+    "derived_facts",
+    "rule_evaluations",
+    "findings",
+    "policy_risk",
+    "anomaly_results",
+    "recommendations",
+    "artifacts"
+  ],
+  "title": "ChainOfProof",
+  "type": "object"
+}

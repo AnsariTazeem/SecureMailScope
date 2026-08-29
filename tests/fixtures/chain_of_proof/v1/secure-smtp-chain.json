@@ -1,0 +1,616 @@
+{
+  "schema_id": "urn:securemailscope:schema:chain-of-proof:1.0.0",
+  "chain_schema_version": "1.0.0",
+  "analysis": {
+    "analysis_id": "ana_48fa992ade36b8c7",
+    "chain_schema_version": "1.0.0",
+    "analysis_status": "complete",
+    "created_at": "2026-08-27T10:00:00Z",
+    "started_at": "2026-08-27T10:00:01Z",
+    "completed_at": "2026-08-27T10:00:30Z",
+    "analyzer_version": "0.1.0",
+    "tshark_version": "4.2.5",
+    "rule_engine_status": "not_run",
+    "rule_pack_id": null,
+    "rule_pack_version": null,
+    "ml_engine_status": "not_run",
+    "model_id": null,
+    "model_version": null,
+    "configuration_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "tls13_authorized_secrets": "not_supplied",
+    "limitations": []
+  },
+  "execution": {
+    "tool_versions": {
+      "tshark": "4.2.5"
+    },
+    "stage_diagnostics": [
+      {
+        "stage": "intake",
+        "status": "complete",
+        "limitation": null,
+        "runtime_seconds": 0.42
+      },
+      {
+        "stage": "stream_reconstruction",
+        "status": "complete",
+        "limitation": null,
+        "runtime_seconds": 0.17
+      },
+      {
+        "stage": "policy_evaluation",
+        "status": "not_run",
+        "limitation": null,
+        "runtime_seconds": 0.0
+      }
+    ],
+    "note": "Execution envelope; not part of reproducible chain content."
+  },
+  "captures": [
+    {
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "original_filename_sanitized": "secure-smtp-chain.pcapng",
+      "format": "pcapng",
+      "size_bytes": 4096,
+      "sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "packet_count": 12,
+      "captured_at_start": "2026-08-27T10:00:02Z",
+      "captured_at_end": "2026-08-27T10:00:03.500000Z",
+      "link_layer_types": [
+        "ethernet"
+      ],
+      "snaplen": 65535,
+      "truncated_packet_count": 0,
+      "capture_warnings": [],
+      "ingestion_tool_versions": {
+        "tshark": "4.2.5"
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "session_id": "ses_05a2650d13a55335",
+      "stable_session_key": "sha256:2cf2f7b3242d7beb2730774cf69b8843a9b87d0bf3c89871b1992ed3410780ca",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "tcp_stream_id": 0,
+      "source_endpoint": {
+        "ip": "192.0.2.10",
+        "port": 35210
+      },
+      "destination_endpoint": {
+        "ip": "192.0.2.20",
+        "port": 2525
+      },
+      "first_frame": 1,
+      "last_frame": 12,
+      "started_at": "2026-08-27T10:00:02Z",
+      "ended_at": "2026-08-27T10:00:03.500000Z",
+      "packet_count": 12,
+      "byte_count": 2048,
+      "protocol": "smtp",
+      "protocol_confidence": "high",
+      "classification_evidence_ids": [
+        "ev_26a2b0d087a9f68f",
+        "ev_47753260b1942432"
+      ],
+      "capture_completeness": "complete",
+      "limitations": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_26a2b0d087a9f68f",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [
+        1
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:02.100000Z",
+      "timestamp_end": "2026-08-27T10:00:02.100000Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_follow_stream",
+      "source_field": "smtp.response",
+      "normalized_value": "220 example.test ESMTP ready",
+      "safe_excerpt": "220 <redacted> ESMTP ready",
+      "display_filter": "tcp.stream eq 0 && smtp",
+      "observability": "observed",
+      "redaction": "excerpt_only",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_47753260b1942432",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [
+        3
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:02.400000Z",
+      "timestamp_end": "2026-08-27T10:00:02.400000Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "smtp.capability",
+      "normalized_value": "STARTTLS",
+      "safe_excerpt": "STARTTLS",
+      "display_filter": "tcp.stream eq 0 && smtp && smtp.capability contains STARTTLS",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_aaf1767ab0f7c8e5",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [
+        5
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:02.900000Z",
+      "timestamp_end": "2026-08-27T10:00:02.900000Z",
+      "direction": "client_to_server",
+      "source_kind": "tshark_field",
+      "source_field": "tls.handshake.type",
+      "normalized_value": "1",
+      "safe_excerpt": "",
+      "display_filter": "tcp.stream eq 0 && tls.handshake.type == 1",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_2aa2014fc6d23f8e",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [
+        6
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:03Z",
+      "timestamp_end": "2026-08-27T10:00:03Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "tls.handshake.type",
+      "normalized_value": "2",
+      "safe_excerpt": "",
+      "display_filter": "tcp.stream eq 0 && tls.handshake.type == 2",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_e999c5627e64bb39",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [
+        6
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:03Z",
+      "timestamp_end": "2026-08-27T10:00:03Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "tls.handshake.extensions_keyshare_group",
+      "normalized_value": "secp256r1",
+      "safe_excerpt": "",
+      "display_filter": "tcp.stream eq 0 && tls.handshake.type == 2",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_7a42f749fb4294ca",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [
+        7
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:03.300000Z",
+      "timestamp_end": "2026-08-27T10:00:03.300000Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "tls.record.opaque_type",
+      "normalized_value": "23",
+      "safe_excerpt": "",
+      "display_filter": "tcp.stream eq 0 && tls.record.opaque_type == 23",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_943e11269a77b190",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [4],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:02.600000Z",
+      "timestamp_end": "2026-08-27T10:00:02.600000Z",
+      "direction": "client_to_server",
+      "source_kind": "tshark_field",
+      "source_field": "smtp.command",
+      "normalized_value": "STARTTLS",
+      "safe_excerpt": "STARTTLS",
+      "display_filter": "tcp.stream eq 0 && smtp.command == STARTTLS",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_f93c21a1c3675070",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [4],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:02.800000Z",
+      "timestamp_end": "2026-08-27T10:00:02.800000Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "smtp.response",
+      "normalized_value": "220 2.0.0 Ready to start TLS",
+      "safe_excerpt": "220 Ready to start TLS",
+      "display_filter": "tcp.stream eq 0 && smtp.response starts-with 220",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_333c7dbf43022df6",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [6],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:03Z",
+      "timestamp_end": "2026-08-27T10:00:03Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "tls.handshake.extensions.supported_version",
+      "normalized_value": "0x0304",
+      "safe_excerpt": "",
+      "display_filter": "tcp.stream eq 0 && tls.handshake.extensions.supported_version == 0x0304",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_788c417297b3d111",
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+      "session_id": "ses_05a2650d13a55335",
+      "frame_numbers": [6],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T10:00:03Z",
+      "timestamp_end": "2026-08-27T10:00:03Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "tls.handshake.ciphersuite",
+      "normalized_value": "TLS_AES_128_GCM_SHA256",
+      "safe_excerpt": "",
+      "display_filter": "tcp.stream eq 0 && tls.handshake.ciphersuite",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    }
+  ],
+  "protocol_events": [
+    {
+      "event_id": "eve_23cff1b55c22dddf",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 0,
+      "event_type": "tcp_connected",
+      "protocol": "smtp",
+      "state_before": "connection_open",
+      "state_after": "connection_open",
+      "timestamp": "2026-08-27T10:00:02Z",
+      "direction": "client_to_server",
+      "evidence_ids": [],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_4ced8243f7dc1167",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 1,
+      "event_type": "server_greeting",
+      "protocol": "smtp",
+      "state_before": "connection_open",
+      "state_after": "greeting",
+      "timestamp": "2026-08-27T10:00:02.100000Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_26a2b0d087a9f68f"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_200c6be9c60d084b",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 2,
+      "event_type": "capability_request",
+      "protocol": "smtp",
+      "state_before": "greeting",
+      "state_after": "ready",
+      "timestamp": "2026-08-27T10:00:02.300000Z",
+      "direction": "client_to_server",
+      "evidence_ids": ["ev_943e11269a77b190"],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_0e6cbadf7ce0049f",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 3,
+      "event_type": "capability_advertised",
+      "protocol": "smtp",
+      "state_before": "ready",
+      "state_after": "tls_offered",
+      "timestamp": "2026-08-27T10:00:02.400000Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_47753260b1942432"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_db306cb557034d80",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 4,
+      "event_type": "tls_upgrade_requested",
+      "protocol": "smtp",
+      "state_before": "tls_offered",
+      "state_after": "tls_requested",
+      "timestamp": "2026-08-27T10:00:02.600000Z",
+      "direction": "client_to_server",
+      "evidence_ids": ["ev_943e11269a77b190"],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_428dc05b2544636a",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 5,
+      "event_type": "tls_upgrade_accepted",
+      "protocol": "smtp",
+      "state_before": "tls_requested",
+      "state_after": "tls_negotiating",
+      "timestamp": "2026-08-27T10:00:02.800000Z",
+      "direction": "server_to_client",
+      "evidence_ids": ["ev_f93c21a1c3675070"],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_1c2eed3968659d74",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 6,
+      "event_type": "client_hello",
+      "protocol": "smtp",
+      "state_before": "tls_negotiating",
+      "state_after": "tls_negotiating",
+      "timestamp": "2026-08-27T10:00:02.900000Z",
+      "direction": "client_to_server",
+      "evidence_ids": [
+        "ev_aaf1767ab0f7c8e5"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_36e1c92e49e2ad3b",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 7,
+      "event_type": "server_hello",
+      "protocol": "smtp",
+      "state_before": "tls_negotiating",
+      "state_after": "tls_negotiating",
+      "timestamp": "2026-08-27T10:00:03Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_2aa2014fc6d23f8e",
+        "ev_333c7dbf43022df6",
+        "ev_788c417297b3d111"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_27429a0e6b3545e1",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 8,
+      "event_type": "key_exchange_observed",
+      "protocol": "smtp",
+      "state_before": "tls_negotiating",
+      "state_after": "tls_negotiating",
+      "timestamp": "2026-08-27T10:00:03.100000Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_e999c5627e64bb39"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_80e82d696c20bf4a",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 9,
+      "event_type": "handshake_finished",
+      "protocol": "smtp",
+      "state_before": "tls_negotiating",
+      "state_after": "tls_active",
+      "timestamp": "2026-08-27T10:00:03.300000Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_7a42f749fb4294ca"
+      ],
+      "event_status": "inferred",
+      "observability": "derived",
+      "limitations": [{
+        "code": "derived_from_observed",
+        "summary": "Handshake completion is inferred from observable encrypted application data; Finished is encrypted without authorized secrets",
+        "detail": "tls13_finished_not_directly_observable"
+      }]
+    },
+    {
+      "event_id": "eve_a6a2fcd8335b888d",
+      "session_id": "ses_05a2650d13a55335",
+      "sequence_index": 10,
+      "event_type": "encrypted_application_data",
+      "protocol": "smtp",
+      "state_before": "tls_active",
+      "state_after": "tls_active",
+      "timestamp": "2026-08-27T10:00:03.500000Z",
+      "direction": "client_to_server",
+      "evidence_ids": [
+        "ev_7a42f749fb4294ca"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    }
+  ],
+  "crypto_observations": [
+    {
+      "observation_id": "obs_c532f8e323d3ef5d",
+      "session_id": "ses_05a2650d13a55335",
+      "kind": "tls_negotiated_version",
+      "value": "TLS_1_3",
+      "normalized_value": "TLS_1_3",
+      "observability": "observed",
+      "evidence_ids": [
+        "ev_788c417297b3d111"
+      ],
+      "limitations": []
+    },
+    {
+      "observation_id": "obs_b9eddfd212467b36",
+      "session_id": "ses_05a2650d13a55335",
+      "kind": "selected_cipher_suite",
+      "value": "TLS_AES_128_GCM_SHA256",
+      "normalized_value": "TLS_AES_128_GCM_SHA256",
+      "observability": "observed",
+      "evidence_ids": [
+        "ev_788c417297b3d111"
+      ],
+      "limitations": []
+    },
+    {
+      "observation_id": "obs_818cf698026bee14",
+      "session_id": "ses_05a2650d13a55335",
+      "kind": "key_share_group",
+      "value": "secp256r1",
+      "normalized_value": "secp256r1",
+      "observability": "observed",
+      "evidence_ids": [
+        "ev_e999c5627e64bb39"
+      ],
+      "limitations": []
+    },
+    {
+      "observation_id": "obs_596ce4700d964c31",
+      "session_id": "ses_05a2650d13a55335",
+      "kind": "tls13_certificate_unavailable",
+      "value": "certificate_not_observable",
+      "normalized_value": "certificate_not_observable",
+      "observability": "session_secrets_required",
+      "evidence_ids": [],
+      "limitations": [
+        {
+          "code": "session_secrets_required",
+          "summary": "TLS 1.3 certificate is encrypted after ServerHello without authorized session secrets",
+          "detail": "no_premaster_or_secret_log"
+        }
+      ]
+    }
+  ],
+  "derived_facts": [
+    {
+      "fact_id": "fact_bbdbb4f3f687f5eb",
+      "session_id": "ses_05a2650d13a55335",
+      "fact_type": "negotiated_tls_version",
+      "value": "TLS_1_3",
+      "derivation_id": "chain.events.tls.version",
+      "derivation_version": "1.0.0",
+      "source_event_ids": [],
+      "source_observation_ids": [
+        "obs_c532f8e323d3ef5d"
+      ],
+      "source_fact_ids": [],
+      "observability": "derived",
+      "confidence_level": "high",
+      "confidence_basis": [
+        "server_hello_supported_versions"
+      ],
+      "limitations": []
+    },
+    {
+      "fact_id": "fact_db3c94f144cfba4d",
+      "session_id": "ses_05a2650d13a55335",
+      "fact_type": "tls_upgrade_completed",
+      "value": true,
+      "derivation_id": "chain.events.tls.upgrade",
+      "derivation_version": "1.0.0",
+      "source_event_ids": [
+        "eve_80e82d696c20bf4a"
+      ],
+      "source_observation_ids": [],
+      "source_fact_ids": [],
+      "observability": "derived",
+      "confidence_level": "high",
+      "confidence_basis": [
+        "ordered_handshake_finished"
+      ],
+      "limitations": []
+    },
+    {
+      "fact_id": "fact_34bda4573cb55712",
+      "session_id": "ses_05a2650d13a55335",
+      "fact_type": "certificate_observability",
+      "value": "session_secrets_required",
+      "derivation_id": "chain.tls13.visibility",
+      "derivation_version": "1.0.0",
+      "source_event_ids": [],
+      "source_observation_ids": [
+        "obs_596ce4700d964c31"
+      ],
+      "source_fact_ids": [],
+      "observability": "derived",
+      "confidence_level": "high",
+      "confidence_basis": [
+        "tls13_certificate_visibility"
+      ],
+      "limitations": [
+        {
+          "code": "session_secrets_required",
+          "summary": "Certificate details not observable for TLS 1.3 without authorized session secrets",
+          "detail": "no_secret_log"
+        }
+      ]
+    }
+  ],
+  "rule_evaluations": [],
+  "findings": [],
+  "policy_risk": null,
+  "anomaly_results": [],
+  "recommendations": [],
+  "artifacts": []
+}

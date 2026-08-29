@@ -1,0 +1,445 @@
+{
+  "schema_id": "urn:securemailscope:schema:chain-of-proof:1.0.0",
+  "chain_schema_version": "1.0.0",
+  "analysis": {
+    "analysis_id": "ana_0d6529070657cb1b",
+    "chain_schema_version": "1.0.0",
+    "analysis_status": "complete",
+    "created_at": "2026-08-27T11:00:00Z",
+    "started_at": "2026-08-27T11:00:01Z",
+    "completed_at": "2026-08-27T11:00:30Z",
+    "analyzer_version": "0.1.0",
+    "tshark_version": "4.2.5",
+    "rule_engine_status": "complete",
+    "rule_pack_id": "SMS-EMAIL-STARTTLS",
+    "rule_pack_version": "1.0.0",
+    "ml_engine_status": "not_run",
+    "model_id": null,
+    "model_version": null,
+    "configuration_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "tls13_authorized_secrets": "not_supplied",
+    "limitations": []
+  },
+  "execution": {
+    "tool_versions": {
+      "tshark": "4.2.5"
+    },
+    "stage_diagnostics": [
+      {
+        "stage": "intake",
+        "status": "complete",
+        "limitation": null,
+        "runtime_seconds": 0.41
+      },
+      {
+        "stage": "stream_reconstruction",
+        "status": "complete",
+        "limitation": null,
+        "runtime_seconds": 0.16
+      },
+      {
+        "stage": "policy_evaluation",
+        "status": "complete",
+        "limitation": null,
+        "runtime_seconds": 0.05
+      }
+    ],
+    "note": "Execution envelope; not part of reproducible chain content."
+  },
+  "captures": [
+    {
+      "capture_id": "cap_57936ac41b3d6c4b",
+      "original_filename_sanitized": "insecure-smtp-chain.pcapng",
+      "format": "pcapng",
+      "size_bytes": 4096,
+      "sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+      "packet_count": 6,
+      "captured_at_start": "2026-08-27T11:00:02Z",
+      "captured_at_end": "2026-08-27T11:00:02.700000Z",
+      "link_layer_types": [
+        "ethernet"
+      ],
+      "snaplen": 65535,
+      "truncated_packet_count": 0,
+      "capture_warnings": [],
+      "ingestion_tool_versions": {
+        "tshark": "4.2.5"
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "session_id": "ses_3ac703c890cdeada",
+      "stable_session_key": "sha256:8dec2ea62bbecd271c6ba21d3335b4d4830a55dd5e004bee678f24956bd0ddf9",
+      "capture_id": "cap_57936ac41b3d6c4b",
+      "tcp_stream_id": 0,
+      "source_endpoint": {
+        "ip": "192.0.2.10",
+        "port": 35210
+      },
+      "destination_endpoint": {
+        "ip": "192.0.2.20",
+        "port": 2525
+      },
+      "first_frame": 1,
+      "last_frame": 4,
+      "started_at": "2026-08-27T11:00:02Z",
+      "ended_at": "2026-08-27T11:00:02.700000Z",
+      "packet_count": 6,
+      "byte_count": 1024,
+      "protocol": "smtp",
+      "protocol_confidence": "high",
+      "classification_evidence_ids": [
+        "ev_b98d88d0ec274d84",
+        "ev_19f8674446ca345e"
+      ],
+      "capture_completeness": "complete",
+      "limitations": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_b98d88d0ec274d84",
+      "capture_id": "cap_57936ac41b3d6c4b",
+      "capture_sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+      "session_id": "ses_3ac703c890cdeada",
+      "frame_numbers": [
+        1
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T11:00:02.100000Z",
+      "timestamp_end": "2026-08-27T11:00:02.100000Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_follow_stream",
+      "source_field": "smtp.response",
+      "normalized_value": "220 example.test ESMTP ready",
+      "safe_excerpt": "220 <redacted> ESMTP ready",
+      "display_filter": "tcp.stream eq 0 && smtp",
+      "observability": "observed",
+      "redaction": "excerpt_only",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_19f8674446ca345e",
+      "capture_id": "cap_57936ac41b3d6c4b",
+      "capture_sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+      "session_id": "ses_3ac703c890cdeada",
+      "frame_numbers": [
+        3
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T11:00:02.400000Z",
+      "timestamp_end": "2026-08-27T11:00:02.400000Z",
+      "direction": "server_to_client",
+      "source_kind": "tshark_field",
+      "source_field": "smtp.capability",
+      "normalized_value": "STARTTLS",
+      "safe_excerpt": "STARTTLS",
+      "display_filter": "tcp.stream eq 0 && smtp && smtp.capability contains STARTTLS",
+      "observability": "observed",
+      "redaction": "none",
+      "extractor_version": "e3a/1"
+    },
+    {
+      "evidence_id": "ev_80b0cc666ae116ef",
+      "capture_id": "cap_57936ac41b3d6c4b",
+      "capture_sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+      "session_id": "ses_3ac703c890cdeada",
+      "frame_numbers": [
+        4
+      ],
+      "occurrence_index": 0,
+      "timestamp_start": "2026-08-27T11:00:02.700000Z",
+      "timestamp_end": "2026-08-27T11:00:02.700000Z",
+      "direction": "client_to_server",
+      "source_kind": "tshark_field",
+      "source_field": "smtp.command",
+      "normalized_value": "MAIL FROM:<sender>",
+      "safe_excerpt": "MAIL FROM:<redacted>",
+      "display_filter": "tcp.stream eq 0 && smtp",
+      "observability": "observed",
+      "redaction": "redacted_local_part",
+      "extractor_version": "e3a/1"
+    }
+  ],
+  "protocol_events": [
+    {
+      "event_id": "eve_b2f6efb8a80a21f1",
+      "session_id": "ses_3ac703c890cdeada",
+      "sequence_index": 0,
+      "event_type": "tcp_connected",
+      "protocol": "smtp",
+      "state_before": "connection_open",
+      "state_after": "connection_open",
+      "timestamp": "2026-08-27T11:00:02Z",
+      "direction": "client_to_server",
+      "evidence_ids": [],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_7e0aa38f2d9455fc",
+      "session_id": "ses_3ac703c890cdeada",
+      "sequence_index": 1,
+      "event_type": "server_greeting",
+      "protocol": "smtp",
+      "state_before": "connection_open",
+      "state_after": "greeting",
+      "timestamp": "2026-08-27T11:00:02.100000Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_b98d88d0ec274d84"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_3b94302053ff7cb4",
+      "session_id": "ses_3ac703c890cdeada",
+      "sequence_index": 2,
+      "event_type": "capability_request",
+      "protocol": "smtp",
+      "state_before": "greeting",
+      "state_after": "ready",
+      "timestamp": "2026-08-27T11:00:02.300000Z",
+      "direction": "client_to_server",
+      "evidence_ids": ["ev_19f8674446ca345e"],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_cda138a2da129299",
+      "session_id": "ses_3ac703c890cdeada",
+      "sequence_index": 3,
+      "event_type": "capability_advertised",
+      "protocol": "smtp",
+      "state_before": "ready",
+      "state_after": "tls_offered",
+      "timestamp": "2026-08-27T11:00:02.400000Z",
+      "direction": "server_to_client",
+      "evidence_ids": [
+        "ev_19f8674446ca345e"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    },
+    {
+      "event_id": "eve_30bb7b2a593a0b92",
+      "session_id": "ses_3ac703c890cdeada",
+      "sequence_index": 4,
+      "event_type": "plaintext_command_after_tls_offer",
+      "protocol": "smtp",
+      "state_before": "tls_offered",
+      "state_after": "tls_offered",
+      "timestamp": "2026-08-27T11:00:02.700000Z",
+      "direction": "client_to_server",
+      "evidence_ids": [
+        "ev_80b0cc666ae116ef"
+      ],
+      "event_status": "observed",
+      "observability": "observed",
+      "limitations": []
+    }
+  ],
+  "crypto_observations": [
+    {
+      "observation_id": "obs_e71da20b2b227144",
+      "session_id": "ses_3ac703c890cdeada",
+      "kind": "tls_negotiated_version",
+      "value": "not_observable",
+      "normalized_value": "not_observable",
+      "observability": "not_observable",
+      "evidence_ids": [],
+      "limitations": [
+        {
+          "code": "unknown_insufficient_evidence",
+          "summary": "No TLS handshake was observed on this session; TLS version is not assessable",
+          "detail": "session_continued_in_plaintext"
+        }
+      ]
+    }
+  ],
+  "derived_facts": [
+    {
+      "fact_id": "fact_9da556d717b4ce0f",
+      "session_id": "ses_3ac703c890cdeada",
+      "fact_type": "starttls_advertised",
+      "value": true,
+      "derivation_id": "chain.smtp.starttls.advertised",
+      "derivation_version": "1.0.0",
+      "source_event_ids": [
+        "eve_cda138a2da129299"
+      ],
+      "source_observation_ids": [],
+      "source_fact_ids": [],
+      "observability": "derived",
+      "confidence_level": "high",
+      "confidence_basis": [
+        "capability_line_observed"
+      ],
+      "limitations": []
+    },
+    {
+      "fact_id": "fact_06514e50f05f65bb",
+      "session_id": "ses_3ac703c890cdeada",
+      "fact_type": "tls_upgrade_completed",
+      "value": false,
+      "derivation_id": "chain.smtp.starttls.completed",
+      "derivation_version": "1.0.0",
+      "source_event_ids": [],
+      "source_observation_ids": [
+        "obs_e71da20b2b227144"
+      ],
+      "source_fact_ids": [],
+      "observability": "derived",
+      "confidence_level": "high",
+      "confidence_basis": [
+        "no_tls_upgrade_request_or_handshake"
+      ],
+      "limitations": []
+    },
+    {
+      "fact_id": "fact_3ee3c17280709d66",
+      "session_id": "ses_3ac703c890cdeada",
+      "fact_type": "plaintext_commands_after_offer",
+      "value": 1,
+      "derivation_id": "chain.smtp.starttls.plaintext_count",
+      "derivation_version": "1.0.0",
+      "source_event_ids": [
+        "eve_30bb7b2a593a0b92"
+      ],
+      "source_observation_ids": [],
+      "source_fact_ids": [],
+      "observability": "derived",
+      "confidence_level": "high",
+      "confidence_basis": [
+        "ordered_plaintext_command_after_offer"
+      ],
+      "limitations": []
+    }
+  ],
+  "rule_evaluations": [
+    {
+      "evaluation_id": "eval_1a2076fa0c5bf75e",
+      "session_id": "ses_3ac703c890cdeada",
+      "rule_id": "SMS-SMTP-STARTTLS-001",
+      "rule_version": "1.0.0",
+      "profile_id": "sms-liberal",
+      "evaluated_at": "2026-08-27T11:00:03Z",
+      "input_fact_ids": [
+        "fact_9da556d717b4ce0f",
+        "fact_06514e50f05f65bb",
+        "fact_3ee3c17280709d66"
+      ],
+      "input_snapshot": {
+        "starttls_advertised": true,
+        "tls_upgrade_completed": false,
+        "plaintext_commands_after_offer": 1
+      },
+      "outcome": "matched",
+      "reason_code": "rule_matched",
+      "generated_finding_id": "fnd_475510c505d60661"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "fnd_475510c505d60661",
+      "stable_finding_key": "sha256:f79ea9e5887fdd86a0b101178587b3d2371dae79a5fef485c9e26d1328c41ca6",
+      "analysis_id": "ana_0d6529070657cb1b",
+      "session_id": "ses_3ac703c890cdeada",
+      "rule_evaluation_id": "eval_1a2076fa0c5bf75e",
+      "rule_id": "SMS-SMTP-STARTTLS-001",
+      "rule_version": "1.0.0",
+      "title": "STARTTLS offered but plaintext continued",
+      "category": "encryption_transition",
+      "severity": "high",
+      "policy_risk_contribution": 25,
+      "evidence_confidence": "high",
+      "observability": "policy_inferred",
+      "fact_ids": [
+        "fact_9da556d717b4ce0f",
+        "fact_06514e50f05f65bb",
+        "fact_3ee3c17280709d66"
+      ],
+      "evidence_ids": [
+        "ev_19f8674446ca345e",
+        "ev_80b0cc666ae116ef"
+      ],
+      "rationale": "The server advertised STARTTLS, but the client continued with plaintext SMTP commands without requesting an upgrade.",
+      "impact": "Email metadata may be exposed to passive interception depending on the subsequent commands.",
+      "recommendation_id": "REC-EMAIL-REQUIRE-TLS",
+      "standards_references": [
+        {
+          "id": "RFC8314",
+          "section": "3"
+        }
+      ],
+      "limitations": [
+        {
+          "code": "unknown_insufficient_evidence",
+          "summary": "The capture proves plaintext continuation; it does not by itself prove an active downgrade attacker",
+          "detail": "no_attacker_attribution"
+        },
+        {
+          "code": "not_present",
+          "summary": "No authentication material observed in this fixture",
+          "detail": "static_illustrative"
+        }
+      ],
+      "created_at": "2026-08-27T11:00:03Z"
+    }
+  ],
+  "policy_risk": {
+    "policy_risk_id": "polr_ad49be64abfef61a",
+    "analysis_id": "ana_0d6529070657cb1b",
+    "profile_id": "sms-liberal",
+    "uncapped_score": 25,
+    "capped_score": 25,
+    "contributions": [
+      {
+        "contribution_id": "plc_cb3475b7accab319",
+        "rule_id": "SMS-SMTP-STARTTLS-001",
+        "rule_version": "1.0.0",
+        "finding_id": "fnd_475510c505d60661",
+        "severity": "high",
+        "policy_risk_contribution": 25,
+        "evidence_confidence": "high",
+        "confidence_factor": 1.0,
+        "confidence_adjusted_points": 25
+      }
+    ],
+    "limitations": []
+  },
+  "anomaly_results": [],
+  "recommendations": [
+    {
+      "recommendation_id": "REC-EMAIL-REQUIRE-TLS",
+      "title": "Require STARTTLS and reject plaintext",
+      "summary": "Configure the server to accept only sessions that request TLS and to reject plaintext continuation after advertising STARTTLS.",
+      "priority": "high",
+      "affected_finding_ids": [
+        "fnd_475510c505d60661"
+      ],
+      "action_steps": [
+        "Require clients to issue STARTTLS",
+        "Reject plaintext commands after STARTTLS is advertised"
+      ],
+      "verification_steps": [
+        "Re-run capture and confirm a completed TLS handshake"
+      ],
+      "standards_references": [
+        {
+          "id": "RFC8314",
+          "section": "3"
+        }
+      ],
+      "scope": "service",
+      "automation_status": "advisory_only"
+    }
+  ],
+  "artifacts": []
+}
