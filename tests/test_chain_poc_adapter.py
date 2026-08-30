@@ -47,6 +47,7 @@ from securemailscope.chain.poc_adapter import (
     PocAdapterContext,
     build_chain_from_poc_analysis,
 )
+from securemailscope.chain.smtp_facts import derive_smtp_transition_facts
 from securemailscope.models import (
     AnalyzeResult,
     CaptureFormat,
@@ -479,8 +480,139 @@ def test_adapter_accepted_without_tls_emits_acceptance_only() -> None:
 
     chain = build_chain_from_poc_analysis(result, context=_context())
     types = [event.event_type for event in chain.protocol_events]
-    assert types[-1] is ProtocolEventType.TLS_UPGRADE_ACCEPTED
     assert ProtocolEventType.CLIENT_HELLO not in types
+    accepted_index = types.index(ProtocolEventType.TLS_UPGRADE_ACCEPTED)
+    assert types[accepted_index + 1] is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+    assert types[-1] is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Plaintext commands after the TLS offer (Commit 3 evidence mapping)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _evidence_of(event, chain) -> EvidenceReference:
+    matches = [node for node in chain.evidence if node.evidence_id in event.evidence_ids]
+    assert len(matches) == 1
+    return matches[0]
+
+
+def test_adapter_counts_observed_plaintext_commands_after_advertisement() -> None:
+    frames = [
+        *_handshake_frames(),
+        frame(4, b"220 secure.example ESMTP\r\n", direction=S),
+        frame(5, b"EHLO client.example\r\n", direction=C),
+        frame(6, b"250-STARTTLS\r\n", direction=S),
+        frame(7, b"MAIL FROM:<alice@example.test>\r\n", direction=C),
+        frame(8, b"RCPT TO:<bob@example.test>\r\n", direction=C),
+        frame(9, b"DATA\r\n", direction=C),
+        frame(10, b"Subject: hello\r\n", direction=C),
+        frame(11, b"body line\r\n", direction=C),
+        frame(12, b".\r\n", direction=C),
+        frame(13, b"QUIT\r\n", direction=C),
+    ]
+    result, _classification, _transition = _analyze(frames)
+    chain = build_chain_from_poc_analysis(result, context=_context())
+
+    plaintext = [
+        event
+        for event in chain.protocol_events
+        if event.event_type is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+    ]
+    assert [_evidence_of(event, chain).frame_numbers[0] for event in plaintext] == [
+        7,
+        8,
+        9,
+        13,
+    ]
+    for event in plaintext:
+        assert event.direction is Direction.CLIENT_TO_SERVER
+        assert event.event_status is EventStatus.OBSERVED
+        assert event.observability is ChainObservability.OBSERVED
+        assert event.state_before is event.state_after
+        assert event.state_before is ProtocolState.TLS_OFFERED
+        evidence = _evidence_of(event, chain)
+        assert evidence.source_kind is EvidenceSourceKind.TSHARK_FIELD
+        assert evidence.source_field == "tcp.payload"
+        assert evidence.normalized_value == "smtp:plaintext_command_after_tls_offer"
+        assert len(evidence.frame_numbers) == 1
+        assert evidence.occurrence_index == 0
+        assert evidence.direction is Direction.CLIENT_TO_SERVER
+        assert evidence.safe_excerpt == ""
+        assert evidence.observability is ChainObservability.OBSERVED
+        assert evidence.redaction is EvidenceRedaction.NONE
+        assert _NUMERIC_FILTER.match(evidence.display_filter)
+
+    ok, problems = validate_chain(chain)
+    assert ok, problems
+
+
+def test_adapter_no_plaintext_event_before_offer_or_for_non_commands() -> None:
+    frames = [
+        *_handshake_frames(),
+        frame(4, b"220 secure.example ESMTP\r\n", direction=S),
+        frame(5, b"MAIL FROM:<early@example.test>\r\n", direction=C),
+        frame(6, b"EHLO client.example\r\n", direction=C),
+        frame(7, b"250-STARTTLS\r\n", direction=S),
+        frame(8, b"MAILBOX invalid\r\n", direction=C),
+        frame(9, b"XABC extension\r\n", direction=C),
+    ]
+    result, _classification, _transition = _analyze(frames)
+    chain = build_chain_from_poc_analysis(result, context=_context())
+    plaintext = [
+        event
+        for event in chain.protocol_events
+        if event.event_type is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+    ]
+    assert plaintext == []
+
+
+def test_adapter_never_counts_message_body_or_bdat_chunk_lines() -> None:
+    frames = [
+        *_handshake_frames(),
+        frame(4, b"220 secure.example ESMTP\r\n", direction=S),
+        frame(5, b"EHLO client.example\r\n", direction=C),
+        frame(6, b"250-STARTTLS\r\n", direction=S),
+        frame(7, b"DATA\r\n", direction=C),
+        frame(8, b"Subject: hello\r\n", direction=C),
+        frame(9, b"body line\r\n", direction=C),
+        frame(10, b".\r\n", direction=C),
+        frame(11, b"BDAT 5\r\n", direction=C),
+        frame(12, b"MAIL FROM:<chunk@example.test>\r\n", direction=C),
+        frame(13, b"QUIT\r\n", direction=C),
+    ]
+    result, _classification, _transition = _analyze(frames)
+    chain = build_chain_from_poc_analysis(result, context=_context())
+    plaintext = [
+        event
+        for event in chain.protocol_events
+        if event.event_type is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+    ]
+    assert [_evidence_of(event, chain).frame_numbers[0] for event in plaintext] == [
+        7,
+        11,
+    ]
+
+
+def test_adapter_partial_command_frames_can_never_produce_plaintext_events() -> None:
+    frames = [
+        *_handshake_frames(),
+        frame(4, b"220 secure.example ESMTP\r\n", direction=S),
+        frame(5, b"EHLO client.example\r\n", direction=C),
+        frame(6, b"250-STARTTLS\r\n", direction=S),
+        frame(7, b"MAIL FROM:<alice@example.test>\r\n", direction=C),
+        frame(8, b"START", direction=C),
+    ]
+    result, _classification, transition = _analyze(frames, capture_truncation=True)
+    assert transition.outcome is TransitionOutcome.TRUNCATED
+    assert transition.completeness is CompleteStatus.CAPTURE_INCOMPLETE
+    chain = build_chain_from_poc_analysis(result, context=_context())
+    plaintext = [
+        event
+        for event in chain.protocol_events
+        if event.event_type is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+    ]
+    assert [_evidence_of(event, chain).frame_numbers[0] for event in plaintext] == [7]
 
 
 def test_adapter_truncated_capture_reports_limit_and_no_fabricated_outcome() -> None:
@@ -838,6 +970,101 @@ def test_adapter_output_is_independent_of_analyzer_list_order() -> None:
     assert {event.session_id for event in chain_reversed.protocol_events} == {
         event.session_id for event in chain_forward.protocol_events
     }
+
+
+def test_adapter_smtp_event_plan_is_independent_of_transition_events_list_order() -> None:
+    """Reversing ``transition.events`` must not change the derived chain.
+
+    An accepted-without-TLS transition is built, then adapted twice: once with
+    ``transition.events`` in the analyzer's natural order and once with the same
+    event data in reversed list order. Because stateful event processing runs on
+    the deterministic (frame, occurrence) wire order, the canonical chain output
+    and the derived SMTP facts must be byte-for-byte identical, and the
+    plaintext-command-after-offer evidence and false completion fact must remain
+    present in both.
+    """
+    frames = [
+        *_handshake_frames(),
+        frame(4, b"220 secure.example ESMTP\r\n", direction=S),
+        frame(5, b"EHLO client.example\r\n", direction=C),
+        frame(6, b"250-STARTTLS\r\n", direction=S),
+        frame(7, b"STARTTLS\r\n", direction=C),
+        frame(8, b"220 OK\r\n", direction=S),
+        frame(9, b"QUIT\r\n", direction=C),
+        frame(10, b"221 Bye\r\n", direction=S),
+    ]
+    tcp_stream = stream(frames)
+    classification = classify_stream(tcp_stream)
+    transition = build_transition(tcp_stream)
+    assert transition.outcome is TransitionOutcome.ACCEPTED_WITHOUT_TLS
+
+    def adapt(events: list[SmtpEvent]):
+        t = transition.model_copy(update={"events": events})
+        result = _result([tcp_stream], [classification], [t])
+        return derive_smtp_transition_facts(
+            build_chain_from_poc_analysis(result, context=_context())
+        )
+
+    natural = adapt(transition.events)
+    reversed_order = adapt(list(reversed(transition.events)))
+
+    assert canonical_content_hash(natural) == canonical_content_hash(reversed_order)
+    assert [f.fact_type for f in natural.derived_facts] == [
+        f.fact_type for f in reversed_order.derived_facts
+    ]
+
+    plaintext_ids = {
+        evidence_id
+        for event in natural.protocol_events
+        if event.event_type is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER
+        for evidence_id in event.evidence_ids
+    }
+    assert plaintext_ids, "plaintext evidence must remain present"
+
+    completed = [
+        fact for fact in natural.derived_facts if fact.fact_type == "tls_upgrade_completed"
+    ]
+    assert len(completed) == 1
+    assert completed[0].value is False
+
+
+def test_adapter_rejects_ambiguous_duplicate_events_at_same_frame_occurrence() -> None:
+    """Two indistinguishable events at one frame/occurrence are rejected.
+
+    When a caller constructs a transition whose ``events`` contain two events
+    with the same frame, occurrence, and category, the deterministic
+    category tie-breaker cannot distinguish them, so the adapter must reject
+    rather than silently select one.
+    """
+    frames = [
+        *_handshake_frames(),
+        frame(4, b"220 secure.example ESMTP\r\n", direction=S),
+        frame(5, b"EHLO client.example\r\n", direction=C),
+        frame(6, b"250-STARTTLS\r\n", direction=S),
+        frame(7, b"STARTTLS\r\n", direction=C),
+        frame(8, b"220 OK\r\n", direction=S),
+        frame(9, b"QUIT\r\n", direction=C),
+        frame(10, b"221 Bye\r\n", direction=S),
+    ]
+    tcp_stream = stream(frames)
+    classification = classify_stream(tcp_stream)
+    transition = build_transition(tcp_stream)
+    duplicate = [
+        *transition.events,
+        SmtpEvent(
+            category=SmtpEventCategory.ESMTP_RESPONSE,
+            direction=S,
+            frame=6,
+            occurrence=0,
+            text="250-STARTTLS",
+        ),
+    ]
+    t = transition.model_copy(update={"events": duplicate})
+    result = _result([tcp_stream], [classification], [t])
+    with pytest.raises(ChainAdapterError) as exc:
+        build_chain_from_poc_analysis(result, context=_context())
+    assert exc.value.code is ChainErrorCode.ADAPTER_MAPPING_FAILED
+    assert "ambiguous duplicate" in exc.value.message
 
 
 def test_adapter_reproducible_analysis_id_is_listed() -> None:

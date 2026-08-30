@@ -25,6 +25,16 @@ Rules of this adapter:
   actual response frame payload observes ``220`` (acceptance) or ``4xx/5xx``
   (rejection); an unrecognized response produces no synthetic event, and a
   response without a proven complete command is an unmappable shape.
+* A *plaintext command after the TLS offer* event is claimed for two cases,
+  both only after a ``STARTTLS_CAPABILITY`` server event was observed:
+  - an analyzer ``OTHER`` event that resolves to an exact payload line whose
+    verb is in the conservative plaintext-command allowlist;
+  - a client ``EHLO`` or ``HELO`` event (which the analyzer categorizes as
+    ``EHLO``/``HELO``) observed strictly after the advertisement.
+  Pre-offer EHLO/HELO remain ``CAPABILITY_REQUEST`` events. DATA message bodies
+  and BDAT chunk payloads are never read as commands, lines on partial STARTTLS
+  command frames are never read at all, and an unreadable line is silently
+  skipped rather than guessed.
 * Analysis output that cannot be mapped without guessing raises a typed
   :class:`~securemailscope.chain.errors.ChainAdapterError` (duplicate streams,
   a classification that references a missing stream, an SMTP classification
@@ -123,6 +133,7 @@ from securemailscope.models import (
     ProtocolClassification,
     ProvenanceStatus,
     RawFrameObservation,
+    SmtpEvent,
     SmtpEventCategory,
     SmtpTransition,
     TcpStream,
@@ -146,6 +157,39 @@ _FULL_STARTTLS_COMMAND = "STARTTLS\r\n"
 #: rejection pattern is checked first to match the analyzer's own ordering.
 _STARTTLS_ACCEPT_RE = re.compile(rb"^220\b", re.MULTILINE)
 _STARTTLS_REJECT_RE = re.compile(rb"^(4[0-9][0-9]|5[0-9][0-9])[ -]", re.MULTILINE)
+
+#: Line splitter identical to the analyzer's own
+#: ``securemailscope.sessions._LINE_RE``, so the adapter reads the exact payload
+#: line whose index is a category event's ``occurrence``.
+_PAYLOAD_LINE_RE = re.compile(rb"[^\r\n]+(?:\r?\n|$)")
+
+#: Evidence token for an observed plaintext SMTP command sent after the
+#: STARTTLS offer (advertisement, acceptance, or both).
+_PLAINTEXT_EVIDENCE_TOKEN = "smtp:plaintext_command_after_tls_offer"
+
+#: SMTP command verbs that count as observed plaintext commands via ``OTHER``
+#: events. The set is conservative: only real command verbs that the passive
+#: analysis can observe verbatim are counted. ``STARTTLS``/``EHLO``/``HELO`` lines
+#: are categorized by the analyzer and handled separately: pre-offer EHLO/HELO are
+#: ``CAPABILITY_REQUEST`` events; post-offer EHLO/HELO become
+#: ``PLAINTEXT_COMMAND_AFTER_TLS_OFFER`` events. A verb-less token (for example
+#: a bare ``MAILBOX`` line) is never counted.
+_PLAINTEXT_VERB_ALLOWLIST = frozenset(
+    {
+        "AUTH",
+        "BDAT",
+        "DATA",
+        "ETRN",
+        "EXPN",
+        "HELP",
+        "MAIL",
+        "NOOP",
+        "QUIT",
+        "RCPT",
+        "RSET",
+        "VRFY",
+    }
+)
 
 #: Stable neutral display name when no usable basename can be derived.
 _NEUTRAL_FILENAME = "capture"
@@ -1269,6 +1313,183 @@ def _command_evidence_id(
     )
 
 
+def _partial_command_frames(transition: SmtpTransition) -> frozenset[int]:
+    """Return the frames that carry an incomplete STARTTLS command, if any.
+
+    When the analyzer could not prove the complete ``STARTTLS\\r\\n`` command,
+    the reconstructable prefix frames must never be read line-by-line: a
+    per-frame occurrence index is not trustworthy across a split command. When
+    the command is complete these frames carry the ``STARTTLS_COMMAND`` category
+    instead and are never considered plaintext continuation.
+    """
+    if transition.starttls_command == _FULL_STARTTLS_COMMAND:
+        return frozenset()
+    return frozenset(transition.starttls_command_frames)
+
+
+def _command_verb(line: bytes) -> str | None:
+    """Return the uppercased first whitespace-delimited token of an SMTP line."""
+    text = line.strip().decode("utf-8", errors="replace").upper()
+    if not text:
+        return None
+    return text.split(None, 1)[0]
+
+
+def _line_at_event(
+    transition: SmtpTransition,
+    event: SmtpEvent,
+    frames_by_number: dict[int, RawFrameObservation],
+    partial_command_frames: frozenset[int],
+) -> bytes | None:
+    """Return the exact payload line an ``OTHER`` event points at, or ``None``.
+
+    The analyzer emits exactly one category per client payload line with
+    ``occurrence`` equal to the line index, so the line is read from the real
+    frame payload at that index. ``None`` is returned (and the line is never
+    guessed) when it would fall on an incomplete-command frame, on an unknown
+    frame, or outside the frame's observable lines.
+    """
+    if event.frame in partial_command_frames:
+        return None
+    observation = frames_by_number.get(event.frame)
+    if observation is None:
+        return None
+    lines = list(_PAYLOAD_LINE_RE.findall(observation.payload))
+    if event.occurrence >= len(lines):
+        return None
+    return lines[event.occurrence]
+
+
+class _PlaintextOfferTracker:
+    """Bounded state machine annotating plaintext commands after the TLS offer.
+
+    State advances only from observable inputs: the capability gate from a
+    ``STARTTLS_CAPABILITY`` server event, and the DATA/BDAT body-mode switches
+    from the actual payload line verbs. A line that cannot be proven safely is
+    never counted, and binary body bytes are never parsed as commands.
+    """
+
+    def __init__(self) -> None:
+        self._capability_seen = False
+        self._data_body_active = False
+        self._absorb_after_bdat = False
+
+    @property
+    def capability_seen(self) -> bool:
+        return self._capability_seen
+
+    def observe_server_event(self, event: SmtpEvent) -> None:
+        """Record the STARTTLS advertisement from a server category event."""
+        if event.category is SmtpEventCategory.STARTTLS_CAPABILITY:
+            self._capability_seen = True
+
+    def classify_client_line(self, line: bytes, *, allowed: bool) -> bool:
+        """Classify one client line, advancing body-mode state.
+
+        Returns whether the line is a countable plaintext command after the
+        offer. ``DATA`` switches to message-body mode (only a dot terminator
+        line exits it); ``BDAT`` absorbs the remaining stream without byte
+        counting because its chunk payloads are not command text. In body mode
+        no line is counted.
+        """
+        if self._absorb_after_bdat:
+            return False
+        if self._data_body_active:
+            if line.rstrip(b"\r\n") == b".":
+                self._data_body_active = False
+            return False
+        verb = _command_verb(line)
+        if verb is None or verb not in _PLAINTEXT_VERB_ALLOWLIST:
+            return False
+        if verb == "DATA":
+            self._data_body_active = True
+        elif verb == "BDAT":
+            self._absorb_after_bdat = True
+        return allowed
+
+    def classify_client_ehlo_helo(self) -> bool:
+        """Whether a client EHLO/HELO counts as plaintext after the TLS offer.
+
+        A client EHLO/HELO that is observed strictly after the server advertised
+        the STARTTLS capability is a plaintext SMTP command, so it qualifies as
+        plaintext continuation (while a pre-offer EHLO/HELO stays a
+        ``CAPABILITY_REQUEST``). EHLO/HELO are never DATA/BDAT operations, but
+        the body/absorption guard is kept for safety so a malformed line can
+        never be counted mid-body.
+        """
+        if self._absorb_after_bdat or self._data_body_active:
+            return False
+        return self._capability_seen
+
+
+def _normalized_transition_events(transition: SmtpTransition) -> list[SmtpEvent]:
+    """Return ``transition.events`` in deterministic wire order.
+
+    An externally constructed :class:`SmtpTransition` may list its ``events`` in
+    any caller-provided order, and that order must never influence the derived
+    chain. The canonical wire order is ``(frame, occurrence, category,
+    direction)``: occurrences already disambiguate multiple values on the same
+    frame, and the category (then direction) deterministically orders any two
+    distinct events that a caller happened to place on the same frame and
+    occurrence. Every stateful consumer in :func:`_smtp_event_plan` is driven
+    from this normalized list, never from the raw list order.
+
+    Two events that share a frame and occurrence *and* the same category are
+    ambiguous duplicates that the category tie-breaker cannot distinguish; they
+    are rejected with a typed :class:`ChainAdapterError` rather than silently
+    selecting one.
+    """
+    ordered = sorted(
+        transition.events,
+        key=lambda event: (
+            event.frame,
+            event.occurrence,
+            event.category.value,
+            event.direction.value,
+        ),
+    )
+    seen: set[tuple[int, int, str]] = set()
+    for event in ordered:
+        key = (event.frame, event.occurrence, event.category.value)
+        if key in seen:
+            raise ChainAdapterError(
+                ChainErrorCode.ADAPTER_MAPPING_FAILED,
+                "adapter",
+                f"stream {transition.tcp_stream} has ambiguous duplicate analyzer "
+                f"events at frame {event.frame} occurrence {event.occurrence} "
+                f"category {event.category.value!r} that cannot be "
+                "deterministically distinguished",
+            )
+        seen.add(key)
+    return ordered
+
+
+def _plaintext_event(
+    *,
+    event: SmtpEvent,
+    registry: _EvidenceRegistry,
+    frame_epochs: dict[int, datetime],
+) -> _RawEvent:
+    """Build a plaintext-command-after-offer raw event for a client event."""
+    evidence = registry.add(
+        source_kind=EvidenceSourceKind.TSHARK_FIELD,
+        source_field="tcp.payload",
+        normalized_value=_PLAINTEXT_EVIDENCE_TOKEN,
+        frame_numbers=[event.frame],
+        direction=Direction.CLIENT_TO_SERVER,
+        occurrence_index=event.occurrence,
+    )
+    return _RawEvent(
+        frame=event.frame,
+        occurrence=event.occurrence,
+        rank=0,
+        event_type=ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER,
+        direction=Direction.CLIENT_TO_SERVER,
+        timestamp=frame_epochs[event.frame],
+        evidence_ids=(evidence,),
+    )
+
+
 def _smtp_event_plan(
     transition: SmtpTransition,
     registry: _EvidenceRegistry,
@@ -1281,8 +1502,13 @@ def _smtp_event_plan(
     ``STARTTLS\\r\\n`` command with attributable frames. Response events are
     derived from the actually observed response-frame payload (``220`` =
     acceptance, ``4xx/5xx`` = rejection, anything else = no synthetic event).
+    All stateful processing (STARTTLS command anchor selection, capability
+    tracking, plaintext detection and SMTP event emission) consumes the
+    deterministic wire order from :func:`_normalized_transition_events`, never
+    the raw list order of the caller-supplied transition.
     """
     plan: list[_RawEvent] = []
+    ordered_events = _normalized_transition_events(transition)
 
     complete_command = transition.starttls_command == _FULL_STARTTLS_COMMAND
     command_evidence = None
@@ -1301,7 +1527,7 @@ def _smtp_event_plan(
     if command_evidence is not None:
         starttls_events = [
             event
-            for event in transition.events
+            for event in ordered_events
             if event.category is SmtpEventCategory.STARTTLS_COMMAND
         ]
         if starttls_events:
@@ -1337,8 +1563,37 @@ def _smtp_event_plan(
             )
         )
 
-    for event in transition.events:
+    tracker = _PlaintextOfferTracker()
+    partial_command_frames = _partial_command_frames(transition)
+    for event in ordered_events:
+        counted_plaintext = False
+        if event.direction is Direction.SERVER_TO_CLIENT:
+            tracker.observe_server_event(event)
+        elif event.frame in frame_epochs and event.category is SmtpEventCategory.OTHER:
+            line = _line_at_event(transition, event, frames_by_number, partial_command_frames)
+            if line is not None:
+                counted_plaintext = tracker.classify_client_line(
+                    line, allowed=tracker.capability_seen
+                )
+        elif (
+            event.category in (SmtpEventCategory.EHLO, SmtpEventCategory.HELO)
+            and event.frame in frame_epochs
+        ):
+            # A client EHLO/HELO observed strictly after the STARTTLS offer is
+            # a plaintext SMTP command and must remain visible in the derived
+            # transition facts (counted as plaintext-after-offer), while a
+            # pre-offer EHLO/HELO stays a CAPABILITY_REQUEST and is not counted.
+            counted_plaintext = tracker.classify_client_ehlo_helo()
         event_type = _EVENT_TYPE_BY_CATEGORY.get(event.category)
+        if counted_plaintext:
+            plan.append(
+                _plaintext_event(
+                    event=event,
+                    registry=registry,
+                    frame_epochs=frame_epochs,
+                )
+            )
+            continue
         if event_type is None:
             continue
         if event.category is SmtpEventCategory.STARTTLS_COMMAND:
@@ -1609,7 +1864,12 @@ def _finalize_events(
     events: list[ProtocolEvent] = []
     current = ProtocolState.UNKNOWN
     for sequence_index, raw in enumerate(raw_events):
-        state_after = _STATE_AFTER[raw.event_type]
+        if raw.event_type is ProtocolEventType.PLAINTEXT_COMMAND_AFTER_TLS_OFFER:
+            # A plaintext command continues the existing protocol state; it
+            # never opens or fails the TLS transition on its own.
+            state_after = current
+        else:
+            state_after = _STATE_AFTER[raw.event_type]
         events.append(
             ProtocolEvent(
                 event_id=protocol_event_id(

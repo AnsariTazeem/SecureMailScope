@@ -8,6 +8,10 @@ canonical serialization, and graph invariants.
 Commit 2 adds :func:`build_chain_from_poc_analysis`, the pure, deterministic
 adapter that maps verified E2/E3A analyzer output into the chain contract.
 
+Commit 3 adds :func:`derive_smtp_transition_facts`, the deterministic fact
+derivation that produces the SMTP STARTTLS transition facts from the ordered,
+evidence-backed chain events.
+
 Policy evaluation, anomaly scoring, and the later report artifacts are later
 commits.
 """
@@ -87,6 +91,7 @@ from securemailscope.chain.poc_adapter import (
     PocAdapterContext,
     build_chain_from_poc_analysis,
 )
+from securemailscope.chain.smtp_facts import derive_smtp_transition_facts
 
 __all__ = [
     "AnalysisExecution",
@@ -144,6 +149,7 @@ __all__ = [
     "canonical_content_json",
     "canonical_json",
     "datetime_canonical_str",
+    "derive_smtp_transition_facts",
     "extract_canonical_content",
     "index_chain",
     "semantic_content_hash",
