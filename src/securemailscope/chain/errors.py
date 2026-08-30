@@ -30,6 +30,9 @@ class ChainErrorCode(StrEnum):
     NAIVE_DATETIME = "naive_datetime"
     SCHEMA_VALIDATION_ERROR = "schema_validation_error"
     INTERNAL_CHAIN_ERROR = "internal_chain_error"
+    ADAPTER_INPUT_INVALID = "adapter_input_invalid"
+    ADAPTER_METADATA_REQUIRED = "adapter_metadata_required"
+    ADAPTER_MAPPING_FAILED = "adapter_mapping_failed"
 
 
 class ChainError(RuntimeError):
@@ -69,3 +72,15 @@ class ChainValidationError(ChainError):
 
     def __str__(self) -> str:
         return "chain invariant violations:\n- " + "\n- ".join(self.problems)
+
+
+class ChainAdapterError(ChainError):
+    """A recoverable mapping failure in an existing-POC to chain adapter.
+
+    ``adapter_input_invalid`` reports context values the adapter cannot map
+    (for example authorized TLS 1.3 secrets, which the passive POC adapter never
+    supports). ``adapter_metadata_required`` reports missing or unusable capture
+    provenance/metadata. ``adapter_mapping_failed`` reports analyzer output that
+    cannot be mapped without inventing evidence (duplicate streams, missing
+    transitions, response-less accepted/rejected outcomes, empty streams).
+    """

@@ -1,12 +1,15 @@
-"""Chain-of-Proof domain contract (Commit 1).
+"""Chain-of-Proof domain contract (Commit 1) and POC adapter (Commit 2).
 
 This package defines the frozen, versioned contract for the Chain-of-Proof
 engine (spec ``Chain-of-Proof-Specification.md`` schema 1.0.0): the stable
 vocabulary, strict Pydantic models, deterministic identifiers, typed errors,
 canonical serialization, and graph invariants.
 
-Only the contract and its building blocks belong here. Policy evaluation,
-anomaly scoring, and the existing-POC adapter mapping are later commits.
+Commit 2 adds :func:`build_chain_from_poc_analysis`, the pure, deterministic
+adapter that maps verified E2/E3A analyzer output into the chain contract.
+
+Policy evaluation, anomaly scoring, and the later report artifacts are later
+commits.
 """
 
 from securemailscope.chain.canonical import (
@@ -43,6 +46,7 @@ from securemailscope.chain.enums import (
     Tls13SecretsStatus,
 )
 from securemailscope.chain.errors import (
+    ChainAdapterError,
     ChainError,
     ChainErrorCode,
     ChainValidationError,
@@ -78,6 +82,11 @@ from securemailscope.chain.models import (
     StageDiagnostic,
     StandardsReference,
 )
+from securemailscope.chain.poc_adapter import (
+    CaptureMetadata,
+    PocAdapterContext,
+    build_chain_from_poc_analysis,
+)
 
 __all__ = [
     "AnalysisExecution",
@@ -88,7 +97,9 @@ __all__ = [
     "AnomalyResult",
     "ArtifactManifest",
     "AutomationStatus",
+    "CaptureMetadata",
     "CaptureProvenance",
+    "ChainAdapterError",
     "ChainError",
     "ChainErrorCode",
     "ChainObservability",
@@ -108,6 +119,7 @@ __all__ = [
     "FindingCategory",
     "LimitationCode",
     "ObservationKind",
+    "PocAdapterContext",
     "PolicyRiskContribution",
     "PolicyRiskSummary",
     "ProtocolEvent",
@@ -127,6 +139,7 @@ __all__ = [
     "StandardsReference",
     "Tls13SecretsStatus",
     "assert_chain_valid",
+    "build_chain_from_poc_analysis",
     "canonical_content_hash",
     "canonical_content_json",
     "canonical_json",
