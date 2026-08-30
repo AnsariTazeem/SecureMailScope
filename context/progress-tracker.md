@@ -1,8 +1,8 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 29 August 2026
+**Last updated:** 30 August 2026
 
-**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Commit 2 (POC-result adapter) is the next milestone. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
+**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Chain Commit 2 (pure POC-result adapter) completed and verified at `616b97d`. Commit 3 (deterministic SMTP transition facts) is the next milestone and remains UNVERIFIED. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
 
 **Implementation status:** T01 PASS (23/23 comparisons); E2/E3A PASS (authorized scope: read-only intake, TShark-native reassembly, content-based SMTP classification, STARTTLS transition states). Selection decision: GO — PS159 selected/finalized for Team Apex. T02–T08 and all binary gates remain UNTESTED.
 
@@ -100,7 +100,7 @@ Scope of this PASS: the E2/E3A analyzer path for the frozen scope only (SMTP on 
 
 ## Current next action
 
-Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is now active on `feat/production-backend`. T02–T08 fixture generation and full-gate validation are no longer the immediate next action; the immediate next action is production Commit 2 (the pure POC-result adapter that maps verified analysis into the Chain-of-Proof contract).
+Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is now active on `feat/production-backend`. T02–T08 fixture generation and full-gate validation are no longer the immediate next action. Commit 2 (the pure POC-result adapter) is completed and verified at `616b97d`; the immediate next action is production Commit 3: the deterministic derivation of SMTP transition facts from ordered, evidence-backed Chain events. Policy rules, findings, and risk scoring remain later work (Commit 4 onward).
 
 ## Exact step-by-step sequence after repository creation
 
@@ -172,8 +172,42 @@ The PS159 selection POC is closed (GO/selection at `cf055cf`). Production develo
 - Existing analyzer remains stable; the contract layer is additive and does not alter frozen POC analysis, schemas, PCAPs, or expected outputs.
 - No policy, ML, API, frontend, PDF, live capture, decryption, phishing detection, blocking, authentication, geolocation, or SIEM support is claimed at this commit.
 
-Scope of this PASS: the Chain-of-Proof domain contract only. Commit 2 (the pure POC-result adapter that maps verified SMTP analysis into the chain) is the next milestone and remains **UNVERIFIED**. API, policy, ML, and report layers are later milestones.
+Scope of this PASS: the Chain-of-Proof domain contract only. Commit 2 (the pure POC-result adapter that maps verified SMTP analysis into the chain) is completed and verified at `616b97d` and recorded in the next section. API, policy, ML, and report layers are later milestones.
+
+### Verified milestone — Chain Commit 2: pure POC-result adapter (PASS, 2026-08-30)
+
+- Commit: `feat: map verified smtp analysis into evidence chain` at `616b97d`.
+- Commit 2 **implemented the pure POC-result adapter** that maps the already-verified SMTP analyzer output into Chain-of-Proof objects valid under the schema and graph invariants.
+- Implemented behavior (conservative):
+  - pure, deterministic transformation from the existing typed `AnalyzeResult` into `ChainOfProof` objects;
+  - capture provenance mapping;
+  - discovered TCP/SMTP session mapping;
+  - content-based classification evidence;
+  - STARTTLS command/response/ClientHello event mapping when positively proven;
+  - stable deterministic Chain IDs;
+  - evidence references carrying the available frame/session provenance;
+  - capture/analysis partial and limitation propagation;
+  - safe, bounded stage diagnostics;
+  - safe warning and filename sanitization;
+  - chain collections whose evidence is not yet implemented remain empty (`crypto_observations`, `derived_facts`, `rule_evaluations`, `findings`, `policy_risk`, `anomaly_results`, `recommendations`, `artifacts`).
+- Test evidence recorded on 2026-08-30:
+  - 111 adapter tests passed;
+  - 142 existing Chain contract tests passed;
+  - 455 full-suite tests passed;
+  - Ruff check passed; Ruff formatting check passed; `git diff --check` passed.
+- Independent architectural review: **GREEN** for the authorized Commit 2 scope.
+- The frozen POC analyzer and evidence records (schemas, PCAPs, manifests, expected outputs) were **not modified**.
+
+Explicit limitations:
+
+- No deterministic `DerivedFact` production yet (Commit 3).
+- No `RuleEvaluation`, `Finding`, `Recommendation`, policy-risk, or anomaly production (Commit 4 and later).
+- No negotiated TLS version, cipher suite, key exchange, Forward Secrecy, or certificate details are invented; ordered TLS handshake-type observations prove message presence only.
+- No API, frontend, or report implementation.
+- Commit 3 remains **UNVERIFIED**.
+
+Scope of this PASS: the pure POC-result adapter only. Commit 3 (deterministic derivation of SMTP transition facts from ordered, evidence-backed Chain events) is the next milestone and remains **UNVERIFIED**.
 
 ## Production blockers and status
 
-No production blockers recorded at Commit 1. Commit 2 (POC-result adapter) is the immediate next action. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.
+No production blockers recorded at Commit 2. Commit 3 (deterministic SMTP transition facts from ordered evidence) is the immediate next action and remains UNVERIFIED. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.

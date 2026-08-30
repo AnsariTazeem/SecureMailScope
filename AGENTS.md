@@ -19,7 +19,10 @@ IMAP/POP3 and the remaining cryptographic/report capabilities describe
 not claimed as implemented.
 
 **Chain Commit 1** (`feat: add chain-of-proof domain contract`) is complete at
-`57fe930`; **Commit 2** (the pure POC-result adapter) is next and **UNVERIFIED**.
+`57fe930`; **Chain Commit 2** (`feat: map verified smtp analysis into evidence
+chain`), the pure POC-result adapter, is **completed and verified at `616b97d`**.
+**Commit 3** (deterministic derivation of SMTP transition facts from ordered,
+evidence-backed Chain events) is next and **UNVERIFIED**.
 
 Correctness, reproducibility, evidence integrity, and honest limitations take
 precedence over feature breadth or presentation polish.

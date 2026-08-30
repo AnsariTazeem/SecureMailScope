@@ -11,7 +11,8 @@ Read every foundation document only for a first full audit, an architecture/scop
 - The **PS159 selection POC is closed** at commit `cf055cf` (branch `main`), recorded as GO/selection without claiming the full product or the complete original POC matrix is GREEN.
 - The active production branch is **`feat/production-backend`**.
 - **Chain Commit 1** (`feat: add chain-of-proof domain contract`) is **completed and verified at `57fe930`**.
-- **Commit 2** (the pure POC-result adapter that maps verified analysis into the chain) is the **next milestone**.
+- **Chain Commit 2** (`feat: map verified smtp analysis into evidence chain`) is **completed and verified at `616b97d`** as the pure POC-result adapter that maps verified analysis into the chain.
+- **Commit 3** (deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events) is the **next milestone** and remains **UNVERIFIED**.
 - The frontend is **separate and frozen**; no frontend redesign is authorized.
 - **Policy risk and ML anomaly remain separate** outputs in all production work.
 - The repository is in the **production-development phase** building on the verified POC core.
@@ -101,7 +102,7 @@ The original plan required final evidence to be recorded in `docs/POC_RESULT.md`
 
 The POC selection is closed and the repository is in the **production-development phase** on branch `feat/production-backend`. The production phase does not rewrite the frozen POC history: the selection POC closes at `cf055cf`, the POC verification history in `context/progress-tracker.md` is preserved, and `docs/POC_RESULT.md`, `docs/PRD.md`, `docs/SYSTEM_DESIGN.md`, frozen capture fixtures, and POC expected outputs remain unchanged.
 
-The active production contract is the **Chain of Proof** (schema `1.0.0`; repository copy in `docs/CHAIN_OF_PROOF_SPECIFICATION.md`, checksum `fa7b14d077a6e71c9e172898e410de08be7b0b87a237fec56e1c76c817f9bb25`). Production work proceeds in the declared Commit sequence (Commit 1 contract completed at `57fe930`; Commit 2 POC-result adapter is next and UNVERIFIED). API, policy, ML, and report layers are later milestones. No production claim is made until it is verified and recorded; planning material is never presented as implemented functionality.
+The active production contract is the **Chain of Proof** (schema `1.0.0`; repository copy in `docs/CHAIN_OF_PROOF_SPECIFICATION.md`, checksum `fa7b14d077a6e71c9e172898e410de08be7b0b87a237fec56e1c76c817f9bb25`). Production work proceeds in the declared Commit sequence (Commit 1 contract completed at `57fe930`; Commit 2 POC-result adapter completed and verified at `616b97d`; Commit 3 deterministic SMTP transition facts is next and UNVERIFIED). API, policy, ML, and report layers are later milestones. No production claim is made until it is verified and recorded; planning material is never presented as implemented functionality.
 
 ### Scope-authorization boundaries
 

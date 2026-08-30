@@ -44,7 +44,8 @@ The closed selection POC did **not** prove IMAP/POP3, full TLS/cipher/key-exchan
 The active production branch `feat/production-backend` builds the Chain-of-Proof engine on the verified POC core:
 
 - Commit 1 (completed at `57fe930`): versioned Chain-of-Proof domain contract under `src/securemailscope/chain`.
-- Commit 2 (next, UNVERIFIED): the pure POC-result adapter that maps verified analyzer output into the chain.
+- Commit 2 (completed and verified at `616b97d`): the pure POC-result adapter that maps verified analyzer output into the chain.
+- Commit 3 (next, UNVERIFIED): deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
 
 API, frontend, policy, ML, and report layers are later milestones and are not yet claims. The frontend is separate and frozen. Policy risk and ML anomaly remain separate outputs.
 
