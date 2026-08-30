@@ -21,8 +21,10 @@ not claimed as implemented.
 **Chain Commit 1** (`feat: add chain-of-proof domain contract`) is complete at
 `57fe930`; **Chain Commit 2** (`feat: map verified smtp analysis into evidence
 chain`), the pure POC-result adapter, is **completed and verified at `616b97d`**.
-**Commit 3** (deterministic derivation of SMTP transition facts from ordered,
-evidence-backed Chain events) is next and **UNVERIFIED**.
+**Chain Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is
+**completed and verified at `2c1454f`**: deterministic derivation of SMTP
+transition facts from ordered, evidence-backed Chain events.
+**Commit 4** (deterministic policy evaluation layer) is next and **UNVERIFIED**.
 
 Correctness, reproducibility, evidence integrity, and honest limitations take
 precedence over feature breadth or presentation polish.

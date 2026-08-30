@@ -12,7 +12,8 @@ Read every foundation document only for a first full audit, an architecture/scop
 - The active production branch is **`feat/production-backend`**.
 - **Chain Commit 1** (`feat: add chain-of-proof domain contract`) is **completed and verified at `57fe930`**.
 - **Chain Commit 2** (`feat: map verified smtp analysis into evidence chain`) is **completed and verified at `616b97d`** as the pure POC-result adapter that maps verified analysis into the chain.
-- **Commit 3** (deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events) is the **next milestone** and remains **UNVERIFIED**.
+- **Chain Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is **completed and verified at `2c1454f`**: deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
+- **Commit 4** (deterministic policy evaluation layer) is the **next milestone** and remains **UNVERIFIED**.
 - The frontend is **separate and frozen**; no frontend redesign is authorized.
 - **Policy risk and ML anomaly remain separate** outputs in all production work.
 - The repository is in the **production-development phase** building on the verified POC core.

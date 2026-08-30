@@ -250,7 +250,7 @@ This is the canonical POC layout, not evidence that the files or features alread
   - ordered TLS handshake-type observations;
   - typed results/errors.
 - The active production work introduces a **versioned domain contract** for the Chain of Proof, defined in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`).
-- The **pure POC-result adapter** (Commit 2, `feat: map verified smtp analysis into evidence chain`) is **completed and verified at `616b97d`**: it maps verified analyzer output into the chain without losing evidence and performs no packet re-analysis. **Commit 3** (deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events) is next and **UNVERIFIED**.
+- The **pure POC-result adapter** (Commit 2, `feat: map verified smtp analysis into evidence chain`) is **completed and verified at `616b97d`**: it maps verified analyzer output into the chain without losing evidence and performs no packet re-analysis. **Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is **completed and verified at `2c1454f`**: deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
 - API, policy, ML, and reports are **later milestones**, not current scope. None is claimed as implemented or authorized by this document alone.
 
 ## Analyzer boundary (verified scope)
@@ -272,14 +272,29 @@ The Commit 2 pure POC-result adapter (`src/securemailscope/chain/poc_adapter.py`
 - it does **not** infer negotiated cryptographic properties (TLS version, cipher suite, key exchange, Forward Secrecy, or certificate contents);
 - it does **not** perform policy or ML evaluation.
 
+## Commit 3 boundary (verified at `2c1454f`)
+
+The Commit 3 deterministic fact derivation (`src/securemailscope/chain/smtp_facts.py`) is completed and verified. Its verified boundary is:
+
+- **input:** a validated `ChainOfProof` object with ordered, evidence-backed protocol events;
+- **output:** the same chain with `DerivedFact` nodes added for:
+  - `starttls_advertised` (true when at least one observed `CAPABILITY_ADVERTISED` event exists);
+  - `plaintext_commands_after_offer` (count of observed `PLAINTEXT_COMMAND_AFTER_TLS_OFFER` events strictly after an advertisement);
+  - `tls_upgrade_completed` (true/false/incomplete_capture/unknown_insufficient_evidence by ordered scan of request, accept/reject, handshake-finished, and post-offer plaintext events).
+- the derivation is **pure**, deterministic, and idempotent (re-running replaces owned facts byte-for-byte);
+- it performs **no packet re-analysis** and touches no later output collections (`rule_evaluations`, `findings`, `policy_risk`, `anomaly_results`, `recommendations`, `artifacts`);
+- facts remain bounded by observable evidence and preserve `UNKNOWN/INSUFFICIENT` states when evidence is incomplete;
+- policy risk and ML anomaly remain separate and are not produced here.
+
 ## Layering (production)
 
 ```text
 existing POC analyzer core (stable, verified scope above)
   -> src/securemailscope/chain  : versioned Chain-of-Proof domain contract (Commit 1, verified at 57fe930)
   -> pure POC-result adapter    : maps verified analyzer output into the chain (Commit 2, verified at 616b97d)
-  -> deterministic transition facts from ordered evidence (Commit 3, next/UNVERIFIED)
-  -> later milestones           : policy findings, ML anomaly, API, frontend, reports
+  -> deterministic transition facts from ordered evidence (Commit 3, verified at 2c1454f)
+  -> deterministic policy findings/risk/recommendations (Commit 4, next, UNVERIFIED)
+  -> later milestones           : presentation/API/artifact boundary, IMAP/POP3, ML anomaly, reports
 ```
 
 ## Production sequence
@@ -288,8 +303,8 @@ The Chain-of-Proof contract in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` defines an
 
 - **Commit 1 — contract** (completed at `57fe930`): versioned Chain-of-Proof domain contract.
 - **Commit 2 — existing POC adapter** (completed and verified at `616b97d`): map the verified SMTP analysis into the chain.
-- **Commit 3 — deterministic event/state/fact derivation** (next, UNVERIFIED): derive SMTP transition facts from ordered, evidence-backed chain events.
-- **Commit 4 — policy findings/risk/recommendations**.
+- **Commit 3 — deterministic event/state/fact derivation** (completed and verified at `2c1454f`): derive SMTP transition facts from ordered, evidence-backed chain events.
+- **Commit 4 — policy findings/risk/recommendations (next, UNVERIFIED)**.
 - **Commit 5 — presentation/API/artifact boundary, subject to explicit task and product-scope authorization**.
 - **IMAP/POP3 expansion and ML** occur only after the vertical slice.
 

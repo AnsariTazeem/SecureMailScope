@@ -45,7 +45,8 @@ The active production branch `feat/production-backend` builds the Chain-of-Proof
 
 - Commit 1 (completed at `57fe930`): versioned Chain-of-Proof domain contract under `src/securemailscope/chain`.
 - Commit 2 (completed and verified at `616b97d`): the pure POC-result adapter that maps verified analyzer output into the chain.
-- Commit 3 (next, UNVERIFIED): deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
+- **Commit 3 (completed and verified at `2c1454f`):** deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
+- **Commit 4 (next, UNVERIFIED):** deterministic policy evaluation producing evidence-backed policy evaluations, findings, recommendations and policy-risk output.
 
 API, frontend, policy, ML, and report layers are later milestones and are not yet claims. The frontend is separate and frozen. Policy risk and ML anomaly remain separate outputs.
 
