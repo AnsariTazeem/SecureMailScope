@@ -132,9 +132,9 @@ export function CompleteView() {
           <div className="flex gap-3 rounded-lg border border-neutral-200 p-4">
             <FileCheck2 className="mt-0.5 size-4 shrink-0 text-neutral-600" aria-hidden />
             <p className="text-xs leading-5 text-neutral-600">
-              Detailed Overview, Sessions, Proof Map, Findings, Compare, and
-              Report views are intentionally deferred beyond F1. Their routes
-              currently show honest placeholders only.
+              The Analysis Overview is available. Sessions, Session X-Ray,{" "}
+              Proof Map, Findings, Compare, and Report remain honest
+              placeholders for later milestones.
             </p>
           </div>
 
@@ -153,7 +153,7 @@ export function CompleteView() {
               href={`/analysis/${analysisId}/overview`}
               className="inline-flex h-9 items-center justify-center rounded-md bg-neutral-950 px-4 text-sm font-medium text-white outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
             >
-              Open Overview placeholder
+              Open Overview
             </Link>
           </div>
         </div>
