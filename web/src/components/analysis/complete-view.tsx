@@ -132,9 +132,9 @@ export function CompleteView() {
           <div className="flex gap-3 rounded-lg border border-neutral-200 p-4">
             <FileCheck2 className="mt-0.5 size-4 shrink-0 text-neutral-600" aria-hidden />
             <p className="text-xs leading-5 text-neutral-600">
-              The Analysis Overview is available. Sessions, Session X-Ray,{" "}
-              Proof Map, Findings, Compare, and Report remain honest
-              placeholders for later milestones.
+              The Analysis Overview and Sessions Explorer are available.
+              Session X-Ray, Proof Map, Findings, Compare, and Report remain
+              honest placeholders for later milestones.
             </p>
           </div>
 
