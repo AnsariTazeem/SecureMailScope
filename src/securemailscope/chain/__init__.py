@@ -12,8 +12,9 @@ Commit 3 adds :func:`derive_smtp_transition_facts`, the deterministic fact
 derivation that produces the SMTP STARTTLS transition facts from the ordered,
 evidence-backed chain events.
 
-Policy evaluation, anomaly scoring, and the later report artifacts are later
-commits.
+Commit 4 adds deterministic policy evaluation: :func:`evaluate_policy`,
+:func:`evaluate_default_policy`, :func:`policy_configuration_digest`, and the
+policy configuration models.
 """
 
 from securemailscope.chain.canonical import (
@@ -91,6 +92,25 @@ from securemailscope.chain.poc_adapter import (
     PocAdapterContext,
     build_chain_from_poc_analysis,
 )
+from securemailscope.chain.policy import (
+    FactRequirement,
+    PolicyContextError,
+    PolicyEvaluationContext,
+    PolicyEvaluationError,
+    PolicyEvidenceRequirement,
+    PolicyOperator,
+    PolicyPack,
+    PolicyPackLoadError,
+    PolicyProfile,
+    PolicyRule,
+    RecommendationTemplate,
+    canonical_policy_pack_digest,
+    evaluate_default_policy,
+    evaluate_policy,
+    load_default_policy_pack,
+    load_policy_pack,
+    policy_configuration_digest,
+)
 from securemailscope.chain.smtp_facts import derive_smtp_transition_facts
 
 __all__ = [
@@ -120,19 +140,30 @@ __all__ = [
     "EvidenceRedaction",
     "EvidenceReference",
     "EvidenceSourceKind",
+    "FactRequirement",
     "Finding",
     "FindingCategory",
     "LimitationCode",
     "ObservationKind",
     "PocAdapterContext",
+    "PolicyContextError",
+    "PolicyEvaluationContext",
+    "PolicyEvaluationError",
+    "PolicyEvidenceRequirement",
+    "PolicyOperator",
+    "PolicyPack",
+    "PolicyPackLoadError",
+    "PolicyProfile",
     "PolicyRiskContribution",
     "PolicyRiskSummary",
+    "PolicyRule",
     "ProtocolEvent",
     "ProtocolEventType",
     "ProtocolState",
     "Recommendation",
     "RecommendationPriority",
     "RecommendationScope",
+    "RecommendationTemplate",
     "RuleEvaluation",
     "RuleOutcome",
     "RuleReasonCode",
@@ -148,10 +179,16 @@ __all__ = [
     "canonical_content_hash",
     "canonical_content_json",
     "canonical_json",
+    "canonical_policy_pack_digest",
     "datetime_canonical_str",
     "derive_smtp_transition_facts",
+    "evaluate_default_policy",
+    "evaluate_policy",
     "extract_canonical_content",
     "index_chain",
+    "load_default_policy_pack",
+    "load_policy_pack",
+    "policy_configuration_digest",
     "semantic_content_hash",
     "stable_digest",
     "stable_sha256_key",

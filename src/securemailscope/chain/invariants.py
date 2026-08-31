@@ -66,6 +66,7 @@ from securemailscope.chain.ids import (
     session_stable_key,
 )
 from securemailscope.chain.models import (
+    POLICY_RISK_CAP,
     AnomalyResult,
     ArtifactManifest,
     CaptureProvenance,
@@ -1363,36 +1364,117 @@ def _check_policy_risk(
         if chain.policy_risk is None:
             _problem(problems, "policy risk missing although rule engine completed")
             return
-        for contribution in chain.policy_risk.contributions:
-            contribution_id = contribution.contribution_id
-            finding = index.findings.get(contribution.finding_id)
-            if finding is None:
+        # 1. Every finding has exactly one contribution
+        finding_to_contrib: dict[str, list[PolicyRiskContribution]] = {}
+        for contrib in chain.policy_risk.contributions:
+            finding_to_contrib.setdefault(contrib.finding_id, []).append(contrib)
+
+        for finding in index.findings.values():
+            contribs = finding_to_contrib.get(finding.finding_id, [])
+            if len(contribs) != 1:
                 _problem(
                     problems,
-                    f"contribution {contribution_id}: missing finding {contribution.finding_id}",
+                    f"finding {finding.finding_id}: has {len(contribs)} contributions, "
+                    "expected exactly 1",
                 )
-                continue
-            if (
-                contribution.rule_id != finding.rule_id
-                or contribution.rule_version != finding.rule_version
-                or finding.severity is not contribution.severity
-                or finding.evidence_confidence is not contribution.evidence_confidence
-                or finding.policy_risk_contribution != contribution.policy_risk_contribution
-            ):
+            else:
+                contrib = contribs[0]
+                # Contribution matches finding
+                if (
+                    contrib.rule_id != finding.rule_id
+                    or contrib.rule_version != finding.rule_version
+                    or finding.severity is not contrib.severity
+                    or finding.evidence_confidence is not contrib.evidence_confidence
+                    or finding.policy_risk_contribution != contrib.policy_risk_contribution
+                ):
+                    _problem(
+                        problems,
+                        f"contribution {contrib.contribution_id}: does not match its finding",
+                    )
+                # Evaluation matches
+                evaluation = index.evaluations.get(finding.rule_evaluation_id)
+                if evaluation is None or (
+                    evaluation.rule_id != contrib.rule_id
+                    or evaluation.rule_version != contrib.rule_version
+                    or evaluation.session_id != finding.session_id
+                ):
+                    _problem(
+                        problems,
+                        f"contribution {contrib.contribution_id}: rule identity does not "
+                        "match its evaluation",
+                    )
+
+        # 2. No contribution without finding
+        for contrib in chain.policy_risk.contributions:
+            if contrib.finding_id not in index.findings:
                 _problem(
                     problems,
-                    f"contribution {contribution_id}: does not match its finding",
+                    f"contribution {contrib.contribution_id}: missing finding {contrib.finding_id}",
                 )
-            evaluation = index.evaluations.get(finding.rule_evaluation_id)
-            if evaluation is None or (
-                evaluation.rule_id != contribution.rule_id
-                or evaluation.rule_version != contribution.rule_version
-                or evaluation.session_id != finding.session_id
-            ):
+
+        # 3. Matched evaluation's generated_finding_id resolves
+        for evaluation in index.evaluations.values():
+            if evaluation.outcome is RuleOutcome.MATCHED:
+                if not evaluation.generated_finding_id:
+                    _problem(
+                        problems,
+                        f"evaluation {evaluation.evaluation_id}: matched outcome without "
+                        "generated_finding_id",
+                    )
+                elif evaluation.generated_finding_id not in index.findings:
+                    _problem(
+                        problems,
+                        f"evaluation {evaluation.evaluation_id}: generated_finding_id "
+                        f"{evaluation.generated_finding_id} does not resolve",
+                    )
+                else:
+                    finding = index.findings[evaluation.generated_finding_id]
+                    if finding.rule_evaluation_id != evaluation.evaluation_id:
+                        _problem(
+                            problems,
+                            f"evaluation {evaluation.evaluation_id}: finding link is not "
+                            "bidirectional",
+                        )
+
+        # 4. All evaluations use policy_risk.profile_id
+        expected_profile = chain.policy_risk.profile_id
+        for evaluation in index.evaluations.values():
+            if evaluation.profile_id != expected_profile:
                 _problem(
                     problems,
-                    f"contribution {contribution_id}: rule identity does not match its evaluation",
+                    f"evaluation {evaluation.evaluation_id}: profile_id "
+                    f"{evaluation.profile_id} does not match policy_risk.profile_id "
+                    f"{expected_profile}",
                 )
+
+        # 5. uncapped_score equals sum of adjusted points
+        expected_uncapped = sum(
+            contribution.confidence_adjusted_points
+            for contribution in chain.policy_risk.contributions
+        )
+        if chain.policy_risk.uncapped_score != expected_uncapped:
+            _problem(
+                problems,
+                f"policy_risk uncapped_score {chain.policy_risk.uncapped_score} != "
+                f"sum of contributions {expected_uncapped}",
+            )
+
+        # 6. capped_score <= uncapped_score
+        if chain.policy_risk.capped_score > chain.policy_risk.uncapped_score:
+            _problem(
+                problems,
+                f"policy_risk capped_score {chain.policy_risk.capped_score} > "
+                f"uncapped_score {chain.policy_risk.uncapped_score}",
+            )
+
+        # 7. capped_score <= POLICY_RISK_CAP
+        if chain.policy_risk.capped_score > POLICY_RISK_CAP:
+            _problem(
+                problems,
+                f"policy_risk capped_score {chain.policy_risk.capped_score} > "
+                f"POLICY_RISK_CAP {POLICY_RISK_CAP}",
+            )
+
         if chain.policy_risk.analysis_id != index.analysis_id:
             _problem(problems, "policy risk analysis_id does not match manifest")
     elif rule_status is EngineStatus.NOT_RUN:

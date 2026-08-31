@@ -1,0 +1,64 @@
+pack_id: SMS-EMAIL-STARTTLS
+version: 1.0.0
+
+profiles:
+  - profile_id: sms-liberal
+    risk_cap: 100
+    confidence_factors:
+      high: 1.00
+      medium: 0.75
+      low: 0.50
+      not_scored: 0.25
+    suppressed_rule_ids: []
+
+rules:
+  - rule_id: SMS-SMTP-STARTTLS-001
+    version: 1.0.0
+    title: STARTTLS offered but plaintext continued
+    category: encryption_transition
+    protocols: [smtp]
+    severity: high
+    policy_risk_contribution: 25
+    requires:
+      - fact: starttls_advertised
+        operator: equals
+        value: true
+      - fact: tls_upgrade_completed
+        operator: equals
+        value: false
+      - fact: plaintext_commands_after_offer
+        operator: greater_than
+        value: 0
+    evidence_requirements:
+      - starttls_advertisement
+      - plaintext_command_after_offer
+    rationale: >-
+      The server advertised STARTTLS, but the observed session continued with
+      plaintext SMTP commands without completing TLS.
+    impact: >-
+      Email metadata or authentication material may be exposed to passive
+      interception depending on the subsequent observed commands.
+    recommendation_id: REC-EMAIL-REQUIRE-TLS
+    standards_references:
+      - id: RFC8314
+        section: "3"
+
+recommendations:
+  - recommendation_id: REC-EMAIL-REQUIRE-TLS
+    title: Require STARTTLS and reject plaintext
+    summary: >-
+      Configure the service to require STARTTLS and reject plaintext
+      continuation after advertising the upgrade.
+    priority: high
+    action_steps:
+      - Require clients to issue STARTTLS before continuing the mail transaction.
+      - Reject plaintext mail commands after STARTTLS is advertised.
+    verification_steps:
+      - Capture a new authorized test session.
+      - Confirm the STARTTLS request is accepted.
+      - Confirm the TLS handshake completes before mail commands continue.
+    standards_references:
+      - id: RFC8314
+        section: "3"
+    scope: service
+    automation_status: advisory_only

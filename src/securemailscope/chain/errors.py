@@ -33,6 +33,9 @@ class ChainErrorCode(StrEnum):
     ADAPTER_INPUT_INVALID = "adapter_input_invalid"
     ADAPTER_METADATA_REQUIRED = "adapter_metadata_required"
     ADAPTER_MAPPING_FAILED = "adapter_mapping_failed"
+    POLICY_PACK_INVALID = "policy_pack_invalid"
+    POLICY_CONTEXT_INVALID = "policy_context_invalid"
+    POLICY_EVALUATION_FAILED = "policy_evaluation_failed"
 
 
 class ChainError(RuntimeError):
@@ -84,3 +87,39 @@ class ChainAdapterError(ChainError):
     cannot be mapped without inventing evidence (duplicate streams, missing
     transitions, response-less accepted/rejected outcomes, empty streams).
     """
+
+
+class PolicyPackLoadError(ChainError):
+    """Policy pack loading failure (YAML parse, validation, or safety violation)."""
+
+    def __init__(self, stage: str, message: str, detail: str = "") -> None:
+        super().__init__(
+            ChainErrorCode.POLICY_PACK_INVALID,
+            stage,
+            message,
+            detail,
+        )
+
+
+class PolicyContextError(ChainError):
+    """Policy evaluation context validation failure."""
+
+    def __init__(self, message: str, detail: str = "") -> None:
+        super().__init__(
+            ChainErrorCode.POLICY_CONTEXT_INVALID,
+            "policy_evaluation",
+            message,
+            detail,
+        )
+
+
+class PolicyEvaluationError(ChainError):
+    """Policy evaluation engine failure."""
+
+    def __init__(self, message: str, detail: str = "") -> None:
+        super().__init__(
+            ChainErrorCode.POLICY_EVALUATION_FAILED,
+            "policy_evaluation",
+            message,
+            detail,
+        )
