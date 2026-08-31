@@ -17,7 +17,7 @@
   verified on 31 August 2026
 - F2F Secure vs Insecure Session Compare: implemented and technically verified
   on 31 August 2026
-- Report remains a placeholder
+- F2G Analysis Report: implemented and technically verified on 31 August 2026
 - Production frontend API: pending backend implementation and integration
   verification
 
@@ -216,6 +216,40 @@ console output were not automated. Both responsive representations and the
 compiled URL navigation/swap path were inspected, and both selector orders were
 verified through direct production HTTP requests.
 
+## F2G Analysis Report verification record
+
+The Report route now loads and re-validates the existing `AnalysisResult`
+through `AnalysisDataSource`, applies the graph-wide integrity validator, checks
+the result source and analysis identity, and builds a narrow Report display
+model on the server. The route renders validated analysis/capture provenance,
+four evidence-backed executive metrics, responsive communication coverage, and
+only the TLS/crypto observation and fact categories already allowlisted by
+Session X-Ray and Compare.
+
+The final document also renders the existing severity-ordered deterministic
+findings, safe Chain-of-Proof entity counts, separate Policy Risk and neutral ML
+Anomaly state, declared observability limitations, explicit contract
+recommendations, and analysis-scoped links to Overview, Sessions, Proof Map,
+Findings, and Compare. No overall security score, new finding, inferred evidence
+relationship, fabricated certificate field, generic recommendation, dependency,
+contract change, fixture change, or simulated export action was introduced.
+
+| Check | Observed result on 31 August 2026 |
+| --- | --- |
+| `npm run lint` | Passed with zero warnings and zero errors. |
+| `npx tsc --noEmit` | Passed. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, build-time TypeScript, static generation, finalization, and all route generation completed. Report was emitted as a dynamic server-rendered route. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| Contract and privacy review | Passed. Report-normalized values are limited by type to TLS version, cipher suite, key-share group, PSK exchange mode, and the TLS 1.3 certificate-unavailable marker. Facts are limited to TLS upgrade completion, Forward Secrecy, and certificate observability. Finding evidence counts use explicit finding references; the Report creates no evidence edges. |
+| Loopback production smoke test | Passed on the final build at `127.0.0.1:3204`. The validated prototype Report, Overview, and Policy Findings routes returned HTTP 200. Verified exact analysis/capture identities and hashes, 2 sessions, 1 represented email protocol family, 1 deterministic finding, 2/2 allowlisted crypto coverage, separate Policy Risk and ML Anomaly sections, neutral ML `not_run`, TLS 1.3 `not_observable`/`session_secrets_required` semantics, explicit recommendation content, and correctly scoped Overview, Sessions, Proof Map, Findings, and Compare links. Malformed and unavailable analysis IDs followed the established streamed not-found convention (HTTP 200 with `noindex`) and displayed no report conclusion. Unsafe fixture details, raw normalized-field names, fabricated certificate metadata, and simulated JSON/HTML/PDF export labels were absent. The server was stopped afterward. |
+| `git diff --check` | Passed after the F2G documentation update and rerun after the final verification wording. |
+
+No browser executable or browser-test dependency is present. Screenshot-level
+desktop/mobile appearance, browser hydration, keyboard/focus behavior, and
+browser-console output were not automated. Responsive desktop/mobile markup and
+server-rendered link/state output were inspected through the compiled source and
+production HTTP responses.
+
 ## Blockers and limitations
 
 - The production HTTP endpoints in
@@ -230,10 +264,12 @@ verified through direct production HTTP requests.
   were therefore exercised with dependency-free, type-checked local
   verification against in-memory fixture copies; automated browser component
   tests remain absent.
-- F2A through F2F are implemented. Report remains pending and its existing
-  placeholder is preserved.
+- F2A Overview, F2B Sessions, F2C Session Detail, F2D Proof Map, F2E Findings,
+  F2F Compare, and F2G Report are implemented. Production frontend API/backend
+  integration remains pending.
 
 ## Next exact milestone action
 
-F2F implementation and technical verification are complete. Do not begin
-Report or another frontend milestone without explicit authorization.
+F2G implementation and technical verification are complete. Do not begin an
+additional frontend milestone or production API/backend integration without
+explicit authorization.

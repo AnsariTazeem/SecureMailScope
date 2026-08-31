@@ -7,9 +7,8 @@ starting an offline capture assessment and, in later milestones, navigating a
 validated Chain-of-Proof result. It does not analyze packets, calculate policy
 findings, infer cryptographic properties, or repair missing evidence.
 
-The current implementation covers the F1 workflow and the authorized F2A–F2F
-result exploration milestones. The Report route remains an explicit
-placeholder and backend integration remains pending.
+The current implementation covers the F1 workflow and the authorized F2A–F2G
+result exploration milestones. Backend integration remains pending.
 
 ## App Router and route map
 
@@ -28,7 +27,7 @@ small and delegate interactive behavior to feature components.
 | `/analysis/[analysisId]/proof-map` | Evidence graph | F2D implemented |
 | `/analysis/[analysisId]/findings` | Policy Risk and ML Anomaly | F2E implemented |
 | `/analysis/[analysisId]/compare` | URL-backed two-session comparison | F2F implemented |
-| `/analysis/[analysisId]/report` | Report access | Placeholder |
+| `/analysis/[analysisId]/report` | Consolidated assessment report | F2G implemented |
 
 Server Components are the default for route composition and static content.
 Client Components are used only where browser APIs, file input, Zustand,
@@ -62,6 +61,10 @@ available and must not display invented result counts or states.
 - `components/analysis/` owns reusable workflow UI such as the step indicator,
   dropzone, selected capture card, validation list, authorization confirmation,
   assessment scope panel, and evidence boundary note.
+- `components/analysis/report/` owns the narrow server-built F2G display model,
+  consolidated report composition, and fail-closed report state. Its crypto
+  surface is limited to the allowlisted observation/fact categories already
+  established by Session X-Ray and Compare.
 - `lib/contracts/` mirrors the approved Chain-of-Proof schema with Zod and
   exports inferred TypeScript types.
 - `lib/api/` owns transport-independent data-source behavior and API errors.
@@ -101,8 +104,19 @@ a replacement for backend validation. The browser sets no multipart
 
 Processing supports loading, progress, failure, missing-workflow, and retry
 navigation states. Completion supports loading, unavailable-result, and honest
-prototype/API disclosure. Future evidence navigation must preserve identifiers
-and explicit observability states from the canonical result.
+prototype/API disclosure. Evidence navigation preserves identifiers and
+explicit observability states from the canonical result.
+
+The F2G Report route follows the same trusted result path as Findings and
+Compare: route-ID validation, `AnalysisDataSource.getResult`, Zod envelope
+validation, graph-wide integrity validation, source/analysis identity checks,
+and then a Report-only display model. That model exposes only rendered capture
+identity, aggregate record counts, protocol coverage, allowlisted cryptographic
+states, existing findings, graph counts, independent policy/ML state, declared
+limitations, and explicit recommendations. It does not create findings,
+evidence links, scores, recommendations, or export artifacts. The report JSON
+and HTML endpoints documented in `INTEGRATION_CONTRACT.md` remain pending, so
+F2G does not render working or simulated export controls.
 
 ## State and testing strategy
 
