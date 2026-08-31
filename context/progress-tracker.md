@@ -2,7 +2,7 @@
 
 **Last updated:** 31 August 2026
 
-**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Chain Commit 2 (pure POC-result adapter) completed and verified at `616b97d`. **Chain Commit 3 (deterministic SMTP transition facts) completed and verified at `2c1454f`. Chain Commit 4 (deterministic policy evaluation engine) completed and verified at `ad25711`.** Commit 5 (presentation/API/artifact boundary) is the next milestone and remains UNVERIFIED. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
+**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Chain Commit 2 (pure POC-result adapter) completed and verified at `616b97d`. **Chain Commit 3 (deterministic SMTP transition facts) completed and verified at `2c1454f`. Chain Commit 4 (deterministic policy evaluation engine) completed and verified at `ad25711`. Commit 5A (deterministic presentation and artifact rendering) completed and verified at `3807118`. Commit 5B (thin read-only FastAPI exposure) completed and verified at `a262b24`.** The declared backend Commit 5 presentation/API/artifact boundary is complete. The next backend milestone is pending explicit architectural selection and remains UNVERIFIED. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
 
 **Implementation status:** T01 PASS (23/23 comparisons); E2/E3A PASS (authorized scope: read-only intake, TShark-native reassembly, content-based SMTP classification, STARTTLS transition states). Selection decision: GO — PS159 selected/finalized for Team Apex. T02–T08 and all binary gates remain UNTESTED.
 
@@ -98,9 +98,9 @@ The `tshark_observe` timeout is recorded transparently as an environmental/tool-
 
 Scope of this PASS: the E2/E3A analyzer path for the frozen scope only (SMTP on the unchanged T01 PCAP). The E2/E3A session-state tests prove that the SMTP transition-state implementation supports accepted TLS, rejected, accepted without TLS, truncated, and incomplete cases; this is unit/state coverage and should not be mistaken for the formal controlled fixtures. The following remain UNTESTED with no evidence collected: IMAP/POP3 identification (T02, T03), TLS 1.3 invisibility handling (T04), STARTTLS rejection/accepted-without-TLS/truncated/false-positive controls via formal fixtures (T05–T07), ML anomaly scoring (T08), deterministic policy-risk scoring, analyzer JSON/HTML report validation, and all binary gates G01–G11.
 
-## Current next action
+## Current production status
 
-Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is now active on `feat/production-backend`. Commit 4 (deterministic policy-pack loading and policy evaluation over the validated Chain-of-Proof, producing evidence-backed rule evaluations, findings, recommendations and policy-risk output) is **completed and verified at `ad25711`**. The immediate next action is production Commit 5: the presentation/API/artifact boundary, subject to explicit task and product-scope authorization; it remains **UNVERIFIED**.
+Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is active on `feat/production-backend`. Commit 5A, the deterministic presentation and artifact-rendering foundation over an already validated and policy-evaluated Chain-of-Proof, is **completed and verified at `3807118`**. Commit 5B, the thin read-only FastAPI exposure over an injected repository of validated Chain-of-Proof objects and verified Commit 5A services, is **completed and verified at `a262b24`**. Together they complete the declared backend Commit 5 presentation/API/artifact boundary. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**.
 
 ## Exact step-by-step sequence after repository creation
 
@@ -259,8 +259,81 @@ Explicit limitations:
 - TLS 1.3 certificate contents remain not observable without authorized session secrets.
 - Ports remain hints, not protocol classification.
 
-Scope of this PASS: deterministic policy evaluation over the validated Chain-of-Proof only. Commit 5 (presentation/API/artifact boundary) is the next milestone and remains **UNVERIFIED**.
+Scope of this PASS: deterministic policy evaluation over the validated Chain-of-Proof only. At the Commit 4 checkpoint, the Commit 5 presentation/API/artifact boundary had not yet been implemented; its verified Commit 5A portion is recorded in the next section.
+
+### Verified milestone — Commit 5A: evidence-backed finding artifacts (PASS, 2026-08-31)
+
+- Commit: `feat: render evidence-backed finding artifacts` at `3807118`.
+- Commit 5A implemented a deterministic presentation and artifact-rendering foundation over an already validated and policy-evaluated Chain-of-Proof.
+- Verified scope:
+  - strict immutable selected-finding projection;
+  - canonical Chain JSON;
+  - autoescaped finding HTML;
+  - deterministic finding PDF;
+  - artifact SHA-256 digests and byte lengths;
+  - evidence-backed event timeline ordered by `(sequence_index, event_id)`;
+  - exact evidence frame numbers and timestamps;
+  - finding rationale, impact, remediation and standards references;
+  - policy-risk and ML-anomaly presentation kept separate.
+- Verification evidence:
+  - independently source-reviewed before commit;
+  - final source archive SHA-256: `8aed36c24684ef254b1a66374ee148ccb0d339d2663317c51079e7a749d61dfd`;
+  - focused presentation suite: 19 passed;
+  - full suite: 618 passed;
+  - Ruff check passed;
+  - Ruff formatting check passed;
+  - `git diff --check` passed;
+  - security/forbidden-pattern scan clean.
+
+Explicit limitations:
+
+- Commit 5A does not analyze packets, derive new facts, evaluate policy or run ML.
+- It does not write artifacts to the filesystem, expose HTTP/API routes, or implement upload or analysis-job orchestration.
+- It adds no persistence, authentication or frontend code.
+- It does not attribute an attacker or expose raw SMTP payloads, credentials, email addresses or arbitrary filesystem paths.
+
+Scope of this PASS: deterministic selected-finding presentation and in-memory artifact rendering only. The separately verified Commit 5B HTTP exposure is recorded in the next section.
+
+### Verified milestone — Commit 5B: read-only Chain API (PASS, 2026-08-31)
+
+- Commit: `feat: expose validated chain through read-only api` at `a262b24`.
+- Independently source-reviewed before commit.
+- Final review archive SHA-256: `c2d181391f5b3282d9f0160e082056c2aacdb56de4fba05e5005758ef4f1d4ee`.
+- Focused API suite: 101 passed.
+- Full suite: 719 passed.
+- Ruff check passed.
+- Ruff formatting check passed.
+- `git diff --check` passed.
+- Forbidden-pattern/security scan clean.
+
+Commit 5B implemented a thin, read-only FastAPI exposure layer over an injected repository of validated Chain-of-Proof objects and the verified Commit 5A presentation/artifact services. Its seven read-only GET resources cover health, analysis summaries, canonical Chain retrieval, session events, safe evidence, finding presentations and existing artifacts; the exact route list is recorded in `context/architecture.md`.
+
+Verified properties:
+
+- versioned `/api/v1` read-only boundary;
+- dependency-injected `AnalysisChainRepository`;
+- bounded, thread-safe in-memory implementation;
+- isolated deep snapshots on registration and retrieval;
+- invariant validation on registration and again after repository retrieval;
+- authoritative Chain ID validation;
+- typed API-specific projections;
+- direct reuse of Commit 5A `FindingPresentation` and artifact services;
+- canonical deterministic JSON bytes and response byte-size bounds;
+- SHA-256, ETag, content-length, `no-store` and `nosniff` headers;
+- stable non-sensitive error envelopes;
+- explicitly configured CORS with wildcard origins rejected;
+- OpenAPI response schemas;
+- canonical Chain JSON and existing finding HTML/PDF artifact exposure;
+- no duplicated analyzer, fact, policy, ML or presentation business logic.
+
+Commit 5B does not add PCAP upload; POST/PUT/PATCH/DELETE analysis behavior; background jobs or queues; database persistence; authentication or authorization; frontend implementation; analyzer, policy or ML execution; live capture; SIEM; phishing detection; blocking; email decryption; geolocation; external AI APIs; silent online dependencies; or filesystem artifact writing. The default production application repository is empty; test data is injected only in tests.
+
+Scope of this PASS: read-only HTTP exposure of validated Chain and existing Commit 5A presentation/artifact services. FastAPI does not perform packet analysis, fact derivation, policy evaluation or ML execution. Current production capability remains bounded by verified SMTP coverage. TLS 1.3 certificate details remain `not_observable` without authorized session secrets. Ports remain hints and protocol classification remains content-based. Policy risk and ML anomaly remain separate outputs.
+
+### Commit 5 vertical boundary status
+
+Commit 5A completed deterministic presentation and in-memory artifacts. Commit 5B completed the thin read-only HTTP exposure. The declared backend Commit 5 presentation/API/artifact boundary is therefore completed and verified through `3807118` and `a262b24`. This does not mean the separate frontend, upload/analysis orchestration, persistence, authentication, IMAP/POP3 expansion, ML execution, deployment or the full product is complete.
 
 ## Production blockers and status
 
-No production blockers recorded at Commit 4. Commit 5 (presentation/API/artifact boundary) is the immediate next action and remains **UNVERIFIED**. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.
+No production blockers are recorded through Commit 5B. No subsequent backend milestone has been architecturally selected or authorized. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution, upload/analysis orchestration, persistence, authentication and deployment remain separate, unimplemented candidates and are not authorized by this documentation update. Frontend implementation remains separate from the backend repository and is not a backend capability claim.

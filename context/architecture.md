@@ -252,7 +252,9 @@ This is the canonical POC layout, not evidence that the files or features alread
 - The active production work introduces a **versioned domain contract** for the Chain of Proof, defined in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`).
 - The **pure POC-result adapter** (Commit 2, `feat: map verified smtp analysis into evidence chain`) is **completed and verified at `616b97d`**: it maps verified analyzer output into the chain without losing evidence and performs no packet re-analysis. **Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is **completed and verified at `2c1454f`**: deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
 - **Commit 4** (`feat: add deterministic policy evaluation engine`) is **completed and verified at `ad25711`**: deterministic policy-pack loading and policy evaluation over the validated Chain-of-Proof, producing evidence-backed rule evaluations, findings, recommendations and policy-risk output.
-- API, ML, and reports are **later milestones**, not current scope. None is claimed as implemented or authorized by this document alone.
+- **Commit 5A** (`feat: render evidence-backed finding artifacts`) is **completed and verified at `3807118`**: a deterministic presentation and artifact-rendering foundation over an already validated and policy-evaluated Chain-of-Proof.
+- **Commit 5B** (`feat: expose validated chain through read-only api`) is **completed and verified at `a262b24`**: a thin, read-only FastAPI exposure layer over an injected repository of validated Chain-of-Proof objects and the verified Commit 5A presentation/artifact services.
+- Commit 5A and Commit 5B together complete the declared backend Commit 5 presentation/API/artifact boundary.
 
 ## Analyzer boundary (verified scope)
 
@@ -302,6 +304,51 @@ The Commit 4 deterministic policy evaluation engine is completed and verified. I
 
 It does not add TLS/cipher/key-exchange/Forward-Secrecy/X.509 facts, IMAP/POP3 production support, API, frontend, ML anomaly, report/PDF, live capture, authentication, decryption, phishing detection, blocking, geolocation, or SIEM integration.
 
+## Commit 5A boundary (verified at `3807118`)
+
+Commit 5A is a deterministic presentation and artifact-rendering foundation over an already validated and policy-evaluated Chain-of-Proof. It produces:
+
+- a strict immutable selected-finding projection;
+- canonical Chain JSON;
+- autoescaped finding HTML;
+- deterministic finding PDF;
+- artifact SHA-256 digests and byte lengths;
+- an evidence-backed event timeline ordered by `(sequence_index, event_id)`;
+- exact evidence frame numbers and timestamps;
+- finding rationale, impact, remediation and standards references;
+- separate policy-risk and ML-anomaly presentation.
+
+Commit 5A does not analyze packets, derive new facts, evaluate policy, run ML, write artifacts to the filesystem, expose HTTP/API routes, implement upload or analysis-job orchestration, add persistence, authentication or frontend code, attribute an attacker, or expose raw SMTP payloads, credentials, email addresses or arbitrary filesystem paths.
+
+## Commit 5B boundary (verified at `a262b24`)
+
+Commit 5B is a thin, read-only FastAPI exposure layer over an injected repository of validated Chain-of-Proof objects and the verified Commit 5A presentation/artifact services. Its application boundary provides exactly these seven read-only GET resources:
+
+- `/api/v1/health`
+- `/api/v1/analyses/{analysis_id}`
+- `/api/v1/analyses/{analysis_id}/chain`
+- `/api/v1/analyses/{analysis_id}/sessions/{session_id}/events`
+- `/api/v1/analyses/{analysis_id}/evidence/{evidence_id}`
+- `/api/v1/analyses/{analysis_id}/findings/{finding_id}`
+- `/api/v1/analyses/{analysis_id}/findings/{finding_id}/artifacts/{artifact_format}`
+
+The verified boundary provides:
+
+- versioned `/api/v1` read-only access through a dependency-injected `AnalysisChainRepository`;
+- a bounded, thread-safe in-memory implementation with isolated deep snapshots on registration and retrieval;
+- Chain invariant validation on registration and again after repository retrieval, plus authoritative Chain ID validation;
+- typed API-specific projections and direct reuse of Commit 5A `FindingPresentation` and artifact services;
+- canonical deterministic JSON bytes and bounded JSON, HTML and PDF response sizes;
+- SHA-256, ETag, content-length, `no-store` and `nosniff` response headers;
+- stable non-sensitive error envelopes and OpenAPI response schemas;
+- explicitly configured CORS, with wildcard origins rejected;
+- canonical Chain JSON and existing finding HTML/PDF artifact exposure;
+- no duplicated analyzer, fact, policy, ML or presentation business logic.
+
+FastAPI does not analyze packets, derive facts, evaluate policy or run ML. Commit 5B does not add PCAP upload; POST/PUT/PATCH/DELETE analysis behavior; background jobs or queues; database persistence; authentication or authorization; frontend implementation; analyzer, policy or ML execution; live capture; SIEM; phishing detection; blocking; email decryption; geolocation; external AI APIs; silent online dependencies; or filesystem artifact writing. The default production application repository is empty; test data is injected only in tests.
+
+Current production capability remains bounded by verified SMTP coverage. TLS 1.3 certificate details remain `not_observable` without authorized session secrets. Ports remain hints and protocol classification remains content-based. Policy risk and ML anomaly remain separate outputs. Frontend implementation remains separate from the backend repository and is not a backend capability claim.
+
 ## Layering (production)
 
 ```text
@@ -310,8 +357,9 @@ existing POC analyzer core (stable, verified scope above)
   -> pure POC-result adapter    : maps verified analyzer output into the chain (Commit 2, verified at 616b97d)
   -> deterministic transition facts from ordered evidence (Commit 3, verified at 2c1454f)
   -> deterministic policy findings/risk/recommendations (Commit 4, verified at ad25711)
-  -> presentation/API/artifact boundary (Commit 5, next, UNVERIFIED)
-  -> later milestones           : IMAP/POP3, ML anomaly, reports
+  -> deterministic presentation/artifact rendering (Commit 5A, verified at 3807118)
+  -> thin read-only FastAPI exposure (Commit 5B, verified at a262b24)
+  -> next backend milestone pending explicit architectural selection
 ```
 
 ## Production sequence
@@ -322,20 +370,23 @@ The Chain-of-Proof contract in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` defines an
 - **Commit 2 — existing POC adapter** (completed and verified at `616b97d`): map the verified SMTP analysis into the chain.
 - **Commit 3 — deterministic event/state/fact derivation** (completed and verified at `2c1454f`): derive SMTP transition facts from ordered, evidence-backed chain events.
 - **Commit 4 — policy findings/risk/recommendations** (completed and verified at `ad25711`): strict bounded YAML policy-pack loading and deterministic evaluation over the validated Chain-of-Proof.
-- **Commit 5 — presentation/API/artifact boundary (next, UNVERIFIED), subject to explicit task and product-scope authorization**.
-- **IMAP/POP3 expansion and ML** occur only after the vertical slice.
+- **Commit 5A — presentation/artifact rendering** (completed and verified at `3807118`): deterministic selected-finding projection and in-memory canonical JSON, autoescaped HTML and deterministic PDF artifacts.
+- **Commit 5B — thin read-only FastAPI exposure** (completed and verified at `a262b24`): typed, bounded, deterministic access to existing Chain and Commit 5A services.
 
-Commit 5, IMAP/POP3, and ML are listed as the contract's declared order, not as implemented or already-authorized work. Each remains its own milestone requiring the plan/review/test/commit discipline in `AGENTS.md`.
+Commit 5A completed deterministic presentation and in-memory artifacts; Commit 5B completed the thin read-only HTTP exposure. The declared backend Commit 5 presentation/API/artifact boundary is completed and verified through `3807118` and `a262b24`. This does not complete the separate frontend, upload/analysis orchestration, persistence, authentication, IMAP/POP3 expansion, ML execution, deployment or the full product.
+
+No subsequent backend milestone has been architecturally selected or authorized. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution, upload/analysis orchestration, persistence, authentication and deployment remain separate, unimplemented candidates and are not authorized by this documentation update.
 
 ## Component placement
 
 - `src/securemailscope/chain` holds the **versioned domain contract**: enums, Pydantic models, stable ID helpers, JSON Schema, invariant tests, and example chain fixtures.
 - The adapter layer (Commit 2, verified at `616b97d`) is **pure**: it transforms verified POC results into chain objects, performs no re-analysis of the capture, and invents no evidence.
-- ML anomaly, API, frontend, and report rendering remain separate later layers and are not folded into the chain contract or the adapter.
+- The Commit 5A presentation layer consumes validated, policy-evaluated Chain state and does not fold rendering into the chain contract, analyzer, fact derivation or policy engine.
+- Commit 5B is a verified read-only adapter over the injected Chain repository and existing Commit 5A services. ML anomaly execution and the separate frontend are not folded into the Chain or API handlers.
 
 ## Invariants carried into production
 
 - Policy risk and ML anomaly remain **separate** outputs; never present their sum or average as an independently validated fact.
 - TLS 1.3 certificate invisibility in secretless passive captures stays `not_observable`/`session_secrets_required`/`not_observable_encrypted_tls13`; never fabricated.
 - Ports are hints only; classification requires direction-consistent content evidence.
-- The frontend renders canonical state and never derives protocol-security conclusions independently; the frontend is separate and frozen.
+- The frontend renders canonical state and never derives protocol-security conclusions independently; frontend implementation remains separate from the backend repository.

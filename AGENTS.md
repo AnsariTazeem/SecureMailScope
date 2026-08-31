@@ -14,9 +14,10 @@ content-based SMTP classification, SMTP STARTTLS transition analysis, typed
 models/errors, the T01 manual verification PASS (23/23), and the E2/E3A
 analyzer-path checkpoint PASS.
 
-IMAP/POP3 and the remaining cryptographic/report capabilities describe
-**target or historical planned scope**, not current implemented scope. They are
-not claimed as implemented.
+IMAP/POP3 and the remaining cryptographic capabilities describe **target or
+historical planned scope**, not current implemented scope. Production
+presentation, artifact and API support is limited to the verified Commit 5A and
+Commit 5B boundaries described below.
 
 **Chain Commit 1** (`feat: add chain-of-proof domain contract`) is complete at
 `57fe930`; **Chain Commit 2** (`feat: map verified smtp analysis into evidence
@@ -27,8 +28,57 @@ transition facts from ordered, evidence-backed Chain events.
 **Chain Commit 4** (`feat: add deterministic policy evaluation engine`) is
 **completed and verified at `ad25711`**: deterministic policy-pack loading and
 policy evaluation over the validated Chain-of-Proof, producing evidence-backed
-rule evaluations, findings, recommendations and policy-risk output. **Commit 5**
-(presentation/API/artifact boundary) is next and **UNVERIFIED**.
+rule evaluations, findings, recommendations and policy-risk output. **Commit
+5A** (`feat: render evidence-backed finding artifacts`) is **completed and
+verified at `3807118`**: a deterministic presentation and artifact-rendering
+foundation over an already validated and policy-evaluated Chain-of-Proof.
+
+Commit 5A produces a strict immutable selected-finding projection, canonical
+Chain JSON, autoescaped finding HTML, deterministic finding PDF, artifact
+SHA-256 digests and byte lengths, an evidence-backed event timeline ordered by
+`(sequence_index, event_id)`, exact evidence frame numbers and timestamps,
+finding rationale, impact, remediation and standards references, and separate
+policy-risk and ML-anomaly presentation.
+
+Commit 5A does not analyze packets, derive new facts, evaluate policy, run ML,
+write artifacts to the filesystem, expose HTTP/API routes, implement upload or
+analysis-job orchestration, add persistence, authentication or frontend code,
+attribute an attacker, or expose raw SMTP payloads, credentials, email
+addresses or arbitrary filesystem paths.
+
+**Commit 5B** (`feat: expose validated chain through read-only api`) is
+**completed and verified at `a262b24`**: a thin, read-only FastAPI exposure
+layer over an injected repository of validated Chain-of-Proof objects and the
+verified Commit 5A presentation/artifact services. Its versioned `/api/v1`
+boundary provides typed, bounded, deterministic access to analysis summaries,
+canonical Chain JSON, session events, safe evidence, finding presentations and
+existing JSON/HTML/PDF artifacts. It uses a dependency-injected
+`AnalysisChainRepository`, validates Chain invariants at repository and API
+boundaries, and does not duplicate analyzer, fact, policy, ML or presentation
+business logic.
+
+Commit 5A completed deterministic presentation and in-memory artifacts; Commit
+5B completed the thin read-only HTTP exposure. The declared backend Commit 5
+presentation/API/artifact boundary is therefore completed and verified through
+`3807118` and `a262b24`.
+
+Commit 5B does not add PCAP upload; POST/PUT/PATCH/DELETE analysis behavior;
+background jobs or queues; database persistence; authentication or
+authorization; frontend implementation; analyzer, policy or ML execution; live
+capture; SIEM; phishing detection; blocking; email decryption; geolocation;
+external AI APIs; silent online dependencies; or filesystem artifact writing.
+The default production application repository is empty; test data is injected
+only in tests. The frontend remains a separate repository/workstream and is not
+a backend capability claim. No capability beyond verified SMTP production
+coverage is claimed. TLS 1.3 certificate details remain `not_observable`
+without authorized session secrets, ports remain hints, protocol classification
+remains content-based, and policy risk and ML anomaly remain separate outputs.
+
+The next backend milestone is pending explicit architectural selection and
+remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution,
+upload/analysis orchestration, persistence, authentication and deployment are
+separate, unimplemented candidates and are not authorized by this documentation
+update.
 
 Correctness, reproducibility, evidence integrity, and honest limitations take
 precedence over feature breadth or presentation polish.
@@ -83,9 +133,9 @@ backend** on branch `feat/production-backend`:
   phase is governed by the approved Chain-of-Proof contract in
   `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`) and by
   `context/architecture.md` (production section).
-- The active production branch is `feat/production-backend`. The frontend is a
-  separate, **frozen** workstream; do not redesign or extend it during backend
-  milestones.
+- The active production branch is `feat/production-backend`. Frontend
+  implementation remains separate from this backend repository and is not a
+  backend capability claim.
 - Preserve the entire POC verification history in `context/progress-tracker.md`
   when appending production progress.
 
@@ -108,8 +158,10 @@ content; report any conflict for an explicit decision.
 - `context/progress-tracker.md` defines **verified implementation status**.
 - Current explicit product constraints control whether optional features such
   as PDF are authorized.
-- **PDF export remains excluded** unless it is explicitly reauthorized by an
-  explicit developer scope decision.
+- Deterministic finding PDF rendering was explicitly authorized and verified
+  within Commit 5A. That authorization does not include filesystem writes or
+  frontend work; read-only artifact exposure was separately completed and
+  verified in Commit 5B.
 
 ## Plan/review/test/commit workflow (production)
 
@@ -124,7 +176,8 @@ content; report any conflict for an explicit decision.
 6. Do not fabricate evidence. Never derive ground truth from the analyzer being
    evaluated, and never edit evidence JSON, manifests, logs, or reports to
    convert a failure into a pass.
-7. The frontend is frozen; do not redesign it as part of a backend change.
+7. Frontend implementation remains a separate workstream; do not treat it as a
+   backend capability claim.
 
 ## Historical planned POC proof matrix
 
