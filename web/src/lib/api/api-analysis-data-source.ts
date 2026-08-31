@@ -11,7 +11,10 @@ import {
 } from "@/lib/contracts/analysis";
 import { ANALYSIS_ID } from "@/lib/contracts/ids";
 import { publicConfig } from "@/lib/config/env";
-import { ApiRequestError } from "@/lib/api/errors";
+import {
+  AnalysisNotFoundError,
+  ApiRequestError,
+} from "@/lib/api/errors";
 import { z } from "zod";
 
 const apiCreateResponseSchema = z.object({
@@ -26,7 +29,11 @@ function endpoint(path: string): string {
   return new URL(path, base).toString();
 }
 
-async function requestJson(url: string, init?: RequestInit): Promise<unknown> {
+async function requestJson(
+  url: string,
+  init?: RequestInit,
+  analysisId?: string,
+): Promise<unknown> {
   let response: Response;
   try {
     response = await fetch(url, init);
@@ -34,6 +41,10 @@ async function requestJson(url: string, init?: RequestInit): Promise<unknown> {
     throw new ApiRequestError(
       "The production analysis API could not be reached. No result was created.",
     );
+  }
+
+  if (response.status === 404 && analysisId) {
+    throw new AnalysisNotFoundError(analysisId);
   }
 
   if (!response.ok) {
@@ -84,6 +95,8 @@ export class ApiAnalysisDataSource implements AnalysisDataSource {
         endpoint(
           `api/v1/analyses/${encodeURIComponent(analysisId)}/status`,
         ),
+        undefined,
+        analysisId,
       ),
     );
   }
@@ -94,6 +107,8 @@ export class ApiAnalysisDataSource implements AnalysisDataSource {
         endpoint(
           `api/v1/analyses/${encodeURIComponent(analysisId)}/result`,
         ),
+        undefined,
+        analysisId,
       ),
     );
   }
