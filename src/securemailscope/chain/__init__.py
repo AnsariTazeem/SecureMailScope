@@ -55,6 +55,7 @@ from securemailscope.chain.errors import (
     ChainError,
     ChainErrorCode,
     ChainValidationError,
+    PresentationError,
 )
 from securemailscope.chain.ids import (
     stable_digest,
@@ -157,6 +158,7 @@ __all__ = [
     "PolicyRiskContribution",
     "PolicyRiskSummary",
     "PolicyRule",
+    "PresentationError",
     "ProtocolEvent",
     "ProtocolEventType",
     "ProtocolState",

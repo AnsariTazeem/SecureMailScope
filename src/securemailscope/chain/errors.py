@@ -36,6 +36,10 @@ class ChainErrorCode(StrEnum):
     POLICY_PACK_INVALID = "policy_pack_invalid"
     POLICY_CONTEXT_INVALID = "policy_context_invalid"
     POLICY_EVALUATION_FAILED = "policy_evaluation_failed"
+    PRESENTATION_INVALID_CHAIN = "presentation_invalid_chain"
+    PRESENTATION_FINDING_NOT_FOUND = "presentation_finding_not_found"
+    PRESENTATION_REFERENCE_INVALID = "presentation_reference_invalid"
+    PRESENTATION_RENDER_FAILED = "presentation_render_failed"
 
 
 class ChainError(RuntimeError):
@@ -123,3 +127,10 @@ class PolicyEvaluationError(ChainError):
             message,
             detail,
         )
+
+
+class PresentationError(ChainError):
+    """Safe presentation projection or rendering failure."""
+
+    def __init__(self, code: ChainErrorCode, message: str) -> None:
+        super().__init__(code, "presentation", message)

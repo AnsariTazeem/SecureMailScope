@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SecureMailScope finding: {{ presentation.title }}</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #16202a; background: #f4f6f8; }
+    body { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    header, section { background: #fff; border: 1px solid #cbd4dc; border-radius: .4rem; padding: 1rem 1.25rem; margin: 0 0 1rem; }
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { margin-top: 0; }
+    dl { display: grid; grid-template-columns: minmax(10rem, 15rem) 1fr; gap: .4rem 1rem; }
+    dt { font-weight: 700; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #cbd4dc; padding: .5rem; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    th { background: #eaf0f4; }
+    code { overflow-wrap: anywhere; }
+    .high, .critical { border-left: .5rem solid #9b1c1c; }
+    .separate { border-left: .5rem solid #365f7d; }
+    @media (max-width: 40rem) { dl { grid-template-columns: 1fr; } dt { margin-top: .4rem; } }
+  </style>
+</head>
+<body>
+  <header class="{{ presentation.severity.value }}">
+    <p>SecureMailScope finding</p>
+    <h1>{{ presentation.title }}</h1>
+    <dl>
+      <dt>Analysis ID</dt><dd><code>{{ presentation.analysis_id }}</code></dd>
+      <dt>Finding ID</dt><dd><code>{{ presentation.finding_id }}</code></dd>
+      <dt>Severity</dt><dd>{{ presentation.severity.value }}</dd>
+      <dt>Category</dt><dd>{{ presentation.category.value }}</dd>
+      <dt>Policy-risk contribution</dt><dd>{{ presentation.policy_risk_contribution }}</dd>
+      <dt>Evidence confidence</dt><dd>{{ presentation.evidence_confidence.value }}</dd>
+      <dt>Capture SHA-256</dt><dd><code>{{ presentation.capture_sha256 }}</code></dd>
+      <dt>SMTP session identity</dt><dd>{{ presentation.protocol.value }} / <code>{{ presentation.session_id }}</code> / <code>{{ presentation.stable_session_key }}</code></dd>
+      <dt>Rule</dt><dd><code>{{ presentation.rule_id }}</code> / {{ presentation.rule_version }} / {{ presentation.rule_outcome.value }}</dd>
+      <dt>Evaluated</dt><dd>{{ presentation.evaluated_at | timestamp }}</dd>
+      <dt>Created</dt><dd>{{ presentation.created_at | timestamp }}</dd>
+    </dl>
+  </header>
+
+  <section>
+    <h2>Finding basis</h2>
+    <h3>Rationale</h3><p>{{ presentation.rationale }}</p>
+    <h3>Impact</h3><p>{{ presentation.impact }}</p>
+  </section>
+
+  <section>
+    <h2>Relevant derived facts</h2>
+    <table>
+      <thead><tr><th>Fact ID</th><th>Type and value</th><th>Observability</th><th>Confidence</th></tr></thead>
+      <tbody>
+      {% for fact in presentation.facts %}
+        <tr><td><code>{{ fact.fact_id }}</code></td><td>{{ fact.fact_type }} = {{ fact_values[fact.fact_id] }}</td><td>{{ fact.observability.value }}</td><td>{{ fact.confidence_level.value }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Evidence-backed event timeline</h2>
+    <table>
+      <thead><tr><th>Sequence index</th><th>Event ID</th><th>Canonical timestamp</th><th>Direction</th><th>Event type</th><th>Event status</th><th>Observability</th><th>Linked evidence IDs</th></tr></thead>
+      <tbody>
+      {% for event in presentation.events %}
+        <tr>
+          <td>{{ event.sequence_index }}</td>
+          <td><code>{{ event.event_id }}</code></td>
+          <td>{{ event.timestamp | timestamp }}</td>
+          <td>{{ event.direction.value }}</td>
+          <td>{{ event.event_type.value }}</td>
+          <td>{{ event.event_status.value }}</td>
+          <td>{{ event.observability.value }}</td>
+          <td>{% for evidence_id in event.evidence_ids %}<code>{{ evidence_id }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Evidence references</h2>
+    <table>
+      <thead><tr><th>Evidence ID</th><th>Frames</th><th>Timestamps</th><th>Source</th><th>Redaction</th></tr></thead>
+      <tbody>
+      {% for item in presentation.evidence %}
+        <tr>
+          <td><code>{{ item.evidence_id }}</code></td>
+          <td>{{ item.frame_numbers | join(', ') }}</td>
+          <td>{{ item.timestamp_start | timestamp }} to {{ item.timestamp_end | timestamp }}</td>
+          <td>{{ item.source_kind.value }} / {{ item.source_field }}</td>
+          <td>{{ item.redaction.value }} / {{ item.observability.value }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Recommendation</h2>
+    <p><strong>{{ presentation.recommendation.recommendation_id }}</strong>: {{ presentation.recommendation.title }}</p>
+    <p>{{ presentation.recommendation.summary }}</p>
+    <h3>Action steps</h3>
+    <ol>{% for step in presentation.recommendation.action_steps %}<li>{{ step }}</li>{% endfor %}</ol>
+    <h3>Verification steps</h3>
+    <ol>{% for step in presentation.recommendation.verification_steps %}<li>{{ step }}</li>{% endfor %}</ol>
+  </section>
+
+  <section>
+    <h2>Standards references</h2>
+    <ul>{% for standard in presentation.standards_references %}<li>{{ standard.id }}{% if standard.section %}, section {{ standard.section }}{% endif %}</li>{% endfor %}</ul>
+  </section>
+
+  <section class="separate">
+    <h2>Policy risk</h2>
+    {% if presentation.policy_risk %}
+    <p>Policy risk: capped {{ presentation.policy_risk.capped_score }}; uncapped {{ presentation.policy_risk.uncapped_score }}; profile {{ presentation.policy_risk.profile_id }}.</p>
+    {% else %}<p>Policy risk: unavailable.</p>{% endif %}
+  </section>
+
+  <section class="separate">
+    <h2>ML anomaly</h2>
+    {% if ml_not_run %}<p>ML anomaly: not run</p>
+    {% elif not presentation.ml_anomaly.results %}<p>ML anomaly: {{ presentation.ml_anomaly.engine_status.value }}; no result for this session.</p>
+    {% else %}
+      <p>ML anomaly engine: {{ presentation.ml_anomaly.engine_status.value }}</p>
+      {% for anomaly in presentation.ml_anomaly.results %}<p><code>{{ anomaly.anomaly_result_id }}</code>: {{ anomaly.band.value }} / {{ anomaly.normalized_score }}. {{ anomaly.interpretation_note }}</p>{% endfor %}
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Limitations</h2>
+    {% if presentation.limitations %}
+    <ul>{% for limitation in presentation.limitations %}<li><strong>{{ limitation.code.value }}</strong>: {{ limitation.summary }}{% if limitation.detail %} ({{ limitation.detail }}){% endif %}</li>{% endfor %}</ul>
+    {% else %}<p>None recorded.</p>{% endif %}
+  </section>
+</body>
+</html>
