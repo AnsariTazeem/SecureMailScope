@@ -24,7 +24,11 @@ chain`), the pure POC-result adapter, is **completed and verified at `616b97d`**
 **Chain Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is
 **completed and verified at `2c1454f`**: deterministic derivation of SMTP
 transition facts from ordered, evidence-backed Chain events.
-**Commit 4** (deterministic policy evaluation layer) is next and **UNVERIFIED**.
+**Chain Commit 4** (`feat: add deterministic policy evaluation engine`) is
+**completed and verified at `ad25711`**: deterministic policy-pack loading and
+policy evaluation over the validated Chain-of-Proof, producing evidence-backed
+rule evaluations, findings, recommendations and policy-risk output. **Commit 5**
+(presentation/API/artifact boundary) is next and **UNVERIFIED**.
 
 Correctness, reproducibility, evidence integrity, and honest limitations take
 precedence over feature breadth or presentation polish.

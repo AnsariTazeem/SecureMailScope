@@ -1,8 +1,8 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 30 August 2026
+**Last updated:** 31 August 2026
 
-**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Chain Commit 2 (pure POC-result adapter) completed and verified at `616b97d`. **Chain Commit 3 (deterministic SMTP transition facts) completed and verified at `2c1454f`.** Commit 4 (deterministic policy evaluation layer) is the next milestone and remains UNVERIFIED. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
+**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Chain Commit 2 (pure POC-result adapter) completed and verified at `616b97d`. **Chain Commit 3 (deterministic SMTP transition facts) completed and verified at `2c1454f`. Chain Commit 4 (deterministic policy evaluation engine) completed and verified at `ad25711`.** Commit 5 (presentation/API/artifact boundary) is the next milestone and remains UNVERIFIED. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
 
 **Implementation status:** T01 PASS (23/23 comparisons); E2/E3A PASS (authorized scope: read-only intake, TShark-native reassembly, content-based SMTP classification, STARTTLS transition states). Selection decision: GO — PS159 selected/finalized for Team Apex. T02–T08 and all binary gates remain UNTESTED.
 
@@ -100,7 +100,7 @@ Scope of this PASS: the E2/E3A analyzer path for the frozen scope only (SMTP on 
 
 ## Current next action
 
-Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is now active on `feat/production-backend`. Commit 3 (deterministic derivation of SMTP transition facts from ordered, evidence-backed Chain events) is **completed and verified at `2c1454f`**. The immediate next action is production Commit 4: the deterministic policy evaluation layer producing evidence-backed policy evaluations, findings, recommendations, and policy-risk output. Policy rules, findings, and risk scoring remain **UNVERIFIED** work (Commit 4 onward).
+Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is now active on `feat/production-backend`. Commit 4 (deterministic policy-pack loading and policy evaluation over the validated Chain-of-Proof, producing evidence-backed rule evaluations, findings, recommendations and policy-risk output) is **completed and verified at `ad25711`**. The immediate next action is production Commit 5: the presentation/API/artifact boundary, subject to explicit task and product-scope authorization; it remains **UNVERIFIED**.
 
 ## Exact step-by-step sequence after repository creation
 
@@ -235,6 +235,32 @@ Explicit limitations:
 
 Scope of this PASS: the deterministic SMTP transition fact derivation only. Commit 4 (deterministic policy evaluation layer producing evidence-backed policy evaluations, findings, recommendations, and policy-risk output) is the next milestone and remains **UNVERIFIED**.
 
+### Verified milestone — Chain Commit 4: deterministic policy evaluation engine (PASS, 2026-08-31)
+
+- Commit: `feat: add deterministic policy evaluation engine` at `ad25711`.
+- Commit 4 implemented deterministic policy-pack loading and policy evaluation over the validated Chain-of-Proof, producing evidence-backed rule evaluations, findings, recommendations and policy-risk output.
+- Verified scope:
+  - strict bounded YAML policy-pack loading;
+  - deterministic rule evaluation;
+  - conservative `UNKNOWN`/`INSUFFICIENT_EVIDENCE` handling;
+  - mandatory evidence lineage;
+  - deterministic findings and recommendations;
+  - confidence-adjusted and capped policy-risk contributions;
+  - policy-risk and ML anomaly outputs remain separate;
+  - atomic, non-mutating Chain replacement.
+- Full tests and quality checks passed before commit.
+- The frozen POC analyzer and evidence records (schemas, PCAPs, manifests, expected outputs) were not modified.
+
+Explicit limitations:
+
+- No full TLS/cipher/key-exchange/Forward-Secrecy/X.509 support; TLS handshake observations remain message-presence evidence only.
+- No IMAP or POP3 production support.
+- No API, frontend, ML anomaly, report/PDF, live capture, authentication, decryption, phishing detection, blocking, geolocation, or SIEM implementation.
+- TLS 1.3 certificate contents remain not observable without authorized session secrets.
+- Ports remain hints, not protocol classification.
+
+Scope of this PASS: deterministic policy evaluation over the validated Chain-of-Proof only. Commit 5 (presentation/API/artifact boundary) is the next milestone and remains **UNVERIFIED**.
+
 ## Production blockers and status
 
-No production blockers recorded at Commit 3. Commit 4 (deterministic policy evaluation layer producing evidence-backed policy evaluations, findings, recommendations, and policy-risk output) is the immediate next action and remains **UNVERIFIED**. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.
+No production blockers recorded at Commit 4. Commit 5 (presentation/API/artifact boundary) is the immediate next action and remains **UNVERIFIED**. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.

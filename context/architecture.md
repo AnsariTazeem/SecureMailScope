@@ -251,7 +251,8 @@ This is the canonical POC layout, not evidence that the files or features alread
   - typed results/errors.
 - The active production work introduces a **versioned domain contract** for the Chain of Proof, defined in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`).
 - The **pure POC-result adapter** (Commit 2, `feat: map verified smtp analysis into evidence chain`) is **completed and verified at `616b97d`**: it maps verified analyzer output into the chain without losing evidence and performs no packet re-analysis. **Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is **completed and verified at `2c1454f`**: deterministic derivation of SMTP transition facts from ordered, evidence-backed chain events.
-- API, policy, ML, and reports are **later milestones**, not current scope. None is claimed as implemented or authorized by this document alone.
+- **Commit 4** (`feat: add deterministic policy evaluation engine`) is **completed and verified at `ad25711`**: deterministic policy-pack loading and policy evaluation over the validated Chain-of-Proof, producing evidence-backed rule evaluations, findings, recommendations and policy-risk output.
+- API, ML, and reports are **later milestones**, not current scope. None is claimed as implemented or authorized by this document alone.
 
 ## Analyzer boundary (verified scope)
 
@@ -286,6 +287,21 @@ The Commit 3 deterministic fact derivation (`src/securemailscope/chain/smtp_fact
 - facts remain bounded by observable evidence and preserve `UNKNOWN/INSUFFICIENT` states when evidence is incomplete;
 - policy risk and ML anomaly remain separate and are not produced here.
 
+## Commit 4 boundary (verified at `ad25711`)
+
+The Commit 4 deterministic policy evaluation engine is completed and verified. Its verified boundary is:
+
+- strict bounded YAML policy-pack loading;
+- deterministic rule evaluation over the validated Chain-of-Proof;
+- conservative `UNKNOWN`/`INSUFFICIENT_EVIDENCE` handling;
+- mandatory evidence lineage for policy outputs;
+- deterministic findings and recommendations;
+- confidence-adjusted and capped policy-risk contributions;
+- atomic, non-mutating Chain replacement;
+- policy-risk and ML anomaly outputs remain separate.
+
+It does not add TLS/cipher/key-exchange/Forward-Secrecy/X.509 facts, IMAP/POP3 production support, API, frontend, ML anomaly, report/PDF, live capture, authentication, decryption, phishing detection, blocking, geolocation, or SIEM integration.
+
 ## Layering (production)
 
 ```text
@@ -293,8 +309,9 @@ existing POC analyzer core (stable, verified scope above)
   -> src/securemailscope/chain  : versioned Chain-of-Proof domain contract (Commit 1, verified at 57fe930)
   -> pure POC-result adapter    : maps verified analyzer output into the chain (Commit 2, verified at 616b97d)
   -> deterministic transition facts from ordered evidence (Commit 3, verified at 2c1454f)
-  -> deterministic policy findings/risk/recommendations (Commit 4, next, UNVERIFIED)
-  -> later milestones           : presentation/API/artifact boundary, IMAP/POP3, ML anomaly, reports
+  -> deterministic policy findings/risk/recommendations (Commit 4, verified at ad25711)
+  -> presentation/API/artifact boundary (Commit 5, next, UNVERIFIED)
+  -> later milestones           : IMAP/POP3, ML anomaly, reports
 ```
 
 ## Production sequence
@@ -304,17 +321,17 @@ The Chain-of-Proof contract in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` defines an
 - **Commit 1 — contract** (completed at `57fe930`): versioned Chain-of-Proof domain contract.
 - **Commit 2 — existing POC adapter** (completed and verified at `616b97d`): map the verified SMTP analysis into the chain.
 - **Commit 3 — deterministic event/state/fact derivation** (completed and verified at `2c1454f`): derive SMTP transition facts from ordered, evidence-backed chain events.
-- **Commit 4 — policy findings/risk/recommendations (next, UNVERIFIED)**.
-- **Commit 5 — presentation/API/artifact boundary, subject to explicit task and product-scope authorization**.
+- **Commit 4 — policy findings/risk/recommendations** (completed and verified at `ad25711`): strict bounded YAML policy-pack loading and deterministic evaluation over the validated Chain-of-Proof.
+- **Commit 5 — presentation/API/artifact boundary (next, UNVERIFIED), subject to explicit task and product-scope authorization**.
 - **IMAP/POP3 expansion and ML** occur only after the vertical slice.
 
-Commits 3–5, IMAP/POP3, and ML are listed as the contract's declared order, not as implemented or already-authorized work. Each remains its own milestone requiring the plan/review/test/commit discipline in `AGENTS.md`.
+Commit 5, IMAP/POP3, and ML are listed as the contract's declared order, not as implemented or already-authorized work. Each remains its own milestone requiring the plan/review/test/commit discipline in `AGENTS.md`.
 
 ## Component placement
 
 - `src/securemailscope/chain` holds the **versioned domain contract**: enums, Pydantic models, stable ID helpers, JSON Schema, invariant tests, and example chain fixtures.
 - The adapter layer (Commit 2, verified at `616b97d`) is **pure**: it transforms verified POC results into chain objects, performs no re-analysis of the capture, and invents no evidence.
-- Policy, ML anomaly, API, frontend, and report rendering remain separate later layers and are not folded into the chain contract or the adapter.
+- ML anomaly, API, frontend, and report rendering remain separate later layers and are not folded into the chain contract or the adapter.
 
 ## Invariants carried into production
 
