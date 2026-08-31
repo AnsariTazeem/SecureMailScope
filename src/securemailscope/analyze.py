@@ -38,7 +38,7 @@ from securemailscope.tshark import (
     build_epochs_argv,
     build_follow_argv,
     build_tshark_argv,
-    parse_epoch_extremes,
+    parse_capture_frame_metadata,
     parse_follow_output,
     run_tool,
 )
@@ -85,7 +85,7 @@ def analyze_capture(
     )
     tool_records.append(record)
 
-    frames_by_stream, reassembly_error_streams, capture_truncation = _parse_observations(
+    frames_by_stream, reassembly_error_streams, malformed_capture = _parse_observations(
         observation_output
     )
 
@@ -93,9 +93,17 @@ def analyze_capture(
         build_epochs_argv(validated), stage="tshark_epochs", timeout_seconds=timeout_seconds
     )
     tool_records.append(epochs_record)
-    first_epoch, last_epoch = parse_epoch_extremes(epochs_output)
-    if first_epoch is not None and last_epoch is not None:
-        provenance = _set_epoch_bounds(provenance, first_epoch, last_epoch)
+    first_epoch, last_epoch, truncated_packet_count = parse_capture_frame_metadata(
+        epochs_output,
+        expected_packet_count=provenance.packet_count,
+    )
+    provenance = _set_capture_frame_metadata(
+        provenance,
+        first_epoch,
+        last_epoch,
+        truncated_packet_count,
+    )
+    capture_incomplete = malformed_capture or truncated_packet_count > 0
 
     streams: list[TcpStream] = []
     classifications = []
@@ -113,14 +121,14 @@ def analyze_capture(
         stream = _attach_reassembled(stream, node0, node1, ep0, ep1)
         streams.append(stream)
         if follow_incomplete:
-            capture_truncation = True
+            capture_incomplete = True
         classification = classify_stream(stream)
         classifications.append(classification)
         if classification.protocol is Protocol.SMTP:
             transition = build_transition(
                 stream,
                 reassembly_error_streams=reassembly_error_streams,
-                capture_truncation=capture_truncation,
+                capture_truncation=capture_incomplete,
             )
             smtp_transitions.append(transition)
 
@@ -133,15 +141,17 @@ def analyze_capture(
     )
 
 
-def _set_epoch_bounds(
-    provenance: CaptureProvenance, first_epoch: Decimal, last_epoch: Decimal
+def _set_capture_frame_metadata(
+    provenance: CaptureProvenance,
+    first_epoch: Decimal | None,
+    last_epoch: Decimal | None,
+    truncated_packet_count: int,
 ) -> CaptureProvenance:
-    return provenance.model_copy(
-        update={
-            "first_epoch_seconds": first_epoch,
-            "last_epoch_seconds": last_epoch,
-        }
-    )
+    updates: dict[str, object] = {"truncated_packet_count": truncated_packet_count}
+    if first_epoch is not None and last_epoch is not None:
+        updates["first_epoch_seconds"] = first_epoch
+        updates["last_epoch_seconds"] = last_epoch
+    return provenance.model_copy(update=updates)
 
 
 def _attach_reassembled(
@@ -175,8 +185,9 @@ def _parse_observations(
 ) -> tuple[dict[int, list[RawFrameObservation]], set[int], bool]:
     """Parse tab-separated field rows and group raw observations by stream.
 
-    Returns ``(frames_by_stream, reassembly_error_streams, truncation)`` where
-    ``truncation`` is derived from real TShark evidence (a malformed packet).
+    Returns ``(frames_by_stream, reassembly_error_streams, malformed_capture)``.
+    Malformation remains an incompleteness signal but is not counted as packet
+    truncation; authoritative truncation uses all-frame captured/original lengths.
     """
     frames_by_stream: dict[int, list[RawFrameObservation]] = {}
     reassembly_streams: set[int] = set()

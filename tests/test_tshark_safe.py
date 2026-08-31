@@ -11,10 +11,13 @@ import pytest
 from securemailscope.errors import AnalysisError, ErrorCode
 from securemailscope.models import CaptureFormat
 from securemailscope.tshark import (
+    build_epochs_argv,
     build_follow_argv,
     build_tshark_argv,
     decode_as_arg,
     parse_capture_format,
+    parse_capture_frame_metadata,
+    parse_capture_link_metadata,
     parse_epoch_extremes,
     parse_follow_output,
     parse_packet_count,
@@ -142,6 +145,15 @@ def test_build_tshark_argv_never_shell() -> None:
     assert all(isinstance(part, str) for part in argv)
 
 
+def test_build_epochs_argv_requests_all_frame_length_evidence() -> None:
+    argv = build_epochs_argv(Path("/tmp/x.pcap"))
+    assert argv[:3] == ["tshark", "-r", "/tmp/x.pcap"]
+    assert "frame.number" in argv
+    assert "frame.time_epoch" in argv
+    assert "frame.cap_len" in argv
+    assert "frame.len" in argv
+
+
 def test_build_follow_argv_validates_stream() -> None:
     argv = build_follow_argv(Path("/tmp/x.pcap"), 0)
     assert argv == ["tshark", "-q", "-r", "/tmp/x.pcap", "-z", "follow,tcp,raw,0"]
@@ -164,6 +176,35 @@ def test_parse_capture_format_from_content_not_extension() -> None:
     assert parse_capture_format("File type = Wireshark - pcapng") is CaptureFormat.PCAPNG
     assert parse_capture_format("File type = pcap") is CaptureFormat.PCAP
     assert parse_capture_format("unrecognized") is CaptureFormat.UNKNOWN
+
+
+def test_parse_pcap_link_layer_and_snaplen_metadata() -> None:
+    output = (
+        "File type: pcap\nFile encapsulation: Ethernet\nPacket size limit: file hdr: 65535 bytes\n"
+    )
+    assert parse_capture_link_metadata(output) == (["ethernet"], 65535)
+
+
+def test_parse_pcapng_multiple_link_layers_normalizes_and_deduplicates() -> None:
+    output = (
+        "File type: pcapng\n"
+        "File encapsulation: Per packet\n"
+        " Encapsulation = Ethernet (1 - ether)\n"
+        " Capture length = 262144\n"
+        " Encapsulation = IEEE 802.11 (20 - ieee-802-11)\n"
+        " Capture length = 65535\n"
+        " Encapsulation = ethernet (1 - ether)\n"
+    )
+    link_layers, snaplen = parse_capture_link_metadata(output)
+    assert link_layers == ["ethernet", "ieee 802.11"]
+    assert snaplen is None
+
+
+def test_parse_capture_link_metadata_fails_without_authoritative_link_layer() -> None:
+    with pytest.raises(AnalysisError) as exc:
+        parse_capture_link_metadata("File type: pcapng\nFile encapsulation: Per packet\n")
+    assert exc.value.code is ErrorCode.MALFORMED_TOOL_OUTPUT
+    assert exc.value.stage == "intake"
 
 
 def test_parse_follow_output_maps_nodes_and_incomplete() -> None:
@@ -199,3 +240,50 @@ def test_parse_epoch_extremes_rejects_malformed() -> None:
     with pytest.raises(AnalysisError) as exc:
         parse_epoch_extremes("not-a-decimal\n")
     assert exc.value.code is ErrorCode.MALFORMED_TOOL_OUTPUT
+
+
+def test_parse_capture_frame_metadata_counts_distinct_shortened_frames() -> None:
+    output = "1\t100.1\t60\t100\n1\t100.1\t60\t100\n2\t100.2\t100\t100\n3\t100.3\t80\t120\n"
+    first, last, truncated = parse_capture_frame_metadata(output, expected_packet_count=3)
+    assert first == Decimal("100.1")
+    assert last == Decimal("100.3")
+    assert truncated == 2
+
+
+def test_parse_capture_frame_metadata_rejects_empty_output_for_non_empty_capture() -> None:
+    with pytest.raises(AnalysisError) as exc:
+        parse_capture_frame_metadata("", expected_packet_count=1)
+    assert exc.value.code is ErrorCode.MALFORMED_TOOL_OUTPUT
+    assert exc.value.stage == "tshark_epochs"
+
+
+def test_parse_capture_frame_metadata_rejects_fewer_frames_than_capinfos() -> None:
+    output = "1\t100.1\t100\t100\n2\t100.2\t100\t100\n"
+    with pytest.raises(AnalysisError) as exc:
+        parse_capture_frame_metadata(output, expected_packet_count=3)
+    assert exc.value.code is ErrorCode.MALFORMED_TOOL_OUTPUT
+    assert exc.value.stage == "tshark_epochs"
+
+
+def test_parse_capture_frame_metadata_accepts_complete_output() -> None:
+    output = "1\t100.1\t100\t100\n2\t100.2\t100\t100\n"
+    assert parse_capture_frame_metadata(output, expected_packet_count=2) == (
+        Decimal("100.1"),
+        Decimal("100.2"),
+        0,
+    )
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "1\t100.1\t60\n",
+        "frame\t100.1\t60\t100\n",
+        "1\t100.1\t101\t100\n",
+    ],
+)
+def test_parse_capture_frame_metadata_rejects_malformed_rows(output: str) -> None:
+    with pytest.raises(AnalysisError) as exc:
+        parse_capture_frame_metadata(output, expected_packet_count=1)
+    assert exc.value.code is ErrorCode.MALFORMED_TOOL_OUTPUT
+    assert exc.value.stage == "tshark_epochs"

@@ -46,7 +46,11 @@ def _stdout_for(tool: str, argv: list[str]) -> str:
     if tool == "capinfos":
         if "-c" in argv:
             return "Number of packets: 7\n"
-        return "File type = Wireshark/tcpdump/... - pcapng\n"
+        return (
+            "File type = Wireshark/tcpdump/... - pcapng\n"
+            "File encapsulation: Ethernet\n"
+            "Capture length = 262144\n"
+        )
     return ""
 
 
@@ -88,6 +92,9 @@ def test_build_provenance_with_mocked_tools(
     assert prov.sha256 == _sha(content)
     assert prov.size_bytes == len(content)
     assert prov.packet_count == 7
+    assert prov.link_layer_types == ["ethernet"]
+    assert prov.snaplen == 262144
+    assert prov.truncated_packet_count is None
     assert prov.status is ProvenanceStatus.OK
     assert records, "execution records should be appended"
     assert prov.tshark_version

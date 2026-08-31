@@ -49,6 +49,10 @@ def test_t01_analyzer_matches_frozen_facts() -> None:
     assert prov.capture_format is CaptureFormat.PCAPNG
     assert prov.sha256 == PCAP_SHA256
     assert prov.packet_count == FROZEN_PACKET_COUNT
+    assert prov.link_layer_types
+    assert prov.snaplen is None or prov.snaplen > 0
+    assert prov.truncated_packet_count is not None
+    assert prov.truncated_packet_count >= 0
 
     assert len(result.streams) == FROZEN_STREAM_COUNT
     stream = result.streams[0]

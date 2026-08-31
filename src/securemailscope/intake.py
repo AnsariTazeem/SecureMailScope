@@ -28,6 +28,7 @@ from securemailscope.tshark import (
     capinfos_stats_argv,
     capinfos_version_argv,
     parse_capture_format,
+    parse_capture_link_metadata,
     parse_packet_count,
     run_tool,
     tshark_version_argv,
@@ -146,6 +147,7 @@ def build_capture_provenance(
             "intake",
             f"capture format could not be identified for {path}",
         )
+    link_layer_types, snaplen = parse_capture_link_metadata(capinfos_out)
 
     stats_out = _execute(
         capinfos_stats_argv(path),
@@ -168,6 +170,8 @@ def build_capture_provenance(
         size_bytes=size_bytes,
         capture_format=capture_format,
         packet_count=packet_count,
+        link_layer_types=link_layer_types,
+        snaplen=snaplen,
         tshark_version=tshark_version,
         capinfos_version=capinfos_version,
         status=ProvenanceStatus.OK,

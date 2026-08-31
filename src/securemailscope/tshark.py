@@ -34,6 +34,10 @@ _REASSEMBLY_PREFERENCES = ("tcp.desegment_tcp_streams:TRUE",)
 
 _VALID_INT = re.compile(r"^\d+$")
 _HEX_LINE_RE = re.compile(r"^[0-9a-fA-F]+$")
+_FILE_ENCAPSULATION_RE = re.compile(r"^\s*File encapsulation\s*[:=]\s*(.+?)\s*$")
+_INTERFACE_ENCAPSULATION_RE = re.compile(r"^\s*Encapsulation\s*[:=]\s*(.+?)\s*$")
+_FILE_SNAPLEN_RE = re.compile(r"file hdr\s*:\s*(\d+)\s*bytes", re.IGNORECASE)
+_INTERFACE_SNAPLEN_RE = re.compile(r"^\s*Capture length\s*=\s*(\d+)\s*$")
 
 
 def sanitize_argv(argv: Sequence[str]) -> list[str]:
@@ -289,8 +293,22 @@ def build_follow_argv(pcap_path: Path, stream_id: int) -> list[str]:
 
 
 def build_epochs_argv(pcap_path: Path) -> list[str]:
-    """TShark command returning ``frame.time_epoch`` for *every* packet."""
-    return ["tshark", "-r", str(pcap_path), "-T", "fields", "-e", "frame.time_epoch"]
+    """TShark command returning epoch and captured/original length for every frame."""
+    return [
+        "tshark",
+        "-r",
+        str(pcap_path),
+        "-T",
+        "fields",
+        "-e",
+        "frame.number",
+        "-e",
+        "frame.time_epoch",
+        "-e",
+        "frame.cap_len",
+        "-e",
+        "frame.len",
+    ]
 
 
 def decode_as_arg(port: int, dissector: str) -> str:
@@ -344,6 +362,56 @@ def parse_capture_format(tool_output: str) -> CaptureFormat:
     if "pcap" in lowered:
         return CaptureFormat.PCAP
     return CaptureFormat.UNKNOWN
+
+
+def _normalize_link_layer(value: str) -> str:
+    normalized = " ".join(value.strip().split())
+    normalized = re.sub(r"\s+\([^)]*\)\s*$", "", normalized).strip().lower()
+    if normalized in {"", "unknown", "not set", "(not set)", "per packet"}:
+        return ""
+    return normalized
+
+
+def parse_capture_link_metadata(tool_output: str) -> tuple[list[str], int | None]:
+    """Parse deterministic link-layer types and an unambiguous snaplen from capinfos."""
+    link_layer_types: list[str] = []
+    seen_link_layers: set[str] = set()
+    snaplens: list[int] = []
+
+    for line in tool_output.splitlines():
+        encapsulation_match = _FILE_ENCAPSULATION_RE.match(line)
+        if encapsulation_match is None:
+            encapsulation_match = _INTERFACE_ENCAPSULATION_RE.match(line)
+        if encapsulation_match is not None:
+            link_layer = _normalize_link_layer(encapsulation_match.group(1))
+            if link_layer and link_layer not in seen_link_layers:
+                seen_link_layers.add(link_layer)
+                link_layer_types.append(link_layer)
+
+        file_snaplen = _FILE_SNAPLEN_RE.search(line)
+        interface_snaplen = _INTERFACE_SNAPLEN_RE.match(line)
+        snaplen_text = (
+            file_snaplen.group(1)
+            if file_snaplen is not None
+            else interface_snaplen.group(1)
+            if interface_snaplen is not None
+            else None
+        )
+        if snaplen_text is not None:
+            snaplen = int(snaplen_text)
+            if snaplen > 0:
+                snaplens.append(snaplen)
+
+    if not link_layer_types:
+        raise AnalysisError(
+            ErrorCode.MALFORMED_TOOL_OUTPUT,
+            "intake",
+            "capture link-layer metadata not present in capinfos output",
+        )
+
+    distinct_snaplens = list(dict.fromkeys(snaplens))
+    snaplen = distinct_snaplens[0] if len(distinct_snaplens) == 1 else None
+    return link_layer_types, snaplen
 
 
 def parse_stream_ids(tool_output: str) -> list[int]:
@@ -438,6 +506,63 @@ def parse_epoch_extremes(tool_output: str) -> tuple[Decimal | None, Decimal | No
     if not epochs:
         return None, None
     return min(epochs), max(epochs)
+
+
+def parse_capture_frame_metadata(
+    tool_output: str,
+    *,
+    expected_packet_count: int,
+) -> tuple[Decimal | None, Decimal | None, int]:
+    """Parse complete all-frame metadata and count distinct shortened frames."""
+    epochs: list[Decimal] = []
+    observed_frames: set[int] = set()
+    truncated_frames: set[int] = set()
+    for line in tool_output.splitlines():
+        if not line.strip():
+            continue
+        columns = line.split("\t")
+        if len(columns) != 4:
+            raise AnalysisError(
+                ErrorCode.MALFORMED_TOOL_OUTPUT,
+                "tshark_epochs",
+                "capture frame row does not have the expected number of fields",
+            )
+        frame_text, epoch_text, captured_text, original_text = columns
+        try:
+            frame_number = int(frame_text)
+            epoch = Decimal(epoch_text)
+            captured_length = int(captured_text)
+            original_length = int(original_text)
+        except (ValueError, ArithmeticError):
+            raise AnalysisError(
+                ErrorCode.MALFORMED_TOOL_OUTPUT,
+                "tshark_epochs",
+                "capture frame metadata contains a non-numeric value",
+            ) from None
+        if frame_number < 1 or captured_length < 0 or original_length < 0:
+            raise AnalysisError(
+                ErrorCode.MALFORMED_TOOL_OUTPUT,
+                "tshark_epochs",
+                "capture frame metadata contains an out-of-range value",
+            )
+        if captured_length > original_length:
+            raise AnalysisError(
+                ErrorCode.MALFORMED_TOOL_OUTPUT,
+                "tshark_epochs",
+                "captured frame length exceeds original frame length",
+            )
+        epochs.append(epoch)
+        observed_frames.add(frame_number)
+        if captured_length < original_length:
+            truncated_frames.add(frame_number)
+
+    if len(observed_frames) != expected_packet_count:
+        raise AnalysisError(
+            ErrorCode.MALFORMED_TOOL_OUTPUT,
+            "tshark_epochs",
+            "all-frame metadata count does not match authoritative packet count",
+        )
+    return min(epochs), max(epochs), len(truncated_frames)
 
 
 def detect_truncation_warning(stderr_diagnostic: str) -> bool:

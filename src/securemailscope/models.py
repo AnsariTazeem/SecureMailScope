@@ -257,6 +257,9 @@ class CaptureProvenance(BaseModel):
     packet_count: int
     first_epoch_seconds: Decimal | None = None
     last_epoch_seconds: Decimal | None = None
+    link_layer_types: list[str] = Field(default_factory=list)
+    snaplen: int | None = Field(default=None, ge=1)
+    truncated_packet_count: int | None = Field(default=None, ge=0)
     tshark_version: str = ""
     capinfos_version: str = ""
     status: ProvenanceStatus

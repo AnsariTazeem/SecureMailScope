@@ -16,6 +16,7 @@ from securemailscope.analyze import (
 )
 from securemailscope.errors import AnalysisError, ErrorCode
 from securemailscope.models import Direction, DirectionBasis
+from securemailscope.tshark import parse_capture_frame_metadata
 
 
 def _row(
@@ -200,6 +201,28 @@ def test_malformed_flag_marks_stream_reassembly_error() -> None:
     )
     frames, reassembly, _ = _parse_observations(lines)
     assert reassembly == {0}
+
+
+def test_malformed_packet_does_not_imply_captured_frame_truncation() -> None:
+    malformed_line = _row(
+        "1",
+        "1800000000.100000000",
+        "10.0.0.1",
+        "10.0.0.2",
+        "49100",
+        "2525",
+        "0",
+        "1000",
+        malformed="1",
+    )
+    _, reassembly, malformed_capture = _parse_observations(malformed_line)
+    _, _, truncated_count = parse_capture_frame_metadata(
+        "1\t1800000000.100000000\t100\t100\n",
+        expected_packet_count=1,
+    )
+    assert reassembly == {0}
+    assert malformed_capture is True
+    assert truncated_count == 0
 
 
 def test_attach_reassembled_endpoint_mismatch_does_not_copy_plaintext() -> None:
