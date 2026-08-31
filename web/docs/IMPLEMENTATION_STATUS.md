@@ -15,8 +15,9 @@
 - F2D Proof Map: implemented and verified on 31 August 2026
 - F2E Findings: Policy Risk and ML Anomaly views implemented and technically
   verified on 31 August 2026
-- Remaining frontend milestones are pending; Compare and Report remain
-  placeholders
+- F2F Secure vs Insecure Session Compare: implemented and technically verified
+  on 31 August 2026
+- Report remains a placeholder
 - Production frontend API: pending backend implementation and integration
   verification
 
@@ -180,6 +181,41 @@ focus return were not browser-automated. Responsive table/card and Sheet markup,
 accessible controls, URL state transitions, and compiled interaction paths were
 reviewed directly.
 
+## F2F Session Compare verification record
+
+Session Compare now loads and re-validates the existing `AnalysisResult`
+through `AnalysisDataSource`, applies the graph-wide integrity validator, and
+builds a narrow display model on the server. Session A and Session B are backed
+by `a` and `b` URL parameters; omitted parameters receive a deterministic pair,
+while malformed, repeated, or unavailable supplied IDs fail closed without a
+fallback substitution.
+
+The workspace renders identity and capture provenance, declared email-to-TLS
+transitions, a bounded allowlist of cryptographic observations and facts,
+separate deterministic Policy Risk and ML Anomaly sections, explicit evidence
+references, and declared limitations. Desktop tables and mobile stacked cards
+represent the same exact rows. Differences compare only displayed values and
+declared states; they do not create security labels or evidence relationships.
+Evidence is resolved only through explicit contract references and uses the
+existing safe evidence inspector. No contract, prototype fixture, API shape,
+dependency, or completed page changed.
+
+| Check | Observed result on 31 August 2026 |
+| --- | --- |
+| `npm run lint` | Passed with zero warnings and zero errors. |
+| `npx tsc --noEmit` | Passed. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, build-time TypeScript, static generation, finalization, and all route generation completed. Compare was emitted as a dynamic server-rendered route. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| Contract and privacy review | Passed. Comparison-normalized values are limited by type to TLS version, cipher suite, key-share group, PSK exchange mode, and the TLS 1.3 certificate-unavailable marker. Facts are limited to TLS upgrade completion, Forward Secrecy, and certificate observability. Evidence relationships use explicit IDs or declared fact sources only. |
+| Loopback production smoke test | Passed on the final build at `127.0.0.1:3203`. The default, explicit, and direct swapped `a`/`b` pairs returned HTTP 200 and preserved the expected Session A/B IDs. Verified 19 exact displayed differences, all six categories, both responsive layout branches, TLS 1.3 and `session_secrets_required`, `not_observable`, `not_assessed`, ML `not_run`, separate Policy Risk/ML copy, prototype disclosure, and Session X-Ray, Proof Map, and Policy Findings links. An unavailable but well-formed session selector returned the explicit selection failure with `noindex, nofollow`; the malformed analysis route returned the streamed route not-found state with noindex metadata. Explicit unsafe fixture fields and raw normalized-value markers were absent. The server was stopped afterward. |
+| `git diff --check` | Passed after the documentation update. |
+
+No browser executable or browser-test dependency is present. Screenshot-level
+desktop/mobile appearance, hydrated selector clicks, focus behavior, and browser
+console output were not automated. Both responsive representations and the
+compiled URL navigation/swap path were inspected, and both selector orders were
+verified through direct production HTTP requests.
+
 ## Blockers and limitations
 
 - The production HTTP endpoints in
@@ -194,10 +230,10 @@ reviewed directly.
   were therefore exercised with dependency-free, type-checked local
   verification against in-memory fixture copies; automated browser component
   tests remain absent.
-- F2A through F2E are implemented. Compare and Report remain pending; their
-  existing placeholders are preserved.
+- F2A through F2F are implemented. Report remains pending and its existing
+  placeholder is preserved.
 
 ## Next exact milestone action
 
-F2E implementation and technical verification are complete. Do not begin
-Compare, Report, or another frontend milestone without explicit authorization.
+F2F implementation and technical verification are complete. Do not begin
+Report or another frontend milestone without explicit authorization.

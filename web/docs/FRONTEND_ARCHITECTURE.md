@@ -7,9 +7,9 @@ starting an offline capture assessment and, in later milestones, navigating a
 validated Chain-of-Proof result. It does not analyze packets, calculate policy
 findings, infer cryptographic properties, or repair missing evidence.
 
-The current implementation covers the F1 workflow. Result exploration routes
-exist only as explicit placeholders so navigation and URLs can stabilize
-without implying that F2 or later milestones are complete.
+The current implementation covers the F1 workflow and the authorized F2A–F2F
+result exploration milestones. The Report route remains an explicit
+placeholder and backend integration remains pending.
 
 ## App Router and route map
 
@@ -22,12 +22,12 @@ small and delegate interactive behavior to feature components.
 | `/analysis/new` | Start Analysis composition | F1 implemented |
 | `/analysis/processing` | Client polling/progress workflow | F1 implemented |
 | `/analysis/complete` | Client result handoff and disclosure | F1 implemented |
-| `/analysis/[analysisId]/overview` | Result overview | Placeholder; F2 pending |
-| `/analysis/[analysisId]/sessions` | Session index | Placeholder |
-| `/analysis/[analysisId]/sessions/[sessionId]` | Session detail | Placeholder |
-| `/analysis/[analysisId]/proof-map` | Evidence graph | Placeholder |
-| `/analysis/[analysisId]/findings` | Findings | Placeholder |
-| `/analysis/[analysisId]/compare` | Comparison | Placeholder |
+| `/analysis/[analysisId]/overview` | Result overview | F2A implemented |
+| `/analysis/[analysisId]/sessions` | Session index | F2B implemented |
+| `/analysis/[analysisId]/sessions/[sessionId]` | Session detail | F2C implemented |
+| `/analysis/[analysisId]/proof-map` | Evidence graph | F2D implemented |
+| `/analysis/[analysisId]/findings` | Policy Risk and ML Anomaly | F2E implemented |
+| `/analysis/[analysisId]/compare` | URL-backed two-session comparison | F2F implemented |
 | `/analysis/[analysisId]/report` | Report access | Placeholder |
 
 Server Components are the default for route composition and static content.
@@ -91,7 +91,7 @@ Capture/dropzone or labelled prototype choice
   -> status polling on /analysis/processing
   -> AnalysisDataSource.getResult
   -> /analysis/complete disclosure
-  -> later evidence routes (pending)
+  -> validated evidence routes
 ```
 
 The upload path accepts exactly one non-empty `.pcap` or `.pcapng` file within
