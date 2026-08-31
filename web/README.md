@@ -44,15 +44,16 @@ must fail honestly when that API is unavailable or returns invalid data.
 | `/analysis/new` | F1 capture selection, validation, authorization, and prototype selection. |
 | `/analysis/processing` | F1 deterministic progress and failure handling. |
 | `/analysis/complete` | F1 completion handoff and dataset disclosure. |
-| `/analysis/[analysisId]/overview` | Reserved placeholder for F2. |
-| `/analysis/[analysisId]/sessions` | Reserved placeholder for a later milestone. |
-| `/analysis/[analysisId]/sessions/[sessionId]` | Reserved session-detail placeholder. |
-| `/analysis/[analysisId]/proof-map` | Reserved placeholder. |
-| `/analysis/[analysisId]/findings` | Reserved placeholder. |
-| `/analysis/[analysisId]/compare` | Reserved placeholder. |
-| `/analysis/[analysisId]/report` | Reserved placeholder. |
+| `/analysis/[analysisId]/overview` | Analysis Overview — F2A implemented. |
+| `/analysis/[analysisId]/sessions` | Sessions Explorer — F2B implemented. |
+| `/analysis/[analysisId]/sessions/[sessionId]` | Session X-Ray — F2C implemented. |
+| `/analysis/[analysisId]/proof-map` | Proof Map — F2D implemented. |
+| `/analysis/[analysisId]/findings` | Findings — F2E implemented. |
+| `/analysis/[analysisId]/compare` | Session Compare — F2F implemented. |
+| `/analysis/[analysisId]/report` | Analysis Report — F2G implemented. |
 
-Placeholder routes intentionally do not fabricate analysis content.
+Production backend/API integration remains pending. The implemented result
+routes currently use the clearly disclosed prototype dataset.
 
 ## Structure
 

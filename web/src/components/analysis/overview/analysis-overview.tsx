@@ -654,7 +654,7 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[52rem] border-collapse text-left text-xs">
                 <caption className="sr-only">
-                  Reconstructed sessions linked to future Session X-Ray routes
+                  Reconstructed sessions with Session X-Ray navigation
                 </caption>
                 <thead>
                   <tr className="border-b border-neutral-200 text-[10px] uppercase tracking-[0.06em] text-neutral-500">
@@ -717,7 +717,7 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
                         <Link
                           href={`/analysis/${result.chain.analysis.analysis_id}/sessions/${review.session.session_id}`}
                           className="inline-flex items-center gap-1 rounded-sm font-medium text-neutral-950 underline decoration-neutral-300 underline-offset-4 outline-none hover:decoration-neutral-950 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
-                          aria-label={`Open Session X-Ray placeholder for ${review.session.session_id}`}
+                          aria-label={`Open Session X-Ray for ${review.session.session_id}`}
                         >
                           Open
                           <ArrowRight className="size-3" aria-hidden />
@@ -783,7 +783,7 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
                     href={`/analysis/${result.chain.analysis.analysis_id}/sessions/${review.session.session_id}`}
                     className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white text-sm font-medium text-neutral-900 outline-none hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
                   >
-                    Open Session X-Ray placeholder
+                    Open Session X-Ray
                     <ArrowRight className="size-4" aria-hidden />
                   </Link>
                 </article>

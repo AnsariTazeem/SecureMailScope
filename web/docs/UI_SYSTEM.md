@@ -57,7 +57,7 @@ the detail pane preserves evidence context.
 - Status badges pair concise text with semantic color.
 - Evidence references use stable identifiers and link to their source context
   when the destination exists.
-- `unknown`, `not_observable`, `not_assessable`, and `not_applicable` are shown
+- `unknown`, `not_observable`, `not_assessed`, and `not_applicable` are shown
   verbatim with an explanation when needed.
 - Passive TLS 1.3 certificate limitations are disclosed wherever certificate
   fields could otherwise appear absent or misleading.

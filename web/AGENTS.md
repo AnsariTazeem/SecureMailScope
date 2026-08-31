@@ -27,7 +27,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - The frontend presents backend contract data; it must never derive or invent
   cryptographic conclusions, findings, evidence, scores, or successful API
   results.
-- Preserve explicit `unknown`, `not_observable`, `not_assessable`, and
+- Preserve explicit `unknown`, `not_observable`, `not_assessed`, and
   `not_applicable` states. Ordinary passive TLS 1.3 captures do not expose
   certificate contents without decryption material.
 - Keep deterministic Policy Risk separate from ML Anomaly. Never combine them

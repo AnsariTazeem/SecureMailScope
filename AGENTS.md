@@ -174,7 +174,7 @@ capture attempt.
 - Never derive ground truth from the analyzer being evaluated.
 - Never infer encrypted TLS 1.3 certificate contents from an undecrypted passive
   capture. Use explicit states such as `not_observable`, `unknown`,
-  `not_assessable`, or `not_applicable` where appropriate.
+  `not_assessed`, or `not_applicable` where appropriate.
 - Keep observed facts, deterministic policy conclusions, and ML outputs
   separate in code and report schemas.
 - Keep policy-risk and ML-anomaly scores separate. Never present their sum or

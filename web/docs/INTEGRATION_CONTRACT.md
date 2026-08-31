@@ -100,7 +100,7 @@ typed client failures. Retry behavior must be bounded and state-aware.
 
 - Every displayed conclusion must come from validated result data and retain
   its evidence references.
-- Preserve `unknown`, `not_observable`, `not_assessable`, and `not_applicable`;
+- Preserve `unknown`, `not_observable`, `not_assessed`, and `not_applicable`;
   do not render them as pass, fail, zero, or empty success.
 - Ordinary passive TLS 1.3 captures do not make encrypted certificate contents
   observable without decryption material.
