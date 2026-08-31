@@ -1,4 +1,4 @@
-"""Stable API error envelope and error-code enum for Commit 5B."""
+"""Stable API error envelope and error-code enum."""
 
 from __future__ import annotations
 
@@ -11,6 +11,13 @@ class ApiErrorCode(StrEnum):
     """Closed machine-readable error codes."""
 
     INVALID_REQUEST = "invalid_request"
+    UNSUPPORTED_CAPTURE_TYPE = "unsupported_capture_type"
+    EMPTY_UPLOAD = "empty_upload"
+    UPLOAD_TOO_LARGE = "upload_too_large"
+    INVALID_CAPTURE = "invalid_capture"
+    ANALYSIS_FAILED = "analysis_failed"
+    ANALYSIS_CONFLICT = "analysis_conflict"
+    ANALYSIS_CAPACITY_UNAVAILABLE = "analysis_capacity_unavailable"
     ANALYSIS_NOT_FOUND = "analysis_not_found"
     SESSION_NOT_FOUND = "session_not_found"
     EVIDENCE_NOT_FOUND = "evidence_not_found"

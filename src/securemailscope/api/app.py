@@ -1,14 +1,15 @@
-"""FastAPI application factory, routes, and error handlers for Commit 5B.
+"""FastAPI application factory, routes, and error handlers.
 
-The route handlers are thin: resolve path parameters, fetch Chain from the
-injected repository, select existing safe model/service, canonicalize response,
-enforce byte bound, add headers, return response. Business logic stays in the
-Chain and presentation layers.
+Route handlers remain adapters over the injected repository, Commit 5A
+presentation services, and Commit 6A synchronous orchestration service.
 """
 
 from __future__ import annotations
 
+import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated
 
@@ -18,6 +19,7 @@ from fastapi.responses import Response
 
 from securemailscope.api.errors import ApiErrorCode, ErrorDetail, ErrorResponse
 from securemailscope.api.models import (
+    AnalysisSubmissionResponse,
     AnalysisSummary,
     HealthResponse,
     LimitationDetail,
@@ -36,6 +38,12 @@ from securemailscope.api.responses import (
     canonical_response_bytes,
 )
 from securemailscope.api.settings import ApiSettings
+from securemailscope.api.uploads import (
+    CaptureUploadError,
+    CaptureUploadErrorCode,
+    parse_capture_upload,
+    temporary_capture_path,
+)
 from securemailscope.chain.errors import ChainValidationError, PresentationError
 from securemailscope.chain.ids import (
     COMPACT_ID_PATTERN,
@@ -46,6 +54,16 @@ from securemailscope.chain.ids import (
 )
 from securemailscope.chain.invariants import assert_chain_valid
 from securemailscope.chain.models import ChainOfProof
+from securemailscope.chain.policy.loader import load_default_policy_pack
+from securemailscope.chain.policy.models import PolicyPack
+from securemailscope.orchestration import (
+    OrchestrationDependencies,
+    OrchestrationError,
+    OrchestrationErrorCode,
+    OrchestrationExecutionContext,
+    OrchestrationSettings,
+    analyze_capture_to_chain,
+)
 from securemailscope.presentation import (
     FindingPresentation,
     build_finding_presentation,
@@ -71,6 +89,11 @@ FindingId = Annotated[str, Path(pattern=COMPACT_ID_PATTERN[PREFIX_FINDING])]
 class _AppState:
     settings: ApiSettings
     repository: AnalysisChainRepository
+    policy_pack: PolicyPack
+    orchestration_settings: OrchestrationSettings
+    orchestration_dependencies: OrchestrationDependencies | None
+    source_configuration_digest: str
+    clock: Callable[[], datetime]
 
 
 def _get_state(request: Request) -> _AppState:
@@ -85,6 +108,33 @@ def _get_repo(request: Request) -> AnalysisChainRepository:
     return _get_state(request).repository
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _source_configuration_digest(settings: ApiSettings) -> str:
+    content = canonical_response_bytes(
+        {
+            "max_input_bytes": settings.max_upload_bytes,
+            "timeout_seconds": settings.analysis_timeout_seconds,
+        }
+    )
+    return hashlib.sha256(content).hexdigest()
+
+
+def _execution_context(state: _AppState) -> OrchestrationExecutionContext:
+    boundary_time = state.clock()
+    return OrchestrationExecutionContext(
+        source_configuration_digest=state.source_configuration_digest,
+        analyzer_version=state.settings.analyzer_version,
+        profile_id=state.settings.analysis_profile_id,
+        created_at=boundary_time,
+        started_at=boundary_time,
+        completed_at=boundary_time,
+        evaluated_at=boundary_time,
+    )
+
+
 def _error_response(status_code: int, code: ApiErrorCode, message: str) -> Response:
     body = ErrorResponse(error=ErrorDetail(code=code, message=message))
     content = canonical_response_bytes(body.model_dump(mode="python"))
@@ -97,16 +147,60 @@ def _error_response(status_code: int, code: ApiErrorCode, message: str) -> Respo
     return response
 
 
-def _ok_response(content: bytes, media_type: str) -> Response:
+def _ok_response(content: bytes, media_type: str, *, status_code: int = 200) -> Response:
     return Response(
         content=content,
-        status_code=200,
+        status_code=status_code,
         media_type=media_type,
     )
 
 
 def _documented_error(description: str) -> dict[str, object]:
     return {"model": ErrorResponse, "description": description}
+
+
+def _upload_error_response(exc: CaptureUploadError) -> Response:
+    mapping = {
+        CaptureUploadErrorCode.INVALID_MULTIPART: (
+            422,
+            ApiErrorCode.INVALID_REQUEST,
+            "malformed multipart request",
+        ),
+        CaptureUploadErrorCode.UNSUPPORTED_CAPTURE_TYPE: (
+            415,
+            ApiErrorCode.UNSUPPORTED_CAPTURE_TYPE,
+            "capture extension is not supported",
+        ),
+        CaptureUploadErrorCode.EMPTY_UPLOAD: (
+            422,
+            ApiErrorCode.EMPTY_UPLOAD,
+            "capture upload is empty",
+        ),
+        CaptureUploadErrorCode.UPLOAD_TOO_LARGE: (
+            413,
+            ApiErrorCode.UPLOAD_TOO_LARGE,
+            "capture upload exceeds size limit",
+        ),
+    }
+    return _error_response(*mapping[exc.code])
+
+
+def _orchestration_error_response(exc: OrchestrationError) -> Response:
+    if exc.code is OrchestrationErrorCode.INVALID_CAPTURE:
+        return _error_response(422, ApiErrorCode.INVALID_CAPTURE, "capture validation failed")
+    if exc.code is OrchestrationErrorCode.REPOSITORY_CONFLICT:
+        return _error_response(
+            409,
+            ApiErrorCode.ANALYSIS_CONFLICT,
+            "analysis conflicts with an existing result",
+        )
+    if exc.code is OrchestrationErrorCode.REPOSITORY_CAPACITY:
+        return _error_response(
+            503,
+            ApiErrorCode.ANALYSIS_CAPACITY_UNAVAILABLE,
+            "analysis capacity is unavailable",
+        )
+    return _error_response(500, ApiErrorCode.ANALYSIS_FAILED, "analysis failed")
 
 
 def _require_chain(repo: AnalysisChainRepository, analysis_id: str) -> ChainOfProof:
@@ -165,6 +259,37 @@ async def health(request: Request) -> Response:
     resp = _ok_response(content, "application/json")
     add_common_headers(resp, content)
     return resp
+
+
+async def submit_analysis(request: Request) -> Response:
+    """Accept one bounded capture and delegate once to Commit 6A orchestration."""
+    state = _get_state(request)
+    async with parse_capture_upload(
+        request,
+        max_upload_bytes=state.settings.max_upload_bytes,
+    ) as parsed:
+        async with temporary_capture_path(
+            parsed,
+            max_upload_bytes=state.settings.max_upload_bytes,
+        ) as capture_path:
+            result = analyze_capture_to_chain(
+                capture_path,
+                registry=state.repository,
+                policy_pack=state.policy_pack,
+                context=_execution_context(state),
+                settings=state.orchestration_settings,
+                dependencies=state.orchestration_dependencies,
+            )
+
+    body = AnalysisSubmissionResponse(
+        api_version=state.settings.api_version,
+        analysis_id=result.analysis_id,
+        analysis_status=result.chain.analysis.analysis_status,
+    )
+    content = canonical_response_bytes(body.model_dump(mode="python"))
+    response = _ok_response(content, "application/json", status_code=201)
+    add_common_headers(response, content)
+    return response
 
 
 async def get_analysis(
@@ -409,8 +534,11 @@ def create_app(
     *,
     settings: ApiSettings | None = None,
     repository: AnalysisChainRepository | None = None,
+    policy_pack: PolicyPack | None = None,
+    orchestration_dependencies: OrchestrationDependencies | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> FastAPI:
-    """Build a FastAPI application over injected Chain repository and settings.
+    """Build the API over injected storage and orchestration boundaries.
 
     The default application repository is empty. Never seed production
     application state with test/demo data.
@@ -419,6 +547,8 @@ def create_app(
         settings = ApiSettings()
     if repository is None:
         repository = InMemoryAnalysisChainRepository(max_entries=settings.max_repository_entries)
+    if policy_pack is None:
+        policy_pack = load_default_policy_pack()
 
     app = FastAPI(
         title="SecureMailScope",
@@ -427,7 +557,18 @@ def create_app(
         docs_url="/api/v1/docs",
         redoc_url="/api/v1/redoc",
     )
-    app.state.api_state = _AppState(settings=settings, repository=repository)
+    app.state.api_state = _AppState(
+        settings=settings,
+        repository=repository,
+        policy_pack=policy_pack,
+        orchestration_settings=OrchestrationSettings(
+            max_input_bytes=settings.max_upload_bytes,
+            timeout_seconds=settings.analysis_timeout_seconds,
+        ),
+        orchestration_dependencies=orchestration_dependencies,
+        source_configuration_digest=_source_configuration_digest(settings),
+        clock=clock or _utc_now,
+    )
 
     if settings.allowed_origins:
         from fastapi.middleware.cors import CORSMiddleware
@@ -435,7 +576,7 @@ def create_app(
         app.add_middleware(
             CORSMiddleware,
             allow_origins=list(settings.allowed_origins),
-            allow_methods=["GET"],
+            allow_methods=["GET", "POST"],
             allow_headers=["*"],
             allow_credentials=False,
         )
@@ -449,6 +590,17 @@ def create_app(
     @app.exception_handler(_NotFound)
     async def _not_found_handler(request: Request, exc: _NotFound) -> Response:
         return _error_response(404, exc.code, exc.message)
+
+    @app.exception_handler(CaptureUploadError)
+    async def _upload_error_handler(request: Request, exc: CaptureUploadError) -> Response:
+        return _upload_error_response(exc)
+
+    @app.exception_handler(OrchestrationError)
+    async def _orchestration_error_handler(
+        request: Request,
+        exc: OrchestrationError,
+    ) -> Response:
+        return _orchestration_error_response(exc)
 
     @app.exception_handler(ChainValidationError)
     async def _chain_validation_handler(request: Request, exc: ChainValidationError) -> Response:
@@ -466,6 +618,36 @@ def create_app(
         methods=["GET"],
         response_model=HealthResponse,
         responses={500: _documented_error("Internal error")},
+    )
+    app.add_api_route(
+        "/api/v1/analyses",
+        submit_analysis,
+        methods=["POST"],
+        status_code=201,
+        response_model=AnalysisSubmissionResponse,
+        responses={
+            409: _documented_error("Analysis conflict"),
+            413: _documented_error("Upload too large"),
+            415: _documented_error("Unsupported capture extension"),
+            422: _documented_error("Malformed multipart request or invalid capture"),
+            500: _documented_error("Analysis or internal failure"),
+            503: _documented_error("Analysis capacity unavailable"),
+        },
+        openapi_extra={
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "multipart/form-data": {
+                        "schema": {
+                            "type": "object",
+                            "required": ["capture"],
+                            "properties": {"capture": {"type": "string", "format": "binary"}},
+                            "additionalProperties": False,
+                        }
+                    }
+                },
+            }
+        },
     )
     app.add_api_route(
         "/api/v1/analyses/{analysis_id}",

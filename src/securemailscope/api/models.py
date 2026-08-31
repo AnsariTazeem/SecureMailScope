@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from securemailscope.api.settings import ApiVersion
 from securemailscope.chain.enums import (
+    AnalysisStatus,
     ChainObservability,
     EngineStatus,
     EventStatus,
@@ -27,6 +28,12 @@ class _ApiModel(BaseModel):
 class HealthResponse(_ApiModel):
     status: str
     api_version: ApiVersion
+
+
+class AnalysisSubmissionResponse(_ApiModel):
+    api_version: ApiVersion
+    analysis_id: str
+    analysis_status: AnalysisStatus
 
 
 class LimitationDetail(_ApiModel):

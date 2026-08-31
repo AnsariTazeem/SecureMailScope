@@ -470,10 +470,11 @@ class TestReadOnlyBoundary:
             resp = await c.post("/api/v1/health")
         assert resp.status_code == 405
 
-    async def test_post_analyses_not_found(self, app):
+    async def test_post_analyses_rejects_malformed_multipart(self, app):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             resp = await c.post("/api/v1/analyses", json={})
-        assert resp.status_code == 404
+        assert resp.status_code == 422
+        assert resp.json()["error"]["code"] == "invalid_request"
 
     async def test_put_analyses_not_found(self, app):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
@@ -566,7 +567,7 @@ class TestResponseBounds:
 
 
 class TestOpenApiContract:
-    def test_openapi_documents_exact_read_only_routes_and_models(self, app):
+    def test_openapi_documents_exact_routes_and_models(self, app):
         schema = app.openapi()
         assert app.openapi_url == "/api/v1/openapi.json"
         expected_models = {
@@ -583,7 +584,8 @@ class TestOpenApiContract:
             "/api/v1/analyses/{analysis_id}/findings/{finding_id}/artifacts/{artifact_format}"
         )
 
-        assert set(schema["paths"]) == {*expected_models, artifact_path}
+        submission_path = "/api/v1/analyses"
+        assert set(schema["paths"]) == {*expected_models, artifact_path, submission_path}
         for path, model_name in expected_models.items():
             operation = schema["paths"][path]
             assert set(operation) == {"get"}
@@ -613,4 +615,15 @@ class TestOpenApiContract:
         assert artifact_error["$ref"] == "#/components/schemas/ErrorResponse"
 
         assert "ErrorResponse" in schema["components"]["schemas"]
-        assert "/api/v1/analyses" not in schema["paths"]
+        submission = schema["paths"][submission_path]
+        assert set(submission) == {"post"}
+        operation = submission["post"]
+        success_schema = operation["responses"]["201"]["content"]["application/json"]["schema"]
+        assert success_schema["$ref"] == "#/components/schemas/AnalysisSubmissionResponse"
+        request_schema = operation["requestBody"]["content"]["multipart/form-data"]["schema"]
+        assert request_schema["required"] == ["capture"]
+        assert request_schema["properties"]["capture"] == {
+            "type": "string",
+            "format": "binary",
+        }
+        assert request_schema["additionalProperties"] is False

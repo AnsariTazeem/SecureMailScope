@@ -328,11 +328,12 @@ class TestCors:
 # ---------------------------------------------------------------------------
 
 
-class TestReadOnlyBoundary:
-    async def test_no_post_analyses_route(self, app):
+class TestMutationBoundary:
+    async def test_post_analyses_requires_multipart_capture(self, app):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             resp = await c.post("/api/v1/analyses", json={})
-        assert resp.status_code == 404
+        assert resp.status_code == 422
+        assert resp.json()["error"]["code"] == "invalid_request"
 
     async def test_post_put_patch_delete_cannot_modify(self, app, chain):
         aid = chain.analysis.analysis_id
