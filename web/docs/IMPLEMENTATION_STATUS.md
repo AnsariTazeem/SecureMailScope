@@ -11,8 +11,9 @@
 - F2A Analysis Overview: implemented and verified on 30 August 2026
 - F2B Sessions Explorer: implementation and technical verification complete on
   30 August 2026
-- F2C through F8: pending; Session X-Ray, Proof Map, Findings, Compare, and
-  Report remain placeholders
+- F2C Session X-Ray: implemented and verified on 31 August 2026
+- F2D Proof Map: implemented and verified on 31 August 2026
+- F2E through F8: pending; Findings, Compare, and Report remain placeholders
 - Production frontend API: pending backend implementation and integration
   verification
 
@@ -70,6 +71,73 @@ only the narrow metadata view model needed by the explorer.
 | Loopback route smoke test | Passed on `127.0.0.1:3021`. The prototype Sessions Explorer, invalid-analysis state, and unchanged Session X-Ray placeholder returned HTTP 200 with expected markers. Both stable fixture session IDs, TLS-transition labels, linked-finding states, `not_run` ML state, and prototype disclosure were present. The invalid route contained `robots=noindex`. The server was stopped afterward. |
 | `git diff --check` | Passed. |
 
+## F2C Session X-Ray verification record
+
+Session X-Ray now fetches and re-validates the existing AnalysisResult envelope,
+fails closed through a typed graph-integrity validator, preserves contract event
+and evidence ordering, and renders session identity, typed protocol events,
+cryptographic observations and facts, TLS 1.3 certificate observability,
+direct and through-source evidence relationships, deterministic policy findings,
+separate ML Anomaly state, and declared limitations. No contract, prototype
+fixture, API shape, dependency, or package configuration was changed for the
+F2C correctness correction.
+
+| Check | Observed result on 31 August 2026 |
+| --- | --- |
+| `npm run lint` | Passed with zero warnings and zero errors. |
+| `npx tsc --noEmit` | Passed with Node.js 22.22.3 and TypeScript 5.9.3. |
+| Focused graph-integrity verification | Passed against in-memory copies of the validated prototype result after compiling the pure TypeScript view-model modules to `/tmp`. Verified duplicate IDs, unresolved evidence, cross-session and cross-capture evidence, unresolved fact sources, broken finding/evaluation and finding/recommendation relationships, fact-source cycles, valid transitive fact evidence, duplicate sequence-index occurrence ordering, explicit `not_observable`, Forward Secrecy `not_assessed`, neutral capability labelling, and frame-array order. The canonical fixture was not modified. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, build-time TypeScript checking, static generation, and all route generation completed. Session X-Ray was emitted as a dynamic server-rendered route. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| Loopback production smoke test | Passed on `127.0.0.1:3139`. Both prototype Session X-Ray routes, Sessions Explorer links, secure TLS state, insecure plaintext-continuation state, Forward Secrecy `Not assessed`, TLS 1.3 certificate `not observable` disclosure, evidence-inspector markers, invalid analysis/session routes, and streamed `robots=noindex` metadata were verified. The unsupported `TLS capability advertised` label was absent. The server was stopped afterward. |
+| `git diff --check` | Passed after the F2C source correction. |
+
+## F2D Proof Map verification record
+
+The Proof Map now fetches through `AnalysisDataSource`, re-validates the result
+with the existing Zod envelope, and fails closed through a graph-wide integrity
+validator. The primary visualization is one deduplicated interactive
+`@xyflow/react` canvas with deterministic capture, session, evidence, transition
+event, observation, derived fact, and policy-finding lanes. Positions use only
+entity type, declared session ownership, sequence/frame occurrence, and stable
+ID; layout does not create relationships. Direct evidence is solid restrained
+green, transitive fact sources are dashed slate and labelled exactly **Evidence
+through declared sources**, and deterministic policy edges are purple. Policy
+Risk and ML Anomaly remain separate, and no anomaly edge is inferred.
+
+The selector exposes All sessions and each individual session, defaults to the
+session with the declared finding, and filters entity/state visibility without
+reconnecting edges. Node and edge inspectors use responsive Sheets and reuse the
+Session X-Ray evidence inspector for safe evidence. The approximately `68dvh`
+mobile canvas retains pan/zoom controls and hides its minimap; the exact
+per-session ledger remains collapsed below the canvas. The large duplicate
+direct-evidence grid and repeated declared-path rows are removed.
+
+Validated prototype graph counts are: secure session
+`ses_05a2650d13a55335`, 30 nodes / 36 canvas edges; insecure session
+`ses_3ac703c890cdeada`, 15 nodes / 21 canvas edges; All sessions, 45 deduplicated
+nodes / 57 canvas edges. The full ledger remains 61 relationships because four
+explicit rule-evaluation relationships are retained in the audit fallback
+without introducing a separate rule-evaluation lane on the requested canvas.
+
+| Check | Observed result on 31 August 2026 |
+| --- | --- |
+| `npm run lint` | Passed with zero warnings and zero errors after the interactive-canvas correction. |
+| `npx tsc --noEmit` | Passed after the interactive-canvas correction. |
+| Focused graph-integrity verification | Passed against in-memory copies of the prototype result after compiling the pure validator to `/tmp`. Verified the valid graph and rejection of unresolved evidence, cross-session fact sources, fact-source cycles, contradictory Policy Risk contributions, and unresolved explicit anomaly links. The canonical fixture was not modified. |
+| `npm run build` | Passed against the final source with Next.js 16.3.3 Turbopack; compilation, build-time TypeScript, static generation, finalization, and all route generation completed. Proof Map was emitted as a dynamic server-rendered route. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| Loopback production smoke test | Passed on the final production build at `127.0.0.1:3146`. Verified the valid Prototype Analysis Dataset Proof Map, invalid analysis-ID state and `noindex`, prioritized default scope, all three node/edge count pairs, React Flow canvas/control markup, exact transitive label, collapsed ledgers, TLS 1.3 session-secrets limitation, distinct state vocabulary, removal of repeated path/direct-evidence grids, and absence of fixture-only unsafe normalized-value markers. Direct Session X-Ray routes for both prototype sessions and the Findings placeholder were also reachable during loopback checks. The server was stopped afterward. |
+| `git diff --check` | Passed. |
+
+F2D is implemented and verified through lint, TypeScript, focused integrity
+checks, the default Turbopack production build, audit, and loopback smoke
+coverage. No browser executable or browser-test dependency is present in the
+workspace, so pointer/touch gestures, responsive Sheet placement, focus return,
+and screenshot-level desktop/mobile appearance were not browser-automated in
+this verification record; the responsive markup and compiled interaction paths
+were inspected instead.
+
 ## Blockers and limitations
 
 - The production HTTP endpoints in
@@ -80,12 +148,14 @@ only the narrow metadata view model needed by the explorer.
 - The generated route smoke tests passed, but the stateful Start → Processing →
   Complete → Overview → Sessions interaction has not been exercised by an
   automated browser test.
-- Automated F1/F2 component and route tests have not yet been added.
-- F2A and F2B do not implement Session X-Ray, Findings, Proof Map, Compare, or
-  Report. Their existing links and placeholders are preserved.
+- No frontend unit-test framework is installed. F2C graph-integrity edge cases
+  were therefore exercised with dependency-free, type-checked local
+  verification against in-memory fixture copies; automated browser component
+  tests remain absent.
+- F2A through F2D are implemented. Findings, Compare, and Report remain
+  pending; their existing placeholders are preserved.
 
 ## Next exact milestone action
 
-F2B implementation and technical verification are complete within the
-authorized scope. Do not begin the next frontend milestone without explicit
-authorization.
+F2D implementation and technical verification are complete. Do not begin F2E
+or another frontend milestone without explicit authorization.
