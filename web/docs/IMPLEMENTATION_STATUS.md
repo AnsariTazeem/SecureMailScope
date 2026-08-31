@@ -13,7 +13,10 @@
   30 August 2026
 - F2C Session X-Ray: implemented and verified on 31 August 2026
 - F2D Proof Map: implemented and verified on 31 August 2026
-- F2E through F8: pending; Findings, Compare, and Report remain placeholders
+- F2E Findings: Policy Risk and ML Anomaly views implemented and technically
+  verified on 31 August 2026
+- Remaining frontend milestones are pending; Compare and Report remain
+  placeholders
 - Production frontend API: pending backend implementation and integration
   verification
 
@@ -138,6 +141,45 @@ and screenshot-level desktop/mobile appearance were not browser-automated in
 this verification record; the responsive markup and compiled interaction paths
 were inspected instead.
 
+## F2E Findings verification record
+
+Findings now provides two independent URL-backed views at
+`/analysis/[analysisId]/findings?view=policy` and `?view=ml`, with Policy Risk
+as the default when the query is absent or unsupported. The server loads through
+`AnalysisDataSource`, re-validates the existing Zod envelope, applies the
+graph-wide integrity validator, and sends the client only narrow display view
+models. No dependency, contract, fixture, or API shape changed.
+
+The Policy Risk view renders contract-declared capped and uncapped scores,
+profile, findings, severities, contributions, categories, rule identities and
+evaluation outcomes, sessions, direct evidence, evidence reached through
+declared sources, rationale, impact, remediation, recommendations, and stable
+Session X-Ray and Proof Map links. It provides search, contract-value filters,
+TanStack Table sorting, readable mobile cards, and a responsive detail Sheet
+that reuses the safe Session X-Ray evidence inspector.
+
+The ML Anomaly view renders its engine status and model/results only when
+supplied, with separate ML search, filters, sorting, result cards, and inspector
+for validated non-empty results. The prototype correctly renders **ML anomaly
+engine was not run** with no model, anomaly score, anomaly result, or ML
+evidence edge; Policy Risk is neither copied into nor combined with ML output.
+
+| Check | Observed result on 31 August 2026 |
+| --- | --- |
+| `npm run lint` | Passed with zero warnings and zero errors. |
+| `npx tsc --noEmit` | Passed. |
+| Contract and relationship review | Passed against the existing validated contract and graph-wide Proof Map integrity validator. Direct finding/anomaly evidence is selected only from explicit evidence IDs; through-source evidence is selected only from declared linked fact or observation source paths. Severity and Policy Risk contribution remain separate contract fields. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, build-time TypeScript, static generation, finalization, and all route generation completed. Findings was emitted as a dynamic server-rendered route. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| Loopback production smoke test | Passed on `127.0.0.1:4317` for explicit `view=policy` and `view=ml`. Verified the prototype label, Policy Risk value and profile, validated finding and session navigation, ML `not_run` copy, absence of ML numeric score/result/evidence fields, fail-closed invalid and unknown analysis states, `noindex, nofollow`, and absence of payload, credential, secret, decrypted-content, normalized-value, and feature-snapshot markers. The server was stopped afterward. |
+| `git diff --check` | Passed before the status update and rerun afterward. |
+
+No browser executable or browser-test dependency is present, so screenshot-level
+desktop/mobile appearance, hydration-console output, pointer interaction, and
+focus return were not browser-automated. Responsive table/card and Sheet markup,
+accessible controls, URL state transitions, and compiled interaction paths were
+reviewed directly.
+
 ## Blockers and limitations
 
 - The production HTTP endpoints in
@@ -152,10 +194,10 @@ were inspected instead.
   were therefore exercised with dependency-free, type-checked local
   verification against in-memory fixture copies; automated browser component
   tests remain absent.
-- F2A through F2D are implemented. Findings, Compare, and Report remain
-  pending; their existing placeholders are preserved.
+- F2A through F2E are implemented. Compare and Report remain pending; their
+  existing placeholders are preserved.
 
 ## Next exact milestone action
 
-F2D implementation and technical verification are complete. Do not begin F2E
-or another frontend milestone without explicit authorization.
+F2E implementation and technical verification are complete. Do not begin
+Compare, Report, or another frontend milestone without explicit authorization.
