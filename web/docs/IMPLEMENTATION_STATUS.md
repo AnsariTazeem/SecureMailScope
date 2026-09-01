@@ -22,6 +22,8 @@
   `f81bcc43ec660bfa32a40076bfe5c9f146d61339` on 1 September 2026
 - V1 judge-ready Report download/print actions: implemented and technically
   verified on 1 September 2026
+- V1 two-path entry flow and simulated Prototype Demo processing: implemented
+  and technically verified on 1 September 2026
 
 ## V1 backend integration verification record
 
@@ -39,6 +41,37 @@ makes no API request.
 | `git diff --check` | Passed. |
 | Frozen backend contract inspection | Confirmed HTTP 201 submission fields (`api_version`, `analysis_id`, `analysis_status`), one multipart part (`capture`), synchronous orchestration, summary/Chain read routes, and stable error envelope at the pinned commit. Backend files were read only. |
 | Additional loopback smoke attempt | Blocked by the workspace sandbox (`listen EPERM`); no route-smoke PASS is claimed for this integration change. |
+
+## V1 two-path entry and Prototype Demo processing verification record
+
+Start Analysis now exposes only two journeys. A selected PCAP/PCAPNG still
+requires explicit authorization before the unchanged
+`ApiAnalysisDataSource.createAnalysis` submission and real summary/Chain
+validation flow. **Explore Demo** requires neither a File nor authorization: it
+sets `PROTOTYPE_ANALYSIS_ID`, `usingPrototypeDataset=true`, and
+`phase=processing`, then navigates through Processing and Complete before the
+existing dashboard opens the validated **Prototype Analysis Dataset** through
+`MockAnalysisDataSource`.
+
+The prototype-only Processing branch advances deterministically through five
+visible presentation stages and 0–100% progress. Its copy identifies
+**Prototype Demo**, **simulated processing**, and explicitly states that no
+backend request or TShark analysis is running. The real branch retains its
+existing indeterminate summary/Chain validation UI and has no stage simulation
+or percentage. No real-to-demo fallback exists.
+
+| Check | Result on 1 September 2026 |
+| --- | --- |
+| `npx tsc --noEmit` | Passed with no diagnostics. |
+| `npm run lint` | Passed with zero reported warnings or errors. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, TypeScript, static generation, and all route generation completed. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| `git diff --check` | Passed. |
+
+The discarded bundled SMTP third path, its static asset, and its ignore-rule
+exception were removed. No browser automation or deployment verification was
+performed. No backend, V2, report/export, dependency, or lockfile change was
+made.
 
 ## V1 Report export verification record
 

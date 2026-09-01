@@ -200,16 +200,23 @@ Verified scope:
   `GET /api/v1/analyses/{analysis_id}` and
   `GET /api/v1/analyses/{analysis_id}/chain` responses, with cross-response ID,
   status, version, engine, object-ID, and count checks;
-- Explore Demo creates no File, performs no API POST, and navigates directly to
-  the clearly disclosed synthetic contract fixture;
+- Explore Demo creates no File, requires no authorization, performs no API POST,
+  and uses the existing Processing → Complete workflow before opening the
+  clearly disclosed synthetic contract fixture through the mock source;
+- only the prototype-ID processing branch shows deterministic 0–100% stages,
+  labelled as simulated Prototype Demo presentation with explicit copy that no
+  backend request or TShark analysis is running; the real processing branch
+  retains summary/Chain validation without fake percentages;
 - Policy Risk and ML Anomaly remain separate, and existing evidence-boundary
   and TLS 1.3 observability handling remain unchanged.
 
 Validation recorded on 2026-09-01:
 
 - `npm run lint`: passed with zero reported warnings or errors.
+- `npx tsc --noEmit`: passed with no diagnostics.
 - `npm run build`: passed with Next.js 16.3.3 Turbopack, including TypeScript
   and all route generation.
+- `npm audit`: passed with zero vulnerabilities.
 - `git diff --check`: passed.
 - Required stale-route/data-mode/multipart greps: no `/status` or `/result`
   production API references, no `NEXT_PUBLIC_DATA_MODE` use under `web/src`,

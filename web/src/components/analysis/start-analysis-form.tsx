@@ -16,7 +16,6 @@ import { getRealAnalysisDataSource } from "@/lib/api/client";
 import { publicConfig } from "@/lib/config/env";
 import { DATASET_LABEL } from "@/lib/contracts/analysis";
 import { formatByteLimit } from "@/lib/validation/capture-file";
-import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
 export function StartAnalysisForm() {
@@ -76,7 +75,7 @@ export function StartAnalysisForm() {
     setValidationErrors([]);
     setError(null);
     selectPrototypeDataset();
-    router.push(`/analysis/${PROTOTYPE_ANALYSIS_ID}/overview`);
+    router.push("/analysis/processing");
   }
 
   async function handleStart() {
@@ -139,31 +138,6 @@ export function StartAnalysisForm() {
               }}
             />
 
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-start gap-3">
-                  <Database className="mt-0.5 size-4 shrink-0 text-neutral-600" aria-hidden />
-                  <div>
-                    <p className="text-sm font-semibold text-neutral-900">
-                      Explore the {DATASET_LABEL}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-neutral-500">
-                      Opens the synthetic Chain-of-Proof contract fixture. It
-                      is demo data, not a production analyzer run, and no file
-                      is uploaded or analyzed.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrototypeSelection}
-                >
-                  Explore Demo
-                </Button>
-              </div>
-            </div>
-
             <CaptureValidationList items={validationItems} />
 
             <AuthorizationConfirmation
@@ -194,6 +168,31 @@ export function StartAnalysisForm() {
                 <Play className="size-4" aria-hidden />
                 {submitting ? "Starting…" : "Start offline analysis"}
               </Button>
+            </div>
+
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <Database className="mt-0.5 size-4 shrink-0 text-neutral-600" aria-hidden />
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-900">
+                      Want to explore without a capture?
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-neutral-500">
+                      {DATASET_LABEL} · No file upload required · Simulated demo
+                      processing
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={submitting}
+                  onClick={handlePrototypeSelection}
+                >
+                  Explore Demo
+                </Button>
+              </div>
             </div>
           </div>
         </section>

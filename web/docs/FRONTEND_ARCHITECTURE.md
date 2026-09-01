@@ -97,9 +97,11 @@ Capture/dropzone
   -> validated evidence routes
 
 Explore Demo
-  -> fixed PROTOTYPE_ANALYSIS_ID route
+  -> select fixed PROTOTYPE_ANALYSIS_ID in Zustand (phase: processing)
+  -> /analysis/processing simulated Prototype Demo stages
+  -> phase: complete and /analysis/complete
   -> MockAnalysisDataSource.getResult
-  -> labelled validated evidence routes
+  -> labelled validated evidence routes and dashboard
 ```
 
 The upload path accepts exactly one non-empty `.pcap` or `.pcapng` file within
@@ -107,10 +109,14 @@ the configured byte limit. Browser validation is an early usability check, not
 a replacement for backend validation. The browser sets no multipart
 `Content-Type` header manually.
 
-Processing supports loading, failure, missing-workflow, and retry navigation
-without inventing backend stages, progress, a queue, or polling. Completion supports loading, unavailable-result, and honest
-prototype/API disclosure. Evidence navigation preserves identifiers and
-explicit observability states from the canonical result.
+Real processing supports loading, failure, missing-workflow, and retry
+navigation without inventing backend stages, percentages, a queue, or polling.
+The prototype-ID branch instead presents a short deterministic 0–100%
+presentation sequence labelled **Prototype Demo** and **simulated**; it makes no
+backend request and never claims that TShark is running. Completion supports
+loading, unavailable-result, and honest prototype/API disclosure. Evidence
+navigation preserves identifiers and explicit observability states from the
+canonical result.
 
 The F2G Report route follows the same trusted result path as Findings and
 Compare: route-ID validation, `AnalysisDataSource.getResult`, Zod envelope

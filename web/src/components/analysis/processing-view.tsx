@@ -3,16 +3,36 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CircleAlert, LoaderCircle, RotateCcw } from "lucide-react";
+import { Check, CircleAlert, LoaderCircle, RotateCcw } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
 import { getAnalysisDataSourceForId } from "@/lib/api/client";
+import { DATASET_LABEL } from "@/lib/contracts/analysis";
+import { cn } from "@/lib/utils";
+import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
+
+const DEMO_PROCESSING_STAGES = [
+  "Load prototype capture dataset",
+  "Reconstruct sample communication sessions",
+  "Map cryptographic evidence",
+  "Evaluate prototype findings",
+  "Prepare analysis dashboard",
+] as const;
+
+const DEMO_STAGE_DELAY_MS = 500;
+const DEMO_COMPLETE_DELAY_MS = 400;
 
 export function ProcessingView() {
   const router = useRouter();
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [completedDemoStages, setCompletedDemoStages] = useState(0);
   const analysisId = useAnalysisWorkflow((state) => state.analysisId);
   const uploadedFileName = useAnalysisWorkflow((state) => state.uploadedFileName);
   const usingPrototypeDataset = useAnalysisWorkflow(
@@ -21,9 +41,14 @@ export function ProcessingView() {
   const setPhase = useAnalysisWorkflow((state) => state.setPhase);
   const setError = useAnalysisWorkflow((state) => state.setError);
   const reset = useAnalysisWorkflow((state) => state.reset);
+  const isPrototypeWorkflow =
+    usingPrototypeDataset && analysisId === PROTOTYPE_ANALYSIS_ID;
+  const demoProgress = Math.round(
+    (completedDemoStages / DEMO_PROCESSING_STAGES.length) * 100,
+  );
 
   useEffect(() => {
-    if (!analysisId) return;
+    if (!analysisId || isPrototypeWorkflow) return;
     const currentAnalysisId = analysisId;
     let cancelled = false;
 
@@ -50,7 +75,31 @@ export function ProcessingView() {
     return () => {
       cancelled = true;
     };
-  }, [analysisId, router, setError, setPhase]);
+  }, [analysisId, isPrototypeWorkflow, router, setError, setPhase]);
+
+  useEffect(() => {
+    if (!isPrototypeWorkflow) return;
+
+    let completedStages = 0;
+    let completeTimer: number | undefined;
+    const stageTimer = window.setInterval(() => {
+      completedStages += 1;
+      setCompletedDemoStages(completedStages);
+
+      if (completedStages === DEMO_PROCESSING_STAGES.length) {
+        window.clearInterval(stageTimer);
+        completeTimer = window.setTimeout(() => {
+          setPhase("complete");
+          router.replace("/analysis/complete");
+        }, DEMO_COMPLETE_DELAY_MS);
+      }
+    }, DEMO_STAGE_DELAY_MS);
+
+    return () => {
+      window.clearInterval(stageTimer);
+      if (completeTimer !== undefined) window.clearTimeout(completeTimer);
+    };
+  }, [isPrototypeWorkflow, router, setPhase]);
 
   if (!analysisId) {
     return (
@@ -70,6 +119,97 @@ export function ProcessingView() {
           >
             Return to Start Analysis
           </Link>
+        </section>
+      </div>
+    );
+  }
+
+  if (isPrototypeWorkflow) {
+    return (
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 py-4 lg:py-10">
+        <div className="text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
+            Prototype Demo
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
+            Preparing demo analysis
+          </h1>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
+            Simulated processing for the {DATASET_LABEL}. No backend request or
+            TShark analysis is running.
+          </p>
+        </div>
+
+        <section className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-2 border-b border-neutral-200 bg-neutral-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.06em] text-neutral-700">
+                Prototype analysis ID
+              </p>
+              <p className="mt-1 font-mono text-xs text-neutral-950">
+                {analysisId}
+              </p>
+            </div>
+            <p className="text-xs font-semibold text-neutral-600">
+              Simulated presentation sequence
+            </p>
+          </div>
+
+          <div className="space-y-6 p-5 sm:p-6">
+            <Progress
+              value={demoProgress}
+              aria-label="Simulated Prototype Demo processing progress"
+            >
+              <ProgressLabel>Prototype Demo progress</ProgressLabel>
+              <ProgressValue />
+            </Progress>
+
+            <ol className="space-y-3" aria-label="Simulated demo stages">
+              {DEMO_PROCESSING_STAGES.map((stage, index) => {
+                const complete = index < completedDemoStages;
+                const active =
+                  index === completedDemoStages &&
+                  completedDemoStages < DEMO_PROCESSING_STAGES.length;
+
+                return (
+                  <li
+                    key={stage}
+                    className="flex items-center gap-3 rounded-md border border-neutral-200 px-3 py-3"
+                  >
+                    <span
+                      className={cn(
+                        "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold",
+                        complete &&
+                          "border-[#027a48] bg-[#027a48] text-white",
+                        active &&
+                          "border-neutral-950 bg-neutral-950 text-white",
+                        !complete &&
+                          !active &&
+                          "border-neutral-300 text-neutral-500",
+                      )}
+                    >
+                      {complete ? (
+                        <Check className="size-3.5" aria-hidden />
+                      ) : active ? (
+                        <LoaderCircle
+                          className="size-3.5 animate-spin"
+                          aria-hidden
+                        />
+                      ) : (
+                        index + 1
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-medium text-neutral-800">
+                      {stage}
+                    </span>
+                    <span className="text-xs text-neutral-500">
+                      {complete ? "Complete" : active ? "Simulating" : "Pending"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </section>
       </div>
     );
@@ -103,15 +243,15 @@ export function ProcessingView() {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 py-4 lg:py-10">
       <div className="text-center">
         <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          {usingPrototypeDataset ? "Demo data" : "Offline analysis"}
+          Offline analysis
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
           Loading completed analysis
         </h1>
         <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-          {usingPrototypeDataset
-            ? "Loading the labelled Prototype Analysis Dataset. No capture is being analyzed."
-            : "The synchronous backend request has completed. SecureMailScope is validating the authoritative analysis summary and Chain-of-Proof before opening the result."}
+          The synchronous backend request has completed. SecureMailScope is
+          validating the authoritative analysis summary and Chain-of-Proof
+          before opening the result.
         </p>
       </div>
 
@@ -128,7 +268,7 @@ export function ProcessingView() {
               Capture
             </p>
             <p className="mt-1 max-w-sm truncate text-xs text-neutral-600">
-              {uploadedFileName ?? "Prototype Analysis Dataset"}
+              {uploadedFileName ?? "Unavailable"}
             </p>
           </div>
         </div>

@@ -44,7 +44,7 @@ export const useAnalysisWorkflow = create<AnalysisWorkflowState>((set) => ({
       authorizationConfirmed: false,
       analysisId: PROTOTYPE_ANALYSIS_ID,
       uploadedFileName: null,
-      phase: "complete",
+      phase: "processing",
       lastError: null,
     }),
   setAuthorizationConfirmed: (authorizationConfirmed) =>
