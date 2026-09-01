@@ -130,3 +130,42 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  body,
+  [data-app-shell] {
+    background: white !important;
+  }
+
+  [data-app-shell],
+  [data-app-content],
+  [data-app-main] {
+    display: block !important;
+    min-height: auto !important;
+  }
+
+  [data-app-main] {
+    padding: 0 !important;
+  }
+
+  .report-print-root {
+    max-width: none !important;
+  }
+
+  .report-print-root article,
+  .report-print-root [data-slot="card"] {
+    break-inside: avoid;
+  }
+
+  .report-print-root * {
+    box-shadow: none !important;
+  }
+}

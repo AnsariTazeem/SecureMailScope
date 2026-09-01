@@ -133,7 +133,10 @@ function AnalysisNavigation({
 
 export function AppSidebar() {
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-neutral-200 bg-[#fcfafa] lg:flex lg:flex-col">
+    <aside
+      data-print-hide
+      className="hidden w-60 shrink-0 border-r border-neutral-200 bg-[#fcfafa] lg:flex lg:flex-col"
+    >
       <div className="border-b border-neutral-200 px-5 py-6">
         <ApplicationIdentity />
         <p className="mt-2 text-xs text-neutral-500">Forensic Analysis Suite</p>

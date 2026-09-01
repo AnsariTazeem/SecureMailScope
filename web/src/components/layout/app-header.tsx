@@ -6,7 +6,10 @@ import { AppMobileNavigation } from "@/components/layout/app-sidebar";
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
+    <header
+      data-print-hide
+      className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-sm"
+    >
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-2 lg:hidden">
           <AppMobileNavigation />

@@ -110,5 +110,12 @@ export default async function ReportPage({ params }: ReportRouteProps) {
     );
   }
 
-  return <ReportWorkspace data={buildReportPageData(loaded.result)} />;
+  return (
+    <ReportWorkspace
+      data={buildReportPageData(loaded.result)}
+      demoChain={
+        loaded.result.data_source === "mock" ? loaded.result.chain : null
+      }
+    />
+  );
 }

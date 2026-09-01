@@ -20,6 +20,8 @@
 - F2G Analysis Report: implemented and technically verified on 31 August 2026
 - Production frontend API adapter: implemented against frozen backend commit
   `f81bcc43ec660bfa32a40076bfe5c9f146d61339` on 1 September 2026
+- V1 judge-ready Report download/print actions: implemented and technically
+  verified on 1 September 2026
 
 ## V1 backend integration verification record
 
@@ -37,6 +39,44 @@ makes no API request.
 | `git diff --check` | Passed. |
 | Frozen backend contract inspection | Confirmed HTTP 201 submission fields (`api_version`, `analysis_id`, `analysis_status`), one multipart part (`capture`), synchronous orchestration, summary/Chain read routes, and stable error envelope at the pinned commit. Backend files were read only. |
 | Additional loopback smoke attempt | Blocked by the workspace sandbox (`listen EPERM`); no route-smoke PASS is claimed for this integration change. |
+
+## V1 Report export verification record
+
+The existing V1 Report now exposes a compact, source-aware action area without
+changing the report design or turning the server-rendered workspace into a
+Client Component. Real Chain downloads fetch the authoritative
+`GET /api/v1/analyses/{analysis_id}/chain` response, validate it with the
+existing frontend Chain contract and analysis identity, and preserve the
+response bytes. Prototype downloads serialize only the already validated
+Prototype Analysis Dataset Chain, use the demo-labelled
+`{analysis_id}.demo-chain.json` filename, and make no production request.
+
+The whole-report action is labelled exactly **Print / Save as PDF** and invokes
+the browser print dialog; it is not represented as a server-generated artifact.
+Minimal print rules hide the application shell navigation and export controls,
+remove report shadows, and retain readable report content. Each displayed real
+finding exposes backend-produced PDF and HTML downloads through the frozen
+artifact endpoint. Demo findings expose no production artifact controls, and a
+zero-finding real result still retains the Chain and print actions.
+
+Download failures map backend unavailability, missing artifacts, response-size
+limits, rendering failures, and invalid MIME/Chain responses to bounded UI
+messages without exposing backend internals or substituting demo content.
+
+| Check | Result on 1 September 2026 |
+| --- | --- |
+| `npx tsc --noEmit` | Passed. |
+| `npm run lint` | Passed with zero reported warnings or errors. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, TypeScript, static generation, and all route generation completed. |
+| `npm audit` | Passed with zero vulnerabilities. |
+| `git diff --check` | Passed. |
+| Frozen backend inspection | Confirmed backend HEAD remained `f81bcc43ec660bfa32a40076bfe5c9f146d61339`; Chain and finding-artifact routes, media types, response limits, and attachment filenames were inspected read-only. |
+
+No browser executable or browser-test dependency is present, so the native
+save dialog, print-preview pagination, and cross-origin download interaction
+were not browser-automated. The production build and compiled client paths were
+verified; no deployment, backend mutation, V2 change, dependency change,
+staging, commit, or push was performed.
 
 ## Verification record
 

@@ -28,6 +28,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { ChainOfProof } from "@/lib/contracts/chain";
+
+import {
+  FindingArtifactActions,
+  ReportExportActions,
+} from "./report-export-actions";
 
 import type {
   ReportCryptoDimension,
@@ -475,18 +481,26 @@ function ImportantFindings({ data }: { data: ReportPageData }) {
               <p className="mt-3 text-sm leading-6 text-neutral-700">
                 {finding.rationale}
               </p>
-              <div className="mt-4 flex flex-col gap-2 border-t border-neutral-100 pt-3 text-xs text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-4 flex flex-col gap-3 border-t border-neutral-100 pt-3 text-xs text-neutral-600 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <span>{finding.evidenceCount} direct evidence references</span>
                   <span aria-hidden> · </span>
                   <span>{finding.factCount} declared facts</span>
                 </div>
-                <Link
-                  href={`/analysis/${data.analysisId}/sessions/${finding.sessionId}`}
-                  className="w-fit break-all font-mono text-[11px] font-medium text-neutral-950 underline decoration-neutral-300 underline-offset-4 outline-none hover:decoration-neutral-950 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
-                >
-                  {finding.sessionId}
-                </Link>
+                <div className="flex min-w-0 flex-col items-start gap-3 sm:items-end">
+                  <Link
+                    href={`/analysis/${data.analysisId}/sessions/${finding.sessionId}`}
+                    className="w-fit break-all font-mono text-[11px] font-medium text-neutral-950 underline decoration-neutral-300 underline-offset-4 outline-none hover:decoration-neutral-950 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
+                  >
+                    {finding.sessionId}
+                  </Link>
+                  {data.dataSource === "api" ? (
+                    <FindingArtifactActions
+                      analysisId={data.analysisId}
+                      findingId={finding.findingId}
+                    />
+                  ) : null}
+                </div>
               </div>
             </article>
           ))}
@@ -879,6 +893,7 @@ function ReportNavigation({ data }: { data: ReportPageData }) {
   return (
     <nav
       aria-label="Report drill-down navigation"
+      data-print-hide
       className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
     >
       <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
@@ -903,9 +918,15 @@ function ReportNavigation({ data }: { data: ReportPageData }) {
   );
 }
 
-export function ReportWorkspace({ data }: { data: ReportPageData }) {
+export function ReportWorkspace({
+  data,
+  demoChain,
+}: {
+  data: ReportPageData;
+  demoChain: ChainOfProof | null;
+}) {
   return (
-    <div className="mx-auto min-w-0 w-full max-w-[92rem] space-y-8">
+    <div className="report-print-root mx-auto min-w-0 w-full max-w-[92rem] space-y-8">
       <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
@@ -919,14 +940,21 @@ export function ReportWorkspace({ data }: { data: ReportPageData }) {
             analysis available throughout the workspace.
           </p>
         </div>
-        <Badge
-          variant="outline"
-          className="w-fit max-w-full rounded-md border-neutral-300 bg-white font-mono text-[11px]"
-        >
-          <span className="truncate" title={data.analysisId}>
-            {data.analysisId}
-          </span>
-        </Badge>
+        <div className="flex max-w-full flex-col gap-3 sm:items-end">
+          <Badge
+            variant="outline"
+            className="w-fit max-w-full rounded-md border-neutral-300 bg-white font-mono text-[11px]"
+          >
+            <span className="truncate" title={data.analysisId}>
+              {data.analysisId}
+            </span>
+          </Badge>
+          <ReportExportActions
+            analysisId={data.analysisId}
+            dataSource={data.dataSource}
+            demoChain={demoChain}
+          />
+        </div>
       </header>
 
       {data.dataSource === "mock" ? (
