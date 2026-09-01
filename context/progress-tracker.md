@@ -177,3 +177,48 @@ Scope of this PASS: the Chain-of-Proof domain contract only. Commit 2 (the pure 
 ## Production blockers and status
 
 No production blockers recorded at Commit 1. Commit 2 (POC-result adapter) is the immediate next action. The frontend is separate and frozen; no frontend redesign is authorized during backend milestones. Policy risk and ML anomaly remain separate outputs throughout production work.
+
+## Verified frontend workstream — V1 backend integration (PASS, 2026-09-01)
+
+An explicitly authorized frontend-only slice on branch
+`feat/frontend-v1-backend-integration` integrated the stable V1 UI with frozen
+backend commit `f81bcc43ec660bfa32a40076bfe5c9f146d61339` without redesigning V1 or
+modifying the backend repository.
+
+Verified scope:
+
+- one deployed frontend build supports both real analysis and the labelled
+  Prototype Analysis Dataset;
+- the fixed prototype analysis ID selects the mock source, while every other
+  valid analysis ID selects the production API source, including direct route
+  loads and refreshes;
+- real submission sends exactly one multipart field, `capture`, to
+  `POST /api/v1/analyses` and does not send frontend authorization state;
+- the synchronous HTTP 201 response validates `api_version`, `analysis_id`, and
+  `analysis_status` while the selected local filename remains frontend state;
+- real results are constructed only from validated
+  `GET /api/v1/analyses/{analysis_id}` and
+  `GET /api/v1/analyses/{analysis_id}/chain` responses, with cross-response ID,
+  status, version, engine, object-ID, and count checks;
+- Explore Demo creates no File, performs no API POST, and navigates directly to
+  the clearly disclosed synthetic contract fixture;
+- Policy Risk and ML Anomaly remain separate, and existing evidence-boundary
+  and TLS 1.3 observability handling remain unchanged.
+
+Validation recorded on 2026-09-01:
+
+- `npm run lint`: passed with zero reported warnings or errors.
+- `npm run build`: passed with Next.js 16.3.3 Turbopack, including TypeScript
+  and all route generation.
+- `git diff --check`: passed.
+- Required stale-route/data-mode/multipart greps: no `/status` or `/result`
+  production API references, no `NEXT_PUBLIC_DATA_MODE` use under `web/src`,
+  and only `formData.append("capture", ...)` in the API adapter.
+- An additional loopback route-smoke attempt was blocked by the workspace
+  sandbox (`listen EPERM`); no live browser/frontend-to-backend integration PASS
+  is claimed from that attempt.
+
+Remaining limitation: the frozen backend repository is in-memory, so a real
+analysis deep link remains retrievable only while that backend process retains
+the corresponding Chain. No deployment, backend mutation, V2 work, dependency
+change, staging, commit, or push was performed.

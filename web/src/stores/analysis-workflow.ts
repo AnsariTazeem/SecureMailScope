@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
+
 type WorkflowPhase = "idle" | "processing" | "complete" | "failed";
 
 type AnalysisWorkflowState = {
@@ -39,15 +41,18 @@ export const useAnalysisWorkflow = create<AnalysisWorkflowState>((set) => ({
     set({
       selectedFile: null,
       usingPrototypeDataset: true,
-      analysisId: null,
-      uploadedFileName: "prototype-analysis-dataset.pcapng",
-      phase: "idle",
+      authorizationConfirmed: false,
+      analysisId: PROTOTYPE_ANALYSIS_ID,
+      uploadedFileName: null,
+      phase: "complete",
       lastError: null,
     }),
   setAuthorizationConfirmed: (authorizationConfirmed) =>
     set({ authorizationConfirmed }),
   setCreated: (analysisId, uploadedFileName) =>
     set({
+      selectedFile: null,
+      usingPrototypeDataset: false,
       analysisId,
       uploadedFileName,
       phase: "processing",

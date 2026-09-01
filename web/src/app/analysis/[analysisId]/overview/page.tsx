@@ -5,7 +5,7 @@ import {
   AnalysisOverview,
   OverviewDataSourceFailure,
 } from "@/components/analysis/overview/analysis-overview";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import {
   AnalysisNotFoundError,
   DataSourceError,
@@ -22,7 +22,7 @@ async function loadAnalysisResult(analysisId: string) {
     return {
       status: "success" as const,
       result: analysisResultSchema.parse(
-        await getAnalysisDataSource().getResult(analysisId),
+        await getAnalysisDataSourceForId(analysisId).getResult(analysisId),
       ),
     };
   } catch (error) {

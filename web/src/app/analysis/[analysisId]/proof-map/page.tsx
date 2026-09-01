@@ -6,7 +6,7 @@ import { ProofMap } from "@/components/analysis/proof-map/proof-map";
 import { ProofMapIntegrityError } from "@/components/analysis/proof-map/proof-map-integrity";
 import { ProofMapDataSourceFailure } from "@/components/analysis/proof-map/proof-map-states";
 import { buildProofMapData } from "@/components/analysis/proof-map/proof-map-view-model";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import { AnalysisNotFoundError, DataSourceError } from "@/lib/api/errors";
 import {
   DATASET_LABEL,
@@ -20,7 +20,7 @@ const loadAnalysisResult = cache(async (analysisId: string) => {
     return {
       status: "success" as const,
       result: analysisResultSchema.parse(
-        await getAnalysisDataSource().getResult(analysisId),
+        await getAnalysisDataSourceForId(analysisId).getResult(analysisId),
       ),
     };
   } catch (error) {

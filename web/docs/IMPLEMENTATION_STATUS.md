@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Branch: `feat/production-frontend`
+- Branch: `feat/frontend-v1-backend-integration`
 - Dependency foundation: completed and present in `web/package.json`
 - F1 Start Analysis implementation: completed from the inherited partial
   foundation, including the shell, typed data-source boundary, upload workflow,
@@ -18,8 +18,25 @@
 - F2F Secure vs Insecure Session Compare: implemented and technically verified
   on 31 August 2026
 - F2G Analysis Report: implemented and technically verified on 31 August 2026
-- Production frontend API: pending backend implementation and integration
-  verification
+- Production frontend API adapter: implemented against frozen backend commit
+  `f81bcc43ec660bfa32a40076bfe5c9f146d61339` on 1 September 2026
+
+## V1 backend integration verification record
+
+The same V1 build now routes `PROTOTYPE_ANALYSIS_ID` to the labelled mock
+dataset and all other valid analysis IDs to the real API. Real submission sends
+only the `capture` multipart field, validates the synchronous HTTP 201 response,
+then validates and cross-checks `GET /api/v1/analyses/{analysis_id}` with
+`GET /api/v1/analyses/{analysis_id}/chain`. Demo selection creates no File and
+makes no API request.
+
+| Check | Result on 1 September 2026 |
+| --- | --- |
+| `npm run lint` | Passed with zero reported warnings or errors. |
+| `npm run build` | Passed with Next.js 16.3.3 Turbopack; compilation, TypeScript, static generation, and all route generation completed. |
+| `git diff --check` | Passed. |
+| Frozen backend contract inspection | Confirmed HTTP 201 submission fields (`api_version`, `analysis_id`, `analysis_status`), one multipart part (`capture`), synchronous orchestration, summary/Chain read routes, and stable error envelope at the pinned commit. Backend files were read only. |
+| Additional loopback smoke attempt | Blocked by the workspace sandbox (`listen EPERM`); no route-smoke PASS is claimed for this integration change. |
 
 ## Verification record
 
@@ -252,11 +269,10 @@ production HTTP responses.
 
 ## Blockers and limitations
 
-- The production HTTP endpoints in
-  [INTEGRATION_CONTRACT.md](INTEGRATION_CONTRACT.md) are not implemented or
-  integration-verified.
-- Mock completion uses the clearly labelled **Prototype Analysis Dataset** and
-  does not analyze an uploaded capture.
+- The real adapter is contract-verified against frozen backend source but a
+  live frontend-to-backend browser smoke test was not run in this workspace.
+- The clearly labelled **Prototype Analysis Dataset** is a synthetic contract
+  fixture and does not analyze or upload a capture.
 - The generated route smoke tests passed, but the stateful Start → Processing →
   Complete → Overview → Sessions interaction has not been exercised by an
   automated browser test.
@@ -265,11 +281,13 @@ production HTTP responses.
   verification against in-memory fixture copies; automated browser component
   tests remain absent.
 - F2A Overview, F2B Sessions, F2C Session Detail, F2D Proof Map, F2E Findings,
-  F2F Compare, and F2G Report are implemented. Production frontend API/backend
-  integration remains pending.
+  F2F Compare, F2G Report, and the V1 production API adapter are implemented.
+- The frozen backend repository is in-memory at this milestone, so real IDs
+  remain refresh/deep-link addressable only while the backend process retains
+  the corresponding Chain.
 
 ## Next exact milestone action
 
-F2G implementation and technical verification are complete. Do not begin an
-additional frontend milestone or production API/backend integration without
-explicit authorization.
+The authorized V1 backend-integration slice is implemented and locally
+verified. Deployment, backend mutation, V2 work, and additional frontend scope
+require separate authorization.

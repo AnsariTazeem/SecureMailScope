@@ -7,8 +7,8 @@ starting an offline capture assessment and, in later milestones, navigating a
 validated Chain-of-Proof result. It does not analyze packets, calculate policy
 findings, infer cryptographic properties, or repair missing evidence.
 
-The current implementation covers the F1 workflow and the authorized F2A–F2G
-result exploration milestones. Backend integration remains pending.
+The current implementation covers the F1 workflow, the authorized F2A–F2G
+result exploration milestones, and frozen V1 backend integration.
 
 ## App Router and route map
 
@@ -19,7 +19,7 @@ small and delegate interactive behavior to feature components.
 | --- | --- | --- |
 | `/` | Server redirect to `/analysis/new` | Implemented |
 | `/analysis/new` | Start Analysis composition | F1 implemented |
-| `/analysis/processing` | Client polling/progress workflow | F1 implemented |
+| `/analysis/processing` | Completed API-result validation handoff | F1 implemented |
 | `/analysis/complete` | Client result handoff and disclosure | F1 implemented |
 | `/analysis/[analysisId]/overview` | Result overview | F2A implemented |
 | `/analysis/[analysisId]/sessions` | Session index | F2B implemented |
@@ -31,7 +31,7 @@ small and delegate interactive behavior to feature components.
 
 Server Components are the default for route composition and static content.
 Client Components are used only where browser APIs, file input, Zustand,
-polling, or navigation events require them. Browser-only `File` objects stay in
+result handoff, or navigation events require them. Browser-only `File` objects stay in
 memory and are never persisted.
 
 ## Layers and dependency direction
@@ -74,27 +74,32 @@ available and must not display invented result counts or states.
 
 ## Data-source boundary
 
-`AnalysisDataSource` defines three operations: create an analysis, read its
-status, and read its result. `MockAnalysisDataSource` provides a deterministic,
-labelled F1 journey. `ApiAnalysisDataSource` is reserved for the pending HTTP
-contract, uses multipart `FormData`, and accepts results only after Zod
-validation. Network, HTTP, JSON, or schema failures remain visible failures.
+`AnalysisDataSource` defines result reading; the real submission source also
+creates analyses. `MockAnalysisDataSource` provides the deterministic, labelled
+demo result. `ApiAnalysisDataSource` uses multipart `FormData`, then constructs
+the frontend envelope from validated backend summary and Chain responses.
+Network, HTTP, JSON, schema, or cross-response integrity failures remain visible.
 
-Mode selection is configuration-driven through `NEXT_PUBLIC_DATA_MODE`. The UI
-does not silently fall back from API mode to mock data.
+Source selection is deterministic from the analysis ID. The fixed prototype ID
+uses the mock source; every other valid analysis ID uses the real source. The UI
+does not silently fall back from API data to mock data.
 
 ## Workflow data flow
 
 ```text
-Capture/dropzone or labelled prototype choice
+Capture/dropzone
   -> client intake validation
   -> explicit authorization confirmation
-  -> AnalysisDataSource.createAnalysis
+  -> ApiAnalysisDataSource.createAnalysis
   -> transient analysis ID in Zustand
-  -> status polling on /analysis/processing
-  -> AnalysisDataSource.getResult
+  -> summary + Chain validation on /analysis/processing
   -> /analysis/complete disclosure
   -> validated evidence routes
+
+Explore Demo
+  -> fixed PROTOTYPE_ANALYSIS_ID route
+  -> MockAnalysisDataSource.getResult
+  -> labelled validated evidence routes
 ```
 
 The upload path accepts exactly one non-empty `.pcap` or `.pcapng` file within
@@ -102,8 +107,8 @@ the configured byte limit. Browser validation is an early usability check, not
 a replacement for backend validation. The browser sets no multipart
 `Content-Type` header manually.
 
-Processing supports loading, progress, failure, missing-workflow, and retry
-navigation states. Completion supports loading, unavailable-result, and honest
+Processing supports loading, failure, missing-workflow, and retry navigation
+without inventing backend stages, progress, a queue, or polling. Completion supports loading, unavailable-result, and honest
 prototype/API disclosure. Evidence navigation preserves identifiers and
 explicit observability states from the canonical result.
 

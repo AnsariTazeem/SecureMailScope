@@ -9,7 +9,7 @@ import {
 } from "@/components/analysis/session-xray/session-xray-states";
 import { SessionXRayIntegrityError } from "@/components/analysis/session-xray/session-xray-integrity";
 import { buildSessionXRayData } from "@/components/analysis/session-xray/session-xray-view-model";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import {
   AnalysisNotFoundError,
   DataSourceError,
@@ -26,7 +26,7 @@ const loadAnalysisResult = cache(async (analysisId: string) => {
     return {
       status: "success" as const,
       result: analysisResultSchema.parse(
-        await getAnalysisDataSource().getResult(analysisId),
+        await getAnalysisDataSourceForId(analysisId).getResult(analysisId),
       ),
     };
   } catch (error) {

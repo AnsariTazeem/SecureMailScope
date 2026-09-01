@@ -7,7 +7,7 @@ import { CheckCircle2, CircleAlert, FileCheck2, LoaderCircle } from "lucide-reac
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import type { AnalysisResult } from "@/lib/contracts/analysis";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
@@ -26,7 +26,9 @@ export function CompleteView() {
 
     async function loadResult() {
       try {
-        const nextResult = await getAnalysisDataSource().getResult(currentAnalysisId);
+        const nextResult = await getAnalysisDataSourceForId(
+          currentAnalysisId,
+        ).getResult(currentAnalysisId);
         if (!cancelled) setResult(nextResult);
       } catch (loadError) {
         if (cancelled) return;

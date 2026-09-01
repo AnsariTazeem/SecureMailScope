@@ -12,19 +12,12 @@ import { CaptureValidationList } from "@/components/analysis/capture-validation-
 import { EvidenceBoundaryNote } from "@/components/analysis/evidence-boundary-note";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getRealAnalysisDataSource } from "@/lib/api/client";
 import { publicConfig } from "@/lib/config/env";
 import { DATASET_LABEL } from "@/lib/contracts/analysis";
 import { formatByteLimit } from "@/lib/validation/capture-file";
+import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
-
-const prototypeFilename = "prototype-analysis-dataset.pcapng";
-
-function createPrototypeFile(): File {
-  return new File([new Uint8Array([1])], prototypeFilename, {
-    type: "application/octet-stream",
-  });
-}
 
 export function StartAnalysisForm() {
   const router = useRouter();
@@ -34,9 +27,6 @@ export function StartAnalysisForm() {
   const selectedFile = useAnalysisWorkflow((state) => state.selectedFile);
   const authorizationConfirmed = useAnalysisWorkflow(
     (state) => state.authorizationConfirmed,
-  );
-  const usingPrototypeDataset = useAnalysisWorkflow(
-    (state) => state.usingPrototypeDataset,
   );
   const lastError = useAnalysisWorkflow((state) => state.lastError);
   const setSelectedFile = useAnalysisWorkflow((state) => state.setSelectedFile);
@@ -49,7 +39,7 @@ export function StartAnalysisForm() {
   const setCreated = useAnalysisWorkflow((state) => state.setCreated);
   const setError = useAnalysisWorkflow((state) => state.setError);
 
-  const hasInput = Boolean(selectedFile || usingPrototypeDataset);
+  const hasInput = Boolean(selectedFile);
   const activeStep = !hasInput ? 0 : authorizationConfirmed ? 2 : 1;
   const canStart = hasInput && authorizationConfirmed && !submitting;
 
@@ -86,6 +76,7 @@ export function StartAnalysisForm() {
     setValidationErrors([]);
     setError(null);
     selectPrototypeDataset();
+    router.push(`/analysis/${PROTOTYPE_ANALYSIS_ID}/overview`);
   }
 
   async function handleStart() {
@@ -94,9 +85,11 @@ export function StartAnalysisForm() {
     setError(null);
 
     try {
-      const file = selectedFile ?? createPrototypeFile();
-      const response = await getAnalysisDataSource().createAnalysis(file);
-      setCreated(response.analysis_id, response.accepted_filename);
+      if (!selectedFile) return;
+      const response = await getRealAnalysisDataSource().createAnalysis(
+        selectedFile,
+      );
+      setCreated(response.analysis_id, response.original_filename);
       router.push("/analysis/processing");
     } catch (error) {
       const message =
@@ -146,32 +139,30 @@ export function StartAnalysisForm() {
               }}
             />
 
-            {publicConfig.dataMode === "mock" ? (
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <Database className="mt-0.5 size-4 shrink-0 text-neutral-600" aria-hidden />
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-900">
-                        Use the {DATASET_LABEL}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-neutral-500">
-                        Opens the deterministic F1 mock journey. It is not a
-                        production analyzer result and does not analyze your
-                        selected capture.
-                      </p>
-                    </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <Database className="mt-0.5 size-4 shrink-0 text-neutral-600" aria-hidden />
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-900">
+                      Explore the {DATASET_LABEL}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-neutral-500">
+                      Opens the synthetic Chain-of-Proof contract fixture. It
+                      is demo data, not a production analyzer run, and no file
+                      is uploaded or analyzed.
+                    </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant={usingPrototypeDataset ? "default" : "outline"}
-                    onClick={handlePrototypeSelection}
-                  >
-                    {usingPrototypeDataset ? "Dataset selected" : "Use prototype"}
-                  </Button>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrototypeSelection}
+                >
+                  Explore Demo
+                </Button>
               </div>
-            ) : null}
+            </div>
 
             <CaptureValidationList items={validationItems} />
 
@@ -190,9 +181,8 @@ export function StartAnalysisForm() {
 
             <div className="flex flex-col gap-3 border-t border-neutral-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs leading-5 text-neutral-500">
-                {publicConfig.dataMode === "mock"
-                  ? "Mock mode validates the selection but returns only the labelled prototype dataset."
-                  : "API mode sends the authorized capture directly as multipart FormData."}
+                Start Analysis uploads the authorized capture to the configured
+                production backend. Explore Demo never uploads a capture.
               </p>
               <Button
                 type="button"

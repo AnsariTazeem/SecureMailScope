@@ -1,3 +1,7 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -5,10 +9,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DATASET_LABEL } from "@/lib/contracts/analysis";
-import { publicConfig } from "@/lib/config/env";
+import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
+import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
 export function DatasetBanner() {
-  if (publicConfig.dataMode !== "mock") return null;
+  const pathname = usePathname();
+  const workflowAnalysisId = useAnalysisWorkflow((state) => state.analysisId);
+  const routeAnalysisId =
+    pathname.match(/^\/analysis\/(ana_[0-9a-f]{16})(?:\/|$)/)?.[1] ?? null;
+  const isTransientWorkflowRoute =
+    pathname === "/analysis/processing" || pathname === "/analysis/complete";
+  const activeAnalysisId = routeAnalysisId ??
+    (isTransientWorkflowRoute ? workflowAnalysisId : null);
+
+  if (activeAnalysisId !== PROTOTYPE_ANALYSIS_ID) return null;
 
   return (
     <Tooltip>

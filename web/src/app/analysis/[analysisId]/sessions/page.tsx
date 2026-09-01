@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { SessionsExplorer } from "@/components/analysis/sessions/sessions-explorer";
 import { SessionsDataSourceFailure } from "@/components/analysis/sessions/sessions-states";
 import { buildSessionsExplorerData } from "@/components/analysis/sessions/session-view-model";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import {
   AnalysisNotFoundError,
   DataSourceError,
@@ -21,7 +21,7 @@ async function loadAnalysisResult(analysisId: string) {
     return {
       status: "success" as const,
       result: analysisResultSchema.parse(
-        await getAnalysisDataSource().getResult(analysisId),
+        await getAnalysisDataSourceForId(analysisId).getResult(analysisId),
       ),
     };
   } catch (error) {

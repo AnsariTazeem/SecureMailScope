@@ -27,14 +27,12 @@ The development server is available at `http://localhost:3000` by default.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_DATA_MODE` | `mock` | Selects the `mock` or reserved `api` data source. |
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Base URL used only in `api` mode. |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Base URL for real analysis submission and reads. |
 | `NEXT_PUBLIC_MAX_CAPTURE_BYTES` | `536870912` | Browser-side capture size limit; defaults to the backend intake limit. |
 
-Mock mode is the currently supported F1 demonstration path. Every mock result
-is labelled **Prototype Analysis Dataset**. API mode is a typed client boundary
-for a production API that is not yet implemented or integration-verified; it
-must fail honestly when that API is unavailable or returns invalid data.
+The same build supports both sources. The fixed prototype analysis ID selects
+the labelled **Prototype Analysis Dataset**; every other valid analysis ID uses
+the configured production API. API failures never fall back to demo data.
 
 ## Routes
 
@@ -42,7 +40,7 @@ must fail honestly when that API is unavailable or returns invalid data.
 | --- | --- |
 | `/` | Redirects to the Start Analysis screen. |
 | `/analysis/new` | F1 capture selection, validation, authorization, and prototype selection. |
-| `/analysis/processing` | F1 deterministic progress and failure handling. |
+| `/analysis/processing` | Synchronous API-result validation and failure handling. |
 | `/analysis/complete` | F1 completion handoff and dataset disclosure. |
 | `/analysis/[analysisId]/overview` | Analysis Overview — F2A implemented. |
 | `/analysis/[analysisId]/sessions` | Sessions Explorer — F2B implemented. |
@@ -52,8 +50,8 @@ must fail honestly when that API is unavailable or returns invalid data.
 | `/analysis/[analysisId]/compare` | Session Compare — F2F implemented. |
 | `/analysis/[analysisId]/report` | Analysis Report — F2G implemented. |
 
-Production backend/API integration remains pending. The implemented result
-routes currently use the clearly disclosed prototype dataset.
+Result routes choose their data source from the analysis ID, so production and
+demo deep links work without persisted browser File objects.
 
 ## Structure
 
@@ -78,7 +76,7 @@ canonical production domain contract is
 
 ## Current limitation
 
-The production backend does not yet expose the documented frontend HTTP API.
-Until that boundary is implemented and verified, only the clearly disclosed
-prototype journey can complete. Prototype output is demonstration data, not a
-claim that an uploaded capture was analyzed.
+The backend repository is in-memory at the frozen integration commit, so a real
+analysis remains refresh/deep-link addressable only while that backend process
+retains it. Prototype output is demonstration data, not a claim that a capture
+was analyzed.

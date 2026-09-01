@@ -12,7 +12,7 @@ import {
   buildAnomalyFindingsData,
   buildPolicyFindingsData,
 } from "@/components/analysis/findings/findings-view-model";
-import { getAnalysisDataSource } from "@/lib/api/client";
+import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import {
   AnalysisNotFoundError,
   DataSourceError,
@@ -27,7 +27,7 @@ import { ANALYSIS_ID } from "@/lib/contracts/ids";
 const loadAnalysisResult = cache(async (analysisId: string) => {
   try {
     const result = analysisResultSchema.parse(
-      await getAnalysisDataSource().getResult(analysisId),
+      await getAnalysisDataSourceForId(analysisId).getResult(analysisId),
     );
     validateFindingsIntegrity(result);
     return { status: "success" as const, result };

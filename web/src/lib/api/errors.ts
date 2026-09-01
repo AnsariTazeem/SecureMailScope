@@ -25,19 +25,9 @@ export class AnalysisNotFoundError extends DataSourceError {
   }
 }
 
-export class ApiUnavailableError extends DataSourceError {
-  constructor() {
-    super(
-      "api_unavailable",
-      "The production HTTP API is not available. This frontend does not invent API results. Use NEXT_PUBLIC_DATA_MODE=mock for the Prototype Analysis Dataset.",
-    );
-    this.name = "ApiUnavailableError";
-  }
-}
-
 export class ApiRequestError extends DataSourceError {
-  constructor(message: string) {
-    super("api_request_failed", message);
+  constructor(message: string, code = "api_request_failed") {
+    super(code, message);
     this.name = "ApiRequestError";
   }
 }
