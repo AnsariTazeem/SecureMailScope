@@ -1,0 +1,81 @@
+name: SecureMailScope Frontend V2 CI
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - feat/frontend-v2
+    paths:
+      - "web/**"
+      - ".github/workflows/frontend-v2-ci.yml"
+
+  pull_request:
+    branches:
+      - feat/frontend-v2
+    paths:
+      - "web/**"
+      - ".github/workflows/frontend-v2-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  validate:
+    name: Validate frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: web
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.3
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Next.js route types
+        run: npx --no-install next typegen
+
+      - name: Check TypeScript
+        run: npx --no-install tsc --noEmit
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Verify V2 data models
+        run: node scripts/verify-v2-models.mjs
+
+      - name: Verify proof-map fitting
+        run: node scripts/verify-proof-map-fit.mjs
+
+      - name: Verify proof-map behavior
+        run: node scripts/verify-proof-map.mjs
+
+      - name: Verify report consistency
+        run: node scripts/verify-report-consistency.mjs
+
+      - name: Create production build
+        run: npm run build -- --webpack
