@@ -49,8 +49,10 @@ export type FindingSessionLink = {
   sessionId: string;
   captureName: string | null;
   protocol: string;
+  tcpStreamId: number;
   sourceEndpoint: string;
   destinationEndpoint: string;
+  captureCompleteness: string;
 };
 
 export type FindingFactLink = {
@@ -67,6 +69,7 @@ export type FindingRecommendation = {
   priority: string;
   actionSteps: string[];
   verificationSteps: string[];
+  standardsReferences: Array<{ id: string; section?: string | null }>;
   scope: string;
   automationStatus: string;
 };
@@ -101,6 +104,8 @@ export type PolicyFindingsData = {
   dataSource: AnalysisResult["data_source"];
   datasetLabel: string | null;
   analysisStatus: string;
+  ruleEngineStatus: string;
+  hasIncompleteSessions: boolean;
   policyRisk: {
     policyRiskId: string;
     profileId: string;
@@ -110,14 +115,18 @@ export type PolicyFindingsData = {
     affectedSessionCount: number;
   } | null;
   findings: FindingDetail[];
+  recommendations: FindingRecommendation[];
   totalFindings: number;
   sessions: Array<{
     sessionId: string;
     captureName: string | null;
     protocol: string;
+    tcpStreamId: number;
     sourceEndpoint: string;
     destinationEndpoint: string;
+    captureCompleteness: string;
   }>;
+  analysisSessions: FindingSessionLink[];
   categories: Array<{ key: string; label: string; count: number }>;
   severities: Array<{ key: string; label: string; count: number }>;
   profiles: Array<{ key: string; count: number }>;
@@ -218,6 +227,19 @@ export function buildPolicyFindingsData(
   const recommendationsMap = new Map(
     recommendations.map((r) => [r.recommendation_id, r]),
   );
+  const recommendationList: FindingRecommendation[] = recommendations.map(
+    (recommendation) => ({
+      recommendationId: recommendation.recommendation_id,
+      title: recommendation.title,
+      summary: recommendation.summary,
+      priority: recommendation.priority,
+      actionSteps: recommendation.action_steps,
+      verificationSteps: recommendation.verification_steps,
+      standardsReferences: recommendation.standards_references,
+      scope: recommendation.scope,
+      automationStatus: recommendation.automation_status,
+    }),
+  );
 
   const evaluationsMap = new Map(
     rule_evaluations.map((e) => [e.evaluation_id, e]),
@@ -242,6 +264,7 @@ export function buildPolicyFindingsData(
               capturesById.get(session.capture_id)
                 ?.original_filename_sanitized ?? null,
             protocol: session.protocol,
+            tcpStreamId: session.tcp_stream_id,
             sourceEndpoint: formatEndpoint(
               session.source_endpoint.ip,
               session.source_endpoint.port,
@@ -250,6 +273,7 @@ export function buildPolicyFindingsData(
               session.destination_endpoint.ip,
               session.destination_endpoint.port,
             ),
+            captureCompleteness: session.capture_completeness,
           },
         ]
       : [];
@@ -282,6 +306,7 @@ export function buildPolicyFindingsData(
           priority: recommendation.priority,
           actionSteps: recommendation.action_steps,
           verificationSteps: recommendation.verification_steps,
+          standardsReferences: recommendation.standards_references,
           scope: recommendation.scope,
           automationStatus: recommendation.automation_status,
         }
@@ -336,6 +361,23 @@ export function buildPolicyFindingsData(
     ).values(),
   ];
 
+  const analysisSessions: FindingSessionLink[] = sessions.map((session) => ({
+    sessionId: session.session_id,
+    captureName:
+      capturesById.get(session.capture_id)?.original_filename_sanitized ?? null,
+    protocol: session.protocol,
+    tcpStreamId: session.tcp_stream_id,
+    sourceEndpoint: formatEndpoint(
+      session.source_endpoint.ip,
+      session.source_endpoint.port,
+    ),
+    destinationEndpoint: formatEndpoint(
+      session.destination_endpoint.ip,
+      session.destination_endpoint.port,
+    ),
+    captureCompleteness: session.capture_completeness,
+  }));
+
   const categoryCounts = new Map<string, number>();
   for (const f of findingsWithDetails) {
     categoryCounts.set(f.category, (categoryCounts.get(f.category) ?? 0) + 1);
@@ -387,10 +429,16 @@ export function buildPolicyFindingsData(
     dataSource: result.data_source,
     datasetLabel: result.dataset_label,
     analysisStatus: analysis.analysis_status,
+    ruleEngineStatus: analysis.rule_engine_status,
+    hasIncompleteSessions: sessions.some(
+      (session) => session.capture_completeness !== "complete",
+    ),
     policyRisk: policyRiskData,
     findings: sortedFindings,
+    recommendations: recommendationList,
     totalFindings: findings.length,
     sessions: sessionList,
+    analysisSessions,
     categories,
     severities,
     profiles,
@@ -428,6 +476,7 @@ export function buildAnomalyFindingsData(
         captureName:
           capturesById.get(session.capture_id)?.original_filename_sanitized ?? null,
         protocol: session.protocol,
+        tcpStreamId: session.tcp_stream_id,
         sourceEndpoint: formatEndpoint(
           session.source_endpoint.ip,
           session.source_endpoint.port,
@@ -436,6 +485,7 @@ export function buildAnomalyFindingsData(
           session.destination_endpoint.ip,
           session.destination_endpoint.port,
         ),
+        captureCompleteness: session.capture_completeness,
       },
     ]),
   );
