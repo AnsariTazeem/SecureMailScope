@@ -32,6 +32,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useInitialProofMapFit } from "./use-initial-proof-map-fit";
 
 import type {
   ProofGraphNode,
@@ -643,21 +644,14 @@ function Canvas({
   onSelection: (selection: InspectorSelection) => void;
 }) {
   const { fitView, setViewport } = useReactFlow<CanvasNode, CanvasEdge>();
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      void fitView({ padding: 0.15, duration: 250, maxZoom: 1 });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [fitView, layoutKey]);
+  const containerRef = useInitialProofMapFit(nodes, layoutKey);
 
   return (
     <ReactFlow<CanvasNode, CanvasEdge>
+      ref={containerRef}
       nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
-      fitView
-      fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
       minZoom={0.15}
       maxZoom={1.8}
       nodesDraggable={false}
