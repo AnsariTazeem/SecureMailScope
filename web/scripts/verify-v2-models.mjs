@@ -105,3 +105,90 @@ const invalidRecommendation = structuredClone(result);
 invalidRecommendation.chain.recommendations = [];
 assert.throws(() => validateFindingsIntegrity(invalidRecommendation));
 console.log("PASS: session/evidence identity, scoped graph endpoints, exact recommendation steps, recommendation filter and multi-session navigation identity, no mutation, ML not_run, missing session, duplicate and cross-session evidence rejection, unresolved recommendation rejection.");
+
+// Synthetic presentation variants stay in memory; source fixtures are untouched.
+const { stateFromEvent, orderProtocolEvents } = load(path.join(root, "components/analysis/session-xray/session-xray-view-model.ts"));
+const { analysisResultSchema } = load(path.join(root, "lib/contracts/analysis.ts"));
+for (const [event_status, observability, expected] of [
+  ["observed", "observed", "observed"], ["inferred", "observed", "derived"],
+  ["observed", "derived", "derived"], ["incomplete_capture", "observed", "incomplete"],
+  ["not_observable", "observed", "not_observable"],
+  ["inferred", "session_secrets_required", "not_observable"],
+  ["observed", "not_applicable", "not_applicable"],
+]) assert.equal(stateFromEvent({ event_status, observability }), expected);
+for (const session of result.chain.sessions) {
+  const data = buildSessionXRayData(result, session.session_id);
+  const source = result.chain.protocol_events.filter(event => event.session_id === session.session_id);
+  assert.deepEqual(data.events.map(event => event.eventId), orderProtocolEvents(source).map(event => event.event_id));
+  for (const event of data.events) {
+    const declared = source.find(item => item.event_id === event.eventId);
+    assert.deepEqual([event.timestamp, event.eventStatus, event.observability, event.stateBefore, event.stateAfter],
+      [declared.timestamp, declared.event_status, declared.observability, declared.state_before, declared.state_after]);
+    assert.deepEqual(event.evidence.map(item => item.evidenceId), declared.evidence_ids);
+    assert.deepEqual(event.frameNumbers, declared.evidence_ids.flatMap(id => result.chain.evidence.find(item => item.evidence_id === id).frame_numbers));
+    assert.ok(event.evidence.every(item => item.sessionId === session.session_id));
+  }
+  for (const observation of result.chain.crypto_observations.filter(item => item.session_id === session.session_id)) {
+    const entry = [...data.cryptoEntries, ...data.certificateEntries].find(item => item.id === observation.observation_id);
+    assert.ok(entry, "Every supported observation, including TLS 1.3 visibility, remains accessible");
+    assert.equal(entry.kind, observation.kind);
+    assert.equal(entry.value, observation.normalized_value);
+    assert.deepEqual(JSON.parse(entry.technicalDetails), observation);
+    assert.deepEqual(entry.limitations, observation.limitations);
+    assert.deepEqual(entry.evidence.map(item => item.evidenceId), observation.evidence_ids);
+  }
+  assert.equal(data.cryptoEntries.find(entry => entry.kind === "forward_secrecy").state, "not_assessed", "Version/cipher/key-share do not synthesize Forward Secrecy");
+  assert.deepEqual(data.captureLimitations, session.limitations);
+}
+const tied = structuredClone(result.chain.protocol_events.slice(0, 3));
+tied[0].sequence_index = 5;
+tied[1].sequence_index = 1;
+tied[2].sequence_index = 1;
+tied[1].timestamp = "2026-09-12T00:00:05Z";
+tied[2].timestamp = "2026-09-12T00:00:01Z";
+const tiedBefore = JSON.stringify(tied);
+assert.deepEqual(orderProtocolEvents(tied).map(event => event.event_id), [tied[1].event_id, tied[2].event_id, tied[0].event_id], "Sequence and original occurrence take precedence over timestamps");
+assert.equal(JSON.stringify(tied), tiedBefore);
+
+const noRecords = structuredClone(result);
+noRecords.chain.protocol_events = [];
+noRecords.chain.crypto_observations = [];
+noRecords.chain.derived_facts = [];
+noRecords.chain.findings = [];
+noRecords.chain.rule_evaluations = [];
+noRecords.chain.policy_risk = null;
+const emptyXray = buildSessionXRayData(analysisResultSchema.parse(noRecords), result.chain.sessions[0].session_id);
+assert.equal(emptyXray.events.length, 0, "Reference milestones must never become event records");
+assert.equal(emptyXray.negotiationEvents.length, 0);
+assert.equal(emptyXray.certificateEntries.length, 0);
+assert.equal(emptyXray.tls13CertificateUnavailable, false, "Missing data does not imply a TLS 1.3 visibility cause");
+assert.equal(emptyXray.cryptoEntries.find(entry => entry.kind === "tls_upgrade_completed").state, "not_assessed");
+
+const genericCapability = structuredClone(result);
+const capability = genericCapability.chain.protocol_events.find(event => event.event_type === "capability_advertised");
+capability.state_before = "ready";
+capability.state_after = "ready";
+const genericData = buildSessionXRayData(analysisResultSchema.parse(genericCapability), capability.session_id);
+assert.ok(!genericData.negotiationEvents.some(event => event.eventId === capability.event_id), "Generic capability is not a TLS offer without a source state");
+assert.ok(genericData.events.some(event => event.eventId === capability.event_id));
+
+for (const [kind, value, normalized_value, observability] of [
+  ["supported_versions", ["TLS_1_2", "TLS_1_3"], "TLS_1_2, TLS_1_3", "observed"],
+  ["certificate_subject", "CN=example.test", "CN=example.test", "observed"],
+  ["certificate_trusted_path_validated", "unknown", "unknown", "derived"],
+  ["certificate_service_identity_validated", "not_assessed", "not_assessed", "not_observable"],
+  ["certificate_revocation_checked", "not_applicable", "not_applicable", "not_applicable"],
+]) {
+  const variant = structuredClone(result);
+  const observation = variant.chain.crypto_observations.find(item => item.kind === "key_share_group");
+  Object.assign(observation, { kind, value, normalized_value, observability });
+  const data = buildSessionXRayData(analysisResultSchema.parse(variant), observation.session_id);
+  const entry = [...data.cryptoEntries, ...data.certificateEntries].find(item => item.id === observation.observation_id);
+  assert.equal(entry.kind, kind);
+  assert.equal(entry.value, normalized_value, "Unavailable result values remain independent of provenance");
+  assert.deepEqual(JSON.parse(entry.technicalDetails), observation);
+  assert.deepEqual(entry.evidence.map(item => item.evidenceId), observation.evidence_ids);
+  assert.equal(data.cryptoEntries.find(item => item.kind === "forward_secrecy").state, "not_assessed");
+}
+assert.equal(JSON.stringify(result), before);
+console.log("PASS: event status/observability, sequence ties, event/frame/evidence/session identity, no synthetic milestones, capability versus TLS offer, raw/normalized crypto and limitations, unavailable states, no inferred Forward Secrecy or certificate trust.");

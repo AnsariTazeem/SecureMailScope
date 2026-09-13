@@ -738,8 +738,15 @@ function Canvas({
   );
 }
 
-export function ProofMapGraph({ data }: { data: ProofMapData }) {
-  const [scope, setScope] = useState(data.defaultSessionId ?? "all");
+export function ProofMapGraph({
+  data,
+  lockedSessionId,
+}: {
+  data: ProofMapData;
+  lockedSessionId?: string;
+}) {
+  const [selectedScope, setScope] = useState(data.defaultSessionId ?? "all");
+  const scope = lockedSessionId ?? selectedScope;
   const [enabledKinds, setEnabledKinds] = useState<Set<ProofGraphNodeKind>>(
     () => new Set(kindOrder),
   );
@@ -946,6 +953,7 @@ export function ProofMapGraph({ data }: { data: ProofMapData }) {
             </span>
             <select
               value={scope}
+              disabled={Boolean(lockedSessionId)}
               onChange={(event) => {
                 setScope(event.target.value);
                 setSelection(null);

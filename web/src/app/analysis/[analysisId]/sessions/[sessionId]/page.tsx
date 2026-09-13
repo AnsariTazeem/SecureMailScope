@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
+import { buildProofMapData } from "@/components/analysis/proof-map/proof-map-view-model";
+import { ProofMapIntegrityError } from "@/components/analysis/proof-map/proof-map-integrity";
 import { SessionXRay } from "@/components/analysis/session-xray/session-xray";
 import {
   SessionRecordNotFound,
@@ -10,10 +12,7 @@ import {
 import { SessionXRayIntegrityError } from "@/components/analysis/session-xray/session-xray-integrity";
 import { buildSessionXRayData } from "@/components/analysis/session-xray/session-xray-view-model";
 import { getAnalysisDataSourceForId } from "@/lib/api/client";
-import {
-  AnalysisNotFoundError,
-  DataSourceError,
-} from "@/lib/api/errors";
+import { AnalysisNotFoundError, DataSourceError } from "@/lib/api/errors";
 import {
   DATASET_LABEL,
   analysisResultSchema,
@@ -80,9 +79,7 @@ export async function generateMetadata({
     : { ...baseMetadata, robots: { index: false, follow: false } };
 }
 
-export default async function SessionDetailPage({
-  params,
-}: SessionRouteProps) {
+export default async function SessionDetailPage({ params }: SessionRouteProps) {
   const { analysisId, sessionId } = await params;
   if (!ANALYSIS_ID.test(analysisId) || !SESSION_ID.test(sessionId)) notFound();
 
@@ -116,10 +113,15 @@ export default async function SessionDetailPage({
   }
 
   let data;
+  let proofData;
   try {
     data = buildSessionXRayData(loaded.result, sessionId);
+    proofData = buildProofMapData(loaded.result);
   } catch (error) {
-    if (error instanceof SessionXRayIntegrityError) {
+    if (
+      error instanceof SessionXRayIntegrityError ||
+      error instanceof ProofMapIntegrityError
+    ) {
       return (
         <SessionXRayDataSourceFailure
           analysisId={analysisId}
@@ -131,12 +133,9 @@ export default async function SessionDetailPage({
   }
   if (!data) {
     return (
-      <SessionRecordNotFound
-        analysisId={analysisId}
-        sessionId={sessionId}
-      />
+      <SessionRecordNotFound analysisId={analysisId} sessionId={sessionId} />
     );
   }
 
-  return <SessionXRay data={data} />;
+  return <SessionXRay key={sessionId} data={data} proofData={proofData} />;
 }

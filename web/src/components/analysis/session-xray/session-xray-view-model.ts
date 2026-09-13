@@ -74,6 +74,9 @@ export type PostureItem = {
 
 export type CryptoEntry = {
   id: string;
+  kind: string;
+  technicalDetails: string | null;
+  limitations: AnalysisLimitation[];
   label: string;
   value: string;
   detail: string;
@@ -130,6 +133,8 @@ export type SessionXRayData = {
   sessionId: string;
   dataSource: AnalysisResult["data_source"];
   datasetLabel: string | null;
+  analysisStatus: string;
+  ruleEngineStatus: string;
   protocol: string;
   protocolConfidence: string;
   sourceEndpoint: string;
@@ -137,6 +142,7 @@ export type SessionXRayData = {
   tcpStreamId: number;
   captureId: string;
   captureName: string | null;
+  captureWarnings: string[];
   captureCompleteness: string;
   firstFrame: number;
   lastFrame: number;
@@ -146,6 +152,8 @@ export type SessionXRayData = {
   byteCount: number;
   posture: PostureItem[];
   events: XRayEvent[];
+  negotiationEvents: XRayEvent[];
+  captureLimitations: AnalysisLimitation[];
   cryptoEntries: CryptoEntry[];
   certificateEntries: CryptoEntry[];
   tls13CertificateUnavailable: boolean;
@@ -254,12 +262,12 @@ const certificateObservationKinds = new Set<CryptoObservation["kind"]>([
 const cryptoObservationLabels: Partial<
   Record<CryptoObservation["kind"], string>
 > = {
-  tls_negotiated_version: "TLS version",
-  selected_cipher_suite: "Cipher suite",
+  tls_negotiated_version: "Negotiated TLS version",
+  selected_cipher_suite: "Selected cipher suite",
   key_share_group: "Key-share group",
   psk_key_exchange_mode: "PSK key-exchange mode",
   record_layer_legacy_version: "Record-layer legacy version",
-  supported_versions: "Supported versions evidence",
+  supported_versions: "Supported versions (not a negotiated result)",
   session_resumption_indicator: "Session resumption indicator",
 };
 
@@ -275,6 +283,18 @@ export function stateFromObservability(observability: string): EvidenceState {
   if (observability === "policy_inferred") return "policy";
   if (observability === "derived") return "derived";
   return "observed";
+}
+
+// Status qualifies a source event even when its supporting evidence was observed.
+export function stateFromEvent(
+  event: Pick<ProtocolEvent, "event_status" | "observability">,
+): EvidenceState {
+  if (event.event_status === "incomplete_capture") return "incomplete";
+  if (event.event_status === "not_observable") return "not_observable";
+  const state = stateFromObservability(event.observability);
+  return event.event_status === "inferred" && state === "observed"
+    ? "derived"
+    : state;
 }
 
 function formatJsonValue(value: unknown): string {
@@ -523,9 +543,12 @@ function observationEntry(
 ): CryptoEntry {
   return {
     id: observation.observation_id,
+    kind: observation.kind,
+    technicalDetails: JSON.stringify(observation, null, 2),
+    limitations: observation.limitations,
     label,
     value: observation.normalized_value,
-    detail: `Validated ${humanize(observation.kind)} observation.`,
+    detail: "Supplied observation",
     state: stateFromObservability(observation.observability),
     observability: observation.observability,
     evidence: linkedEvidence(evidenceById, observation.evidence_ids),
@@ -541,6 +564,9 @@ function factEntry(
 ): CryptoEntry {
   return {
     id: fact.fact_id,
+    kind: fact.fact_type,
+    technicalDetails: JSON.stringify(fact, null, 2),
+    limitations: fact.limitations,
     label,
     value: formatJsonValue(fact.value),
     detail: `Derived by ${fact.derivation_id} v${fact.derivation_version}; confidence ${humanize(fact.confidence_level)}.`,
@@ -594,11 +620,14 @@ export function buildSessionXRayData(
   const events: XRayEvent[] = sourceEvents.map((event) => {
     const evidence = linkedEvidence(evidenceById, event.evidence_ids);
     const copy = eventCopy[event.event_type];
+    const state = stateFromEvent(event);
     return {
       eventId: event.event_id,
       sequenceIndex: event.sequence_index,
-      title: copy.title,
-      description: copy.description,
+      title: state === "observed" ? copy.title : humanize(event.event_type),
+      description: state === "observed"
+        ? copy.description
+        : `Source event status: ${humanize(event.event_status)}; observability: ${humanize(event.observability)}.`,
       eventType: event.event_type,
       protocol: event.protocol,
       stateBefore: event.state_before,
@@ -607,7 +636,7 @@ export function buildSessionXRayData(
       direction: event.direction,
       eventStatus: event.event_status,
       observability: event.observability,
-      state: stateFromObservability(event.observability),
+      state,
       frameNumbers: evidence.flatMap((item) => item.frameNumbers),
       evidence,
       limitations: event.limitations,
@@ -624,23 +653,20 @@ export function buildSessionXRayData(
   const cryptoEntries: CryptoEntry[] = [];
   if (upgradeFact) {
     cryptoEntries.push({
-      id: upgradeFact.fact_id,
-      label: "TLS upgrade completion",
+      ...factEntry(upgradeFact, evidenceById, context, "TLS upgrade completion"),
       value:
         upgradeFact.value === true
           ? "Completed"
           : upgradeFact.value === false
             ? "Not completed"
             : formatJsonValue(upgradeFact.value),
-      detail: `Derived by ${upgradeFact.derivation_id} v${upgradeFact.derivation_version}; confidence ${humanize(upgradeFact.confidence_level)}.`,
-      state: stateFromObservability(upgradeFact.observability),
-      observability: upgradeFact.observability,
-      evidence: factEvidence(upgradeFact, evidenceById, context),
-      evidenceRelationship: "through_sources",
     });
   } else {
     cryptoEntries.push({
       id: "tls-upgrade-not-assessed",
+      kind: "tls_upgrade_completed",
+      technicalDetails: null,
+      limitations: [],
       label: "TLS upgrade completion",
       value: "Not assessed",
       detail: "No validated TLS upgrade-completion fact is present.",
@@ -669,6 +695,9 @@ export function buildSessionXRayData(
         )
       : {
           id: "forward-secrecy-not-assessed",
+          kind: "forward_secrecy",
+          technicalDetails: null,
+          limitations: [],
           label: "Forward Secrecy",
           value: "Not assessed",
           detail:
@@ -686,17 +715,15 @@ export function buildSessionXRayData(
   const tls13CertificateUnavailable = certificateObservations.some(
     (observation) => observation.kind === "tls13_certificate_unavailable",
   );
-  const certificateEntries = certificateObservations
-    .filter(
-      (observation) => observation.kind !== "tls13_certificate_unavailable",
-    )
-    .map((observation) =>
-      observationEntry(
-        observation,
-        evidenceById,
-        humanize(observation.kind),
-      ),
-    );
+  const certificateEntries = certificateObservations.map((observation) =>
+    observationEntry(
+      observation,
+      evidenceById,
+      observation.kind === "tls13_certificate_unavailable"
+        ? "TLS 1.3 certificate visibility"
+        : humanize(observation.kind),
+    ),
+  );
   const certificateVisibilityFact = sessionFacts.find(
     (fact) => fact.fact_type === "certificate_observability",
   );
@@ -836,13 +863,8 @@ export function buildSessionXRayData(
 
   const sessionScopedLimitations = [
     ...session.limitations,
-    ...sourceEvents.flatMap((event) => event.limitations),
     ...sessionObservations.flatMap((observation) => observation.limitations),
     ...sessionFacts.flatMap((fact) => fact.limitations),
-    ...chain.findings
-      .filter((finding) => finding.session_id === sessionId)
-      .flatMap((finding) => finding.limitations),
-    ...anomalies.flatMap((anomaly) => anomaly.limitations),
   ];
 
   return {
@@ -850,6 +872,8 @@ export function buildSessionXRayData(
     sessionId: session.session_id,
     dataSource: result.data_source,
     datasetLabel: result.dataset_label,
+    analysisStatus: chain.analysis.analysis_status,
+    ruleEngineStatus: chain.analysis.rule_engine_status,
     protocol: session.protocol,
     protocolConfidence: session.protocol_confidence,
     sourceEndpoint: formatEndpoint(
@@ -863,6 +887,7 @@ export function buildSessionXRayData(
     tcpStreamId: session.tcp_stream_id,
     captureId: session.capture_id,
     captureName: capture.original_filename_sanitized,
+    captureWarnings: [...capture.capture_warnings],
     captureCompleteness: session.capture_completeness,
     firstFrame: session.first_frame,
     lastFrame: session.last_frame,
@@ -872,6 +897,16 @@ export function buildSessionXRayData(
     byteCount: session.byte_count,
     posture,
     events,
+    negotiationEvents: events.filter(
+      (event) =>
+        [
+          "tls_upgrade_requested", "tls_upgrade_accepted", "tls_upgrade_rejected",
+          "client_hello", "server_hello", "handshake_finished",
+        ].includes(event.eventType) ||
+        (event.stateBefore !== event.stateAfter &&
+          ["tls_offered", "tls_active", "tls_failed"].includes(event.stateAfter)),
+    ),
+    captureLimitations: session.limitations,
     cryptoEntries,
     certificateEntries,
     tls13CertificateUnavailable,
