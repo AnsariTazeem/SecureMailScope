@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { Database, FilterX, Search, TableProperties } from "lucide-react";
 
@@ -37,8 +38,8 @@ function EmptyDataset() {
         No reconstructed sessions
       </h2>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-neutral-600">
-        The validated analysis result contains an empty sessions collection.
-        No session records or conclusions were synthesized.
+        The validated analysis result contains an empty sessions collection. No
+        session records or conclusions were synthesized.
       </p>
     </section>
   );
@@ -116,11 +117,9 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
       const matchesCapture =
         captureFilter === "all" || row.captureId === captureFilter;
       const matchesCompleteness =
-        completenessFilter === "all" ||
-        row.completeness === completenessFilter;
+        completenessFilter === "all" || row.completeness === completenessFilter;
       const matchesTransition =
-        transitionFilter === "all" ||
-        row.tlsTransition === transitionFilter;
+        transitionFilter === "all" || row.tlsTransition === transitionFilter;
       const matchesFindings =
         findingFilter === "all" ||
         (findingFilter === "with" && row.linkedFindingCount > 0) ||
@@ -163,6 +162,16 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
 
   return (
     <div className="mx-auto min-w-0 w-full max-w-[96rem] space-y-6">
+      <div className="flex justify-end">
+        {data.rows.length >= 2 ? (
+          <Link
+            href={`/analysis/${data.analysisId}/compare`}
+            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium focus-visible:outline-2"
+          >
+            Compare sessions
+          </Link>
+        ) : null}
+      </div>
       <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
@@ -214,7 +223,10 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
       {data.totalSessions === 0 ? (
         <EmptyDataset />
       ) : (
-        <section aria-labelledby="session-inventory-heading" className="min-w-0">
+        <section
+          aria-labelledby="session-inventory-heading"
+          className="min-w-0"
+        >
           <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
             <CardHeader className="border-b border-neutral-200">
               <CardTitle>
