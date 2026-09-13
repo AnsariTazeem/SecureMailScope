@@ -1,4 +1,5 @@
 import type { AnalysisResult } from "@/lib/contracts/analysis";
+import { eventState, factTitle, readableToken, suppliedValue } from "./proof-map-presentation";
 
 import { humanize } from "../sessions/session-formatters";
 import type { XRayEvidence } from "../session-xray/session-xray-view-model";
@@ -87,6 +88,8 @@ export type ProofGraphInspectorRow = {
 };
 
 export type ProofGraphNode = {
+  value: string;
+  context: ProofGraphInspectorRow[];
   id: string;
   kind: ProofGraphNodeKind;
   sessionIds: string[];
@@ -785,7 +788,7 @@ function buildGraphNodes(
   context: ProofMapIntegrityContext,
   evidenceById: Map<string, XRayEvidence>,
 ): ProofGraphNode[] {
-  const nodes: ProofGraphNode[] = [];
+  const nodes: Omit<ProofGraphNode, "value" | "context">[] = [];
   const sessionIdsByCapture = new Map<string, string[]>();
   for (const session of context.chain.sessions) {
     sessionIdsByCapture.set(session.capture_id, [
@@ -1157,7 +1160,60 @@ function buildGraphNodes(
     });
   }
 
-  return nodes.sort((left, right) => left.id.localeCompare(right.id));
+  return nodes.map((node): ProofGraphNode => {
+    const rows: ProofGraphInspectorRow[] = [];
+    let title = node.title;
+    let value = node.metadata;
+    let state = node.state;
+    const technical = [...node.inspectorRows];
+    const fact = node.kind === "fact" ? context.factsById.get(node.id) : undefined;
+    const observation = node.kind === "observation" ? context.observationsById.get(node.id) : undefined;
+    const event = node.kind === "event" ? context.eventsById.get(node.id) : undefined;
+    const finding = node.kind === "finding" ? context.findingsById.get(node.id) : undefined;
+    if (fact) {
+      title = factTitle(fact.fact_type);
+      value = suppliedValue(fact.value);
+      rows.push({ label: "Confidence", value: fact.confidence_level });
+      technical.push({ label: "Exact value (JSON)", value: JSON.stringify(fact.value) ?? "undefined", monospace: true },
+        { label: "Confidence basis", value: fact.confidence_basis });
+    }
+    if (observation) {
+      title = observation.kind === "tls13_certificate_unavailable" ? "TLS 1.3 certificate visibility" : `Observation: ${readableToken(observation.kind)}`;
+      value = suppliedValue(observation.value);
+      technical.push({ label: "Exact value (JSON)", value: JSON.stringify(observation.value) ?? "undefined", monospace: true },
+        { label: "Normalized observation value", value: observation.normalized_value, monospace: true });
+    }
+    if (event) {
+      title = `Event: ${readableToken(event.event_type)}`;
+      value = readableToken(event.event_status);
+      state = eventState(event);
+      rows.push({ label: "Transition", value: `${event.state_before} → ${event.state_after}` },
+        { label: "Event status", value: event.event_status },
+        { label: "Source observability", value: event.observability },
+        { label: "Direction", value: event.direction });
+      technical.push({ label: "Timestamp", value: event.timestamp, monospace: true });
+    }
+    if (finding) {
+      rows.push({ label: "Rationale", value: finding.rationale },
+        { label: "Impact", value: finding.impact }, { label: "Evidence confidence", value: finding.evidence_confidence });
+      technical.push({ label: "Rule version", value: finding.rule_version, monospace: true },
+        { label: "Standards references (JSON)", value: JSON.stringify(finding.standards_references), monospace: true });
+    }
+    if (node.kind === "evidence") {
+      const evidence = evidenceById.get(node.id)!;
+      title = `Evidence: ${evidence.sourceField}`;
+      value = evidence.safeExcerpt || `Frames ${evidence.frameNumbers.join(", ")}`;
+      rows.push({ label: "Frames", value: evidence.frameNumbers.map(String) }, { label: "Direction", value: evidence.direction });
+    }
+    const inherited = [
+      ...scopedLimitations("analysis", context.chain.analysis.limitations),
+      ...(node.kind === "session" ? [] : node.sessionIds.flatMap((id) => scopedLimitations(`session ${id}`, context.sessionsById.get(id)!.limitations))),
+    ];
+    return {
+      ...node, title, value, state, stateLabel: state, context: rows,
+      inspectorRows: technical, limitations: [...node.limitations, ...inherited]
+    };
+  }).sort((left, right) => left.id.localeCompare(right.id));
 }
 
 function collectLimitations(context: ProofMapIntegrityContext): ProofLimitation[] {
