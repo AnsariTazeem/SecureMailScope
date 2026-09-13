@@ -77,7 +77,7 @@ export function ReportExportActions({
           variant="outline"
           size="lg"
           onClick={downloadChain}
-          disabled={downloading}
+          disabled={downloading || (dataSource === "mock" && !demoChain)}
           aria-busy={downloading}
         >
           {downloading ? (
@@ -85,7 +85,9 @@ export function ReportExportActions({
           ) : (
             <Download aria-hidden />
           )}
-          Download Chain JSON
+          {dataSource === "mock"
+            ? "Download demo Chain JSON"
+            : "Download backend Chain JSON"}
         </Button>
         <Button
           type="button"
@@ -97,6 +99,18 @@ export function ReportExportActions({
           Print / Save as PDF
         </Button>
       </div>
+      <p className="mt-2 text-xs leading-5 text-neutral-600 sm:text-right">
+        {dataSource === "mock"
+          ? "Demo Chain JSON retains the Prototype Analysis Dataset notice in its analysis limitations. Backend finding HTML/PDF artifacts are unavailable for demo data."
+          : "Chain JSON and individual finding HTML/PDF files are downloaded unchanged from the backend. Finding artifacts are not full-analysis reports."}
+        {" "}Print / Save as PDF uses this report and your browser’s print
+        dialog, including expanded technical details.
+      </p>
+      {dataSource === "mock" && !demoChain ? (
+        <p role="status" className="mt-2 text-xs">
+          Demo JSON is unavailable because its source Chain is missing.
+        </p>
+      ) : null}
       {error ? (
         <p
           role="alert"
@@ -152,7 +166,7 @@ export function FindingArtifactActions({
             ) : (
               <Download aria-hidden />
             )}
-            Download {format.toUpperCase()}
+            Download finding {format.toUpperCase()}
           </Button>
         ))}
       </div>

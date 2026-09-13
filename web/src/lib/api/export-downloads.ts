@@ -38,10 +38,15 @@ async function requestDownload(
 ): Promise<Response> {
   let response: Response;
   try {
-    response = await fetch(url, { cache: "no-store" });
-  } catch {
+    response = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (error) {
     throw new ExportDownloadError(
-      "The production backend is unavailable. Check the configured API URL and backend service, then try again.",
+      error instanceof Error && error.name === "TimeoutError"
+        ? "The backend download timed out. No file was downloaded. Try again when the service is available."
+        : "The production backend is unavailable. Check the configured API URL and backend service, then try again.",
     );
   }
 
