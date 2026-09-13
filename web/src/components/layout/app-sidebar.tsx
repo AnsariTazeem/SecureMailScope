@@ -7,15 +7,13 @@ import {
   Activity,
   FileSearch,
   Files,
-  GitCompareArrows,
-  GitFork,
   ListChecks,
   Menu,
   PlayCircle,
   Shield,
 } from "lucide-react";
 
-import { DatasetBanner } from "@/components/layout/dataset-banner";
+import { AnalysisDetails } from "@/components/layout/analysis-details";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -29,12 +27,10 @@ import { cn } from "@/lib/utils";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
 const navigationItems = [
-  { label: "Start analysis", segment: null, icon: PlayCircle },
+  { label: "New analysis", segment: null, icon: PlayCircle },
   { label: "Overview", segment: "overview", icon: Activity },
   { label: "Sessions", segment: "sessions", icon: Files },
-  { label: "Proof Map", segment: "proof-map", icon: GitFork },
-  { label: "Findings", segment: "findings", icon: ListChecks },
-  { label: "Compare", segment: "compare", icon: GitCompareArrows },
+  { label: "Recommendations", segment: "recommendations", icon: ListChecks },
   { label: "Report", segment: "report", icon: FileSearch },
 ] as const;
 
@@ -85,7 +81,12 @@ function AnalysisNavigation({
           : "/analysis/new";
         const active = href
           ? pathname === href ||
-            (item.segment === "sessions" && pathname.startsWith(`${href}/`))
+            (item.segment === "sessions" &&
+              (pathname.startsWith(`${href}/`) ||
+                pathname.endsWith("/proof-map") ||
+                pathname.endsWith("/compare"))) ||
+            (item.segment === "recommendations" &&
+              pathname.endsWith("/findings"))
           : false;
         const Icon = item.icon;
 
@@ -135,17 +136,19 @@ export function AppSidebar() {
   return (
     <aside
       data-print-hide
-      className="hidden w-60 shrink-0 border-r border-neutral-200 bg-[#fcfafa] lg:flex lg:flex-col"
+      className="sticky top-0 hidden h-svh w-60 shrink-0 border-r border-neutral-200 bg-[#fcfafa] lg:flex lg:flex-col"
     >
       <div className="border-b border-neutral-200 px-5 py-6">
         <ApplicationIdentity />
-        <p className="mt-2 text-xs text-neutral-500">Forensic Analysis Suite</p>
+        <p className="mt-2 text-xs text-neutral-500">
+          Email security workspace
+        </p>
       </div>
 
       <AnalysisNavigation ariaLabel="Primary" />
 
-      <div className="border-t border-neutral-200 p-4 text-[11px] leading-5 text-neutral-500">
-        Passive analysis only. Evidence limitations remain explicit.
+      <div className="border-t border-border p-4">
+        <AnalysisDetails />
       </div>
     </aside>
   );
@@ -185,10 +188,12 @@ export function AppMobileNavigation() {
         className="w-[min(20rem,calc(100vw-3rem))] gap-0 bg-[#fcfafa] p-0 sm:max-w-80 lg:hidden"
       >
         <SheetHeader className="border-b border-neutral-200 px-5 py-6 pr-12">
-          <SheetTitle className="sr-only">SecureMailScope navigation</SheetTitle>
+          <SheetTitle className="sr-only">
+            SecureMailScope navigation
+          </SheetTitle>
           <ApplicationIdentity onNavigate={() => setOpen(false)} />
           <SheetDescription className="mt-2 text-xs">
-            Forensic Analysis Suite
+            Email security workspace
           </SheetDescription>
         </SheetHeader>
 
@@ -198,10 +203,7 @@ export function AppMobileNavigation() {
         />
 
         <div className="mt-auto border-t border-neutral-200 p-4">
-          <DatasetBanner />
-          <p className="mt-3 text-[11px] leading-5 text-neutral-500">
-            Passive analysis only. Evidence limitations remain explicit.
-          </p>
+          <AnalysisDetails />
         </div>
       </SheetContent>
     </Sheet>
