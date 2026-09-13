@@ -1,0 +1,107 @@
+.report {
+  overflow-wrap: anywhere;
+}
+
+.report [data-report-print-only] {
+  display: none;
+}
+
+@media print {
+  .report [data-report-screen-only] {
+    display: none !important;
+  }
+
+  .report [data-report-print-only] {
+    display: block;
+  }
+
+  /* Block flow lets headings and their next content fragment together.
+     Screen cards use flex/grid and overflow-hidden, which hinder pagination. */
+  .report [data-report-section],
+  .report [data-report-print-flow],
+  .report [data-slot="card"],
+  .report [data-slot="card-header"],
+  .report [data-slot="card-title"],
+  .report [data-slot="card-content"] {
+    display: block;
+    overflow: visible;
+    height: auto;
+    max-height: none;
+    break-inside: auto !important;
+  }
+
+  /* Override the application's global keep-card-together print rule. */
+  .report article,
+  .report [data-report-raw-record],
+  .report pre {
+    break-inside: auto !important;
+    overflow: visible;
+    max-height: none;
+  }
+
+  .report h1,
+  .report h2,
+  .report h3,
+  .report h4,
+  .report [data-report-heading],
+  .report [data-slot="card-header"],
+  .report [data-slot="card-title"] {
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  .report h1 + *,
+  .report h2 + *,
+  .report h3 + *,
+  .report h4 + *,
+  .report [data-report-heading] + *,
+  .report [data-slot="card-header"] + *,
+  .report [data-slot="card-title"] + * {
+    page-break-before: avoid;
+    break-before: avoid-page;
+  }
+
+  .report p,
+  .report li,
+  .report pre {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .report pre,
+  .report code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
+
+  /* Keep only the brief engine/score block together, never a full raw record. */
+  .report [data-report-keep] {
+    break-inside: avoid-page;
+  }
+
+  .report [data-report-reference] {
+    padding: 0.5rem;
+  }
+
+  .report [data-report-reference] > * + * {
+    margin-block-start: 0.25rem;
+  }
+
+  .report [data-report-appendix] {
+    break-before: page;
+  }
+
+  /* Reduce container spacing, not type size. No page-count target or scaling. */
+  .report > * + * {
+    margin-block-start: 1rem;
+  }
+
+  .report [data-slot="card"] {
+    padding-block: 0.5rem;
+  }
+
+  .report [data-report-print-flow] > * + * {
+    margin-block-start: 1rem;
+  }
+}
