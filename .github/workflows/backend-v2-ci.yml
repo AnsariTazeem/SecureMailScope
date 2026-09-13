@@ -1,0 +1,62 @@
+name: Backend V2 CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/backend-v2
+  pull_request:
+    branches:
+      - feat/backend-v2
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-v2-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-quality:
+    name: Ruff and pytest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python from .python-version
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.5"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install TShark and capinfos
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends tshark
+          tshark --version
+          capinfos --version
+
+      - name: Verify lockfile
+        run: uv lock --check
+
+      - name: Install locked development dependencies
+        run: uv sync --locked --dev
+
+      - name: Run Ruff
+        run: uv run --locked ruff check .
+
+      - name: Run complete pytest suite
+        run: uv run --locked pytest
