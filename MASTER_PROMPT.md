@@ -9,8 +9,10 @@ The objective is not to make the project look complete. It is to produce indepen
 ## Current objective and status
 
 - This document retains **historical POC planning and integrity rules**, which remain binding for the frozen POC records and relevant POC work.
-- **Current work is production Chain-of-Proof development** on branch `feat/production-backend`.
-- **Current implementation truth comes from `context/progress-tracker.md`** (with the production section of `context/architecture.md`), not from historical planning text.
+- **Current work is Backend V2 development** on branch `feat/backend-v2`.
+- Backend V1 ends at `f81bcc4`, tagged `backend-v1-public-deployed`; Backend V2 CI begins at `94b6ac9`.
+- `context/backend-v2-implementation-plan.md` is the authoritative Backend V2 implementation plan.
+- **Current implementation truth comes from `context/progress-tracker.md`** (with the Backend V2 section of `context/architecture.md`), not from historical planning text.
 - The selection **GREEN/RED decision has already closed as GO at `cf055cf`**. Do not rewrite that historical decision; do not re-issue a POC recommendation.
 
 ## Current starting status (historical)
@@ -189,23 +191,26 @@ At completion, `docs/POC_RESULT.md` must record environment/versions, commit, co
 
 The developer supplies one active task. Do not invent or begin work from this placeholder.
 
-## Production-development mode (post-selection, `feat/production-backend`)
+## Backend V2 development mode (`feat/backend-v2`)
 
-The PS159 selection POC is **closed (GO) at `cf055cf`** and the repository is now in a **production-development phase** on branch `feat/production-backend`. The historical POC rules above are retained and remain binding; production work additionally follows the rules in this section.
+The PS159 selection POC is **closed (GO) at `cf055cf`**. The deployed Backend V1 baseline ends at `f81bcc4` and is tagged `backend-v1-public-deployed`. Backend V2 CI begins at `94b6ac9`; all Backend V2 work occurs only on `feat/backend-v2`. The historical POC rules above remain binding.
 
 ### Authority and scope
 
 - The frozen POC records are authoritative and must not be rewritten, reinterpreted, weakened, or extended: `docs/POC_RESULT.md`, `docs/PRD.md`, `docs/SYSTEM_DESIGN.md`, the frozen capture fixtures, and POC expected outputs.
 - The active production contract is the **Chain of Proof** in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`). Read it before any production chain work. Do not silently alter its technical content; report any conflict for an explicit decision.
-- The existing analyzer remains stable. `src/securemailscope/chain` is the versioned domain contract. The **pure POC-result adapter** (Commit 2) is **completed at `616b97d`**: it maps verified analyzer output into the chain with no re-analysis. **Commit 3** (`feat: derive smtp transition facts from ordered evidence`) is **completed and verified at `2c1454f`**: deterministic SMTP transition facts derived from ordered, evidence-backed chain events. **Commit 4** (`feat: add deterministic policy evaluation engine`) is **completed and verified at `ad25711`**: deterministic policy-pack loading and policy evaluation over the validated Chain-of-Proof, producing evidence-backed rule evaluations, findings, recommendations and policy-risk output. **Commit 5A** (`feat: render evidence-backed finding artifacts`) is **completed and verified at `3807118`**. **Commit 5B** (`feat: expose validated chain through read-only api`) is **completed and verified at `a262b24`**.
+- The Commit 1–5B descriptions below are **historical verified Backend V1 milestones**. Commit 5A did not itself add upload/orchestration and Commit 5B was read-only; those statements describe their milestone boundaries, not the current service.
 - Commit 5A is a deterministic presentation and artifact-rendering foundation over an already validated and policy-evaluated Chain-of-Proof. It produces a strict immutable selected-finding projection, canonical Chain JSON, autoescaped finding HTML, deterministic finding PDF, artifact SHA-256 digests and byte lengths, an evidence-backed event timeline ordered by `(sequence_index, event_id)`, exact evidence frame numbers and timestamps, finding rationale, impact, remediation and standards references, and separate policy-risk and ML-anomaly presentation.
 - Commit 5A does not analyze packets, derive new facts, evaluate policy, run ML, write artifacts to the filesystem, expose HTTP/API routes, implement upload or analysis-job orchestration, add persistence, authentication or frontend code, attribute an attacker, or expose raw SMTP payloads, credentials, email addresses or arbitrary filesystem paths.
 - Commit 5B is a thin, read-only FastAPI exposure layer over an injected repository of validated Chain-of-Proof objects and the verified Commit 5A presentation/artifact services. Its versioned `/api/v1` boundary provides typed, bounded and deterministic analysis, Chain, session-event, evidence, finding and existing JSON/HTML/PDF artifact responses without duplicating analyzer, fact, policy, ML or presentation business logic.
-- Commit 5A completed deterministic presentation and in-memory artifacts; Commit 5B completed the thin read-only HTTP exposure. The declared backend Commit 5 presentation/API/artifact boundary is completed and verified through `3807118` and `a262b24`.
-- Commit 5B does not add PCAP upload, write methods, background jobs or queues, database persistence, authentication or authorization, frontend implementation, analyzer execution, policy execution, ML execution, live capture, SIEM, phishing detection, blocking, email decryption, geolocation, external AI APIs, silent online dependencies or filesystem artifact writing. The default production application repository is empty; test data is injected only in tests. No capability beyond verified SMTP production coverage is claimed. TLS 1.3 certificate details remain `not_observable` without authorized session secrets, and ports remain hints for content-based protocol classification.
+- Commits `639fd47` and `f81bcc4` subsequently completed verified synchronous `analyze_capture_to_chain()` orchestration and bounded PCAP/PCAPNG upload through `POST /api/v1/analyses`. The verified baseline also includes capture validation, capinfos metadata, SHA-256 provenance, bounded TShark, supported email-session reconstruction, Chain adaptation/invariant validation, deterministic SMTP facts and policy evaluation, JSON/HTML/PDF artifacts, all `/api/v1` analysis/read routes, and 776 tests.
 - Frontend implementation remains a separate workstream and is not a backend capability claim.
 - **Policy risk and ML anomaly remain separate** outputs; never present their sum or average as an independently validated fact.
-- The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution, upload/analysis orchestration, persistence, authentication and deployment remain separate, unimplemented candidates and are not authorized by this documentation update.
+- **SELECTED:** the Backend V2 architecture and milestones in `context/backend-v2-implementation-plan.md`.
+- **PLANNED/UNVERIFIED:** durable persistence, a durable job lifecycle, bounded background execution, complete IMAP/POP3 transition analysis, production ML, authentication/authorization/tenant isolation, staging deployment and a repository-controlled Docker runtime.
+- **DEFERRED:** scale-out infrastructure and optional ledger anchoring until prerequisites and measurements justify them. Blockchain is not implemented or required.
+- Current limitations: synchronous analysis may block the FastAPI event loop; results exist only in the bounded in-memory repository; `ml_engine_status` remains `not_run`.
+- Deployed Backend V1 and Frontend V1, both production branches, Railway, Vercel, public production URLs and production API behavior are protected. Future integration requires a separate staging backend and staging API URL. Production deployment changes are not authorized.
 
 ### Production discipline
 

@@ -2,10 +2,11 @@
 
 ## Purpose
 
-SecureMailScope is **currently in production-backend development** on branch
-`feat/production-backend`, building on a closed selection POC for SIH 2026
+SecureMailScope is **currently in Backend V2 development** on branch
+`feat/backend-v2`, building on the deployed Backend V1 baseline for SIH 2026
 PS159: AI-assisted cryptographic security posture assessment of email
-communications.
+communications. The authoritative implementation plan is
+`context/backend-v2-implementation-plan.md`.
 
 The selection POC was a **technical viability/kill test** and **closed as GO at
 `cf055cf`**. Its verified analyzer scope is limited to: generic capture
@@ -14,10 +15,43 @@ content-based SMTP classification, SMTP STARTTLS transition analysis, typed
 models/errors, the T01 manual verification PASS (23/23), and the E2/E3A
 analyzer-path checkpoint PASS.
 
-IMAP/POP3 and the remaining cryptographic capabilities describe **target or
-historical planned scope**, not current implemented scope. Production
-presentation, artifact and API support is limited to the verified Commit 5A and
-Commit 5B boundaries described below.
+Backend V1 ends at commit `f81bcc4`, tagged `backend-v1-public-deployed`.
+Backend V2 CI begins at `94b6ac9`. Backend V2 work occurs only on
+`feat/backend-v2`; deployed Backend V1, Frontend V1, `feat/production-backend`,
+`feat/production-frontend`, production URLs, Railway/Vercel configuration and
+production API behavior must remain unchanged.
+
+Current capability labels are strict:
+
+- **VERIFIED:** bounded PCAP/PCAPNG upload; capture validation, capinfos
+  metadata and SHA-256 provenance; bounded TShark analysis; synchronous
+  `analyze_capture_to_chain()` orchestration; supported email-session
+  reconstruction; Chain adaptation and invariant validation; deterministic
+  SMTP transition facts and policy evaluation; JSON/HTML/PDF artifacts; the
+  `/api/v1` analysis and read endpoints; the 776-test baseline; and read-only
+  Backend V2 CI.
+- **SELECTED:** the Backend V2 architecture and milestone sequence in
+  `context/backend-v2-implementation-plan.md`.
+- **PLANNED:** durable repositories and job lifecycle, bounded background
+  execution, staging-only deployment/runtime support, complete IMAP/POP3
+  transition analysis, production ML, and authentication/tenant isolation.
+- **DEFERRED:** scale-out workers/queues/search and optional ledger anchoring
+  until prerequisites and measurements justify them.
+- **UNVERIFIED:** every selected, planned or deferred capability until supported
+  by implementation evidence and tests.
+
+The current verified service is still synchronous and may block the FastAPI
+event loop. Results exist only in the bounded in-memory repository. There is no
+durable database, durable job lifecycle, bounded background executor,
+production ML, authentication, authorization, tenant isolation, staging
+deployment or repository-controlled Docker runtime. Complete IMAP and POP3
+transition analysis is not verified; `ml_engine_status` remains `not_run`.
+
+### Historical Backend V1 milestone record
+
+The following Commit 1–5B descriptions are preserved historical milestone
+boundaries. Statements that upload or orchestration were absent apply only at
+the named checkpoint.
 
 **Chain Commit 1** (`feat: add chain-of-proof domain contract`) is complete at
 `57fe930`; **Chain Commit 2** (`feat: map verified smtp analysis into evidence
@@ -62,23 +96,17 @@ Commit 5A completed deterministic presentation and in-memory artifacts; Commit
 presentation/API/artifact boundary is therefore completed and verified through
 `3807118` and `a262b24`.
 
-Commit 5B does not add PCAP upload; POST/PUT/PATCH/DELETE analysis behavior;
-background jobs or queues; database persistence; authentication or
-authorization; frontend implementation; analyzer, policy or ML execution; live
-capture; SIEM; phishing detection; blocking; email decryption; geolocation;
-external AI APIs; silent online dependencies; or filesystem artifact writing.
-The default production application repository is empty; test data is injected
-only in tests. The frontend remains a separate repository/workstream and is not
-a backend capability claim. No capability beyond verified SMTP production
-coverage is claimed. TLS 1.3 certificate details remain `not_observable`
-without authorized session secrets, ports remain hints, protocol classification
-remains content-based, and policy risk and ML anomaly remain separate outputs.
+At the Commit 5B checkpoint, that commit did not add PCAP upload, write analysis
+methods, background jobs, persistence, authentication, ML execution or
+deployment, and its default repository was empty. The frontend remained a
+separate workstream. TLS 1.3 certificate details remained `not_observable`
+without authorized session secrets, ports remained hints, and Policy Risk and
+ML Anomaly remained separate.
 
-The next backend milestone is pending explicit architectural selection and
-remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution,
-upload/analysis orchestration, persistence, authentication and deployment are
-separate, unimplemented candidates and are not authorized by this documentation
-update.
+Commits `639fd47` and `f81bcc4` subsequently completed synchronous orchestration
+and secure capture upload. Deterministic Policy Risk and ML Anomaly remain
+separate. Blockchain is neither implemented nor required; optional ledger
+anchoring is deferred.
 
 Correctness, reproducibility, evidence integrity, and honest limitations take
 precedence over feature breadth or presentation polish.
@@ -122,20 +150,21 @@ and POC result define what has actually been verified.
 
 ## Authority boundaries: frozen POC versus production
 
-The repository contains a **frozen POC history** and an **active production
-backend** on branch `feat/production-backend`:
+The repository contains a **frozen POC history**, a protected deployed Backend
+V1 baseline, and active Backend V2 work on `feat/backend-v2`:
 
 - The PS159 selection POC is **closed** and frozen at `cf055cf`. Do not rewrite,
   reinterpret, weaken, or extend the frozen POC records: `docs/POC_RESULT.md`,
   `docs/PRD.md`, `docs/SYSTEM_DESIGN.md`, the frozen capture fixtures, and the
   POC expected outputs.
-- Production development builds on the verified POC core. The production target
+- Backend development builds on the verified POC core. The Chain target
   phase is governed by the approved Chain-of-Proof contract in
   `docs/CHAIN_OF_PROOF_SPECIFICATION.md` (schema `1.0.0`) and by
-  `context/architecture.md` (production section).
-- The active production branch is `feat/production-backend`. Frontend
-  implementation remains separate from this backend repository and is not a
-  backend capability claim.
+  `context/architecture.md` (Backend V2 section).
+- Backend V1 ends at `f81bcc4` (`backend-v1-public-deployed`); Backend V2 CI
+  begins at `94b6ac9`. Do not modify either production branch or any deployed
+  V1 service. Future integration requires a separate staging backend and API
+  URL and explicit deployment approval.
 - Preserve the entire POC verification history in `context/progress-tracker.md`
   when appending production progress.
 

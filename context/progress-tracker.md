@@ -1,8 +1,8 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 31 August 2026
+**Last updated:** 14 September 2026
 
-**Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Chain Commit 2 (pure POC-result adapter) completed and verified at `616b97d`. **Chain Commit 3 (deterministic SMTP transition facts) completed and verified at `2c1454f`. Chain Commit 4 (deterministic policy evaluation engine) completed and verified at `ad25711`. Commit 5A (deterministic presentation and artifact rendering) completed and verified at `3807118`. Commit 5B (thin read-only FastAPI exposure) completed and verified at `a262b24`.** The declared backend Commit 5 presentation/API/artifact boundary is complete. The next backend milestone is pending explicit architectural selection and remains UNVERIFIED. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
+**Current phase:** Backend V2 on `feat/backend-v2`. Backend V1 ends at `f81bcc4`, tagged `backend-v1-public-deployed`; Backend V2 CI begins at `94b6ac9`. The authoritative plan is `context/backend-v2-implementation-plan.md`. The selection POC remains CLOSED/GO at `cf055cf`; historical verification records below are preserved.
 
 **Implementation status:** T01 PASS (23/23 comparisons); E2/E3A PASS (authorized scope: read-only intake, TShark-native reassembly, content-based SMTP classification, STARTTLS transition states). Selection decision: GO — PS159 selected/finalized for Team Apex. T02–T08 and all binary gates remain UNTESTED.
 
@@ -98,9 +98,37 @@ The `tshark_observe` timeout is recorded transparently as an environmental/tool-
 
 Scope of this PASS: the E2/E3A analyzer path for the frozen scope only (SMTP on the unchanged T01 PCAP). The E2/E3A session-state tests prove that the SMTP transition-state implementation supports accepted TLS, rejected, accepted without TLS, truncated, and incomplete cases; this is unit/state coverage and should not be mistaken for the formal controlled fixtures. The following remain UNTESTED with no evidence collected: IMAP/POP3 identification (T02, T03), TLS 1.3 invisibility handling (T04), STARTTLS rejection/accepted-without-TLS/truncated/false-positive controls via formal fixtures (T05–T07), ML anomaly scoring (T08), deterministic policy-risk scoring, analyzer JSON/HTML report validation, and all binary gates G01–G11.
 
-## Current production status
+## Current Backend V2 status
 
-Selection decision recorded: GO — PS159 selected/finalized for Team Apex; the selection-grade technical POC is CLOSED at `cf055cf`. Production development is active on `feat/production-backend`. Commit 5A, the deterministic presentation and artifact-rendering foundation over an already validated and policy-evaluated Chain-of-Proof, is **completed and verified at `3807118`**. Commit 5B, the thin read-only FastAPI exposure over an injected repository of validated Chain-of-Proof objects and verified Commit 5A services, is **completed and verified at `a262b24`**. Together they complete the declared backend Commit 5 presentation/API/artifact boundary. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**.
+VERIFIED: bounded PCAP/PCAPNG capture upload; capture validation, capinfos
+metadata and SHA-256 provenance; bounded TShark analysis; synchronous
+`analyze_capture_to_chain()` orchestration; supported email-session
+reconstruction; Chain-of-Proof adaptation and invariant validation;
+deterministic SMTP transition facts; deterministic policy evaluation;
+JSON/HTML/PDF artifacts; `/api/v1` HTTP analysis and read endpoints; the
+776-test baseline; and read-only Backend V2 CI.
+
+SELECTED: the Backend V2 architecture and milestone sequence documented in the
+authoritative implementation plan.
+
+PLANNED and UNVERIFIED: durable database persistence; a durable job lifecycle
+and bounded background executor; complete IMAP/POP3 transition analysis;
+production ML; authentication, authorization and tenant isolation; staging;
+and a repository-controlled Docker runtime.
+
+DEFERRED: scale-out workers/queues/search and optional ledger anchoring until
+prerequisites and measurements justify them. Blockchain is not implemented or
+required.
+
+CURRENT LIMITATIONS: analysis executes synchronously and may block the FastAPI
+event loop; completed results exist only in the bounded in-memory repository;
+there is no durable database or durable job lifecycle; and
+`ml_engine_status=not_run` with no production ML execution.
+
+Deployed Backend V1 and Frontend V1 remain unchanged. Do not modify either
+production branch, Railway, Vercel, public production URLs or production API
+behavior. Future integration requires a separate staging backend and staging
+API URL; production deployment changes are not authorized.
 
 ## Exact step-by-step sequence after repository creation
 
@@ -160,9 +188,12 @@ If that evidence chain cannot be produced after normal setup corrections, record
 
 None. Tool availability was verified on 2026-08-25 by the real doctor run (11/11 prerequisite checks passed, verdict `READY`, exit code 0).
 
-## Production phase — Chain of Proof commit history
+## Historical Backend V1 — Chain-of-Proof commit history
 
-The PS159 selection POC is closed (GO/selection at `cf055cf`). Production development continues on branch `feat/production-backend` under the approved Chain-of-Proof contract (schema `1.0.0`). The frozen POC verification history above is preserved unchanged; production work does not rewrite it.
+The milestones in this section are preserved historical Backend V1 checkpoints.
+Statements that a later capability was absent describe the boundary at that
+checkpoint, not the current Backend V1 baseline. The PS159 selection POC is
+closed at `cf055cf`; the frozen POC verification history above remains unchanged.
 
 ### Verified milestone — Chain Commit 1: domain contract (PASS, 2026-08-29)
 
@@ -332,8 +363,35 @@ Scope of this PASS: read-only HTTP exposure of validated Chain and existing Comm
 
 ### Commit 5 vertical boundary status
 
-Commit 5A completed deterministic presentation and in-memory artifacts. Commit 5B completed the thin read-only HTTP exposure. The declared backend Commit 5 presentation/API/artifact boundary is therefore completed and verified through `3807118` and `a262b24`. This does not mean the separate frontend, upload/analysis orchestration, persistence, authentication, IMAP/POP3 expansion, ML execution, deployment or the full product is complete.
+Commit 5A completed deterministic presentation and in-memory artifacts. Commit
+5B completed the thin read-only HTTP exposure. At that historical checkpoint,
+upload and orchestration were not yet implemented; they were added by the
+verified milestones below.
 
-## Production blockers and status
+### Verified milestone — Commit 6A: synchronous analysis orchestration (PASS)
 
-No production blockers are recorded through Commit 5B. No subsequent backend milestone has been architecturally selected or authorized. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution, upload/analysis orchestration, persistence, authentication and deployment remain separate, unimplemented candidates and are not authorized by this documentation update. Frontend implementation remains separate from the backend repository and is not a backend capability claim.
+- Commit: `639fd47`.
+- Added synchronous `analyze_capture_to_chain()` orchestration across capture
+  validation/provenance, bounded TShark analysis, supported email-session
+  reconstruction, Chain adaptation, deterministic SMTP fact derivation, policy
+  evaluation, final invariant validation and bounded repository registration.
+- This is synchronous request-path execution, not a durable job lifecycle or a
+  bounded background executor.
+
+### Verified milestone — Commit 6B: secure capture upload and Backend V1 boundary (PASS)
+
+- Commit: `f81bcc4`, tagged `backend-v1-public-deployed`.
+- Added bounded PCAP/PCAPNG upload through `POST /api/v1/analyses`, including
+  multipart bounds, capture validation, private temporary handling, capinfos
+  metadata, SHA-256 provenance and cleanup.
+- Backend V1 verification baseline: 776 tests passed.
+- Backend V2 read-only CI begins at `94b6ac9`; it contains no deployment step,
+  secret use, OIDC write permission or repository write permission.
+
+## Backend V2 limitations and status
+
+This documentation update completes Milestone V2-0. The next selected
+implementation milestone is V2-1 — Identity and Repository Contracts. Durable
+storage, event-loop isolation, durable jobs, complete IMAP/POP3 transitions,
+production ML, authentication/tenant isolation, staging and Docker runtime are
+PLANNED and remain UNVERIFIED. No production deployment change is authorized.

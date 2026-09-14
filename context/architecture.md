@@ -234,9 +234,13 @@ SecureMailScope/
 
 This is the canonical POC layout, not evidence that the files or features already exist. Do not add alternate orchestration or combined-scoring modules; orchestration belongs in `pipeline.py`, the CLI remains thin, and policy/ML remain separate files.
 
-# Production architecture (post-selection, `feat/production-backend`)
+# Historical Backend V1 architecture (through `f81bcc4`)
 
-**Status:** Active production development building on the frozen POC core. This section documents the production backend phase; it does not rewrite the frozen POC plan above.
+**Status:** VERIFIED historical Backend V1 architecture. Backend V1 ends at
+`f81bcc4`, tagged `backend-v1-public-deployed`. Milestone-specific exclusions
+below describe what each commit did not yet add; they are not current-state
+claims. Current Backend V2 architecture is documented later in this file and in
+`context/backend-v2-implementation-plan.md`.
 
 ## Phase boundaries
 
@@ -345,9 +349,17 @@ The verified boundary provides:
 - canonical Chain JSON and existing finding HTML/PDF artifact exposure;
 - no duplicated analyzer, fact, policy, ML or presentation business logic.
 
-FastAPI does not analyze packets, derive facts, evaluate policy or run ML. Commit 5B does not add PCAP upload; POST/PUT/PATCH/DELETE analysis behavior; background jobs or queues; database persistence; authentication or authorization; frontend implementation; analyzer, policy or ML execution; live capture; SIEM; phishing detection; blocking; email decryption; geolocation; external AI APIs; silent online dependencies; or filesystem artifact writing. The default production application repository is empty; test data is injected only in tests.
+At the Commit 5B checkpoint, FastAPI did not analyze packets, derive facts,
+evaluate policy or run ML, and Commit 5B did not itself add PCAP upload or write
+methods. Synchronous orchestration and `POST /api/v1/analyses` were subsequently
+added by commits `639fd47` and `f81bcc4`. Background jobs, durable persistence,
+authentication/authorization and production ML remained absent at the Backend
+V1 boundary.
 
-Current production capability remains bounded by verified SMTP coverage. TLS 1.3 certificate details remain `not_observable` without authorized session secrets. Ports remain hints and protocol classification remains content-based. Policy risk and ML anomaly remain separate outputs. Frontend implementation remains separate from the backend repository and is not a backend capability claim.
+Backend V1 capability remains bounded by verified SMTP transition coverage. TLS
+1.3 certificate details remain `not_observable` without authorized session
+secrets. Ports remain hints and protocol classification remains content-based.
+Policy Risk and ML Anomaly remain separate outputs.
 
 ## Layering (production)
 
@@ -359,7 +371,8 @@ existing POC analyzer core (stable, verified scope above)
   -> deterministic policy findings/risk/recommendations (Commit 4, verified at ad25711)
   -> deterministic presentation/artifact rendering (Commit 5A, verified at 3807118)
   -> thin read-only FastAPI exposure (Commit 5B, verified at a262b24)
-  -> next backend milestone pending explicit architectural selection
+  -> synchronous analyze_capture_to_chain orchestration (Commit 6A, 639fd47)
+  -> bounded POST /api/v1/analyses capture upload (Commit 6B, f81bcc4)
 ```
 
 ## Production sequence
@@ -373,9 +386,13 @@ The Chain-of-Proof contract in `docs/CHAIN_OF_PROOF_SPECIFICATION.md` defines an
 - **Commit 5A — presentation/artifact rendering** (completed and verified at `3807118`): deterministic selected-finding projection and in-memory canonical JSON, autoescaped HTML and deterministic PDF artifacts.
 - **Commit 5B — thin read-only FastAPI exposure** (completed and verified at `a262b24`): typed, bounded, deterministic access to existing Chain and Commit 5A services.
 
-Commit 5A completed deterministic presentation and in-memory artifacts; Commit 5B completed the thin read-only HTTP exposure. The declared backend Commit 5 presentation/API/artifact boundary is completed and verified through `3807118` and `a262b24`. This does not complete the separate frontend, upload/analysis orchestration, persistence, authentication, IMAP/POP3 expansion, ML execution, deployment or the full product.
+Commit 5A completed deterministic presentation and in-memory artifacts; Commit
+5B completed thin read-only HTTP exposure. Commits `639fd47` and `f81bcc4`
+subsequently completed synchronous orchestration and bounded capture upload.
 
-No subsequent backend milestone has been architecturally selected or authorized. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution, upload/analysis orchestration, persistence, authentication and deployment remain separate, unimplemented candidates and are not authorized by this documentation update.
+This historical sequence ends at the verified Backend V1 boundary. It does not
+claim durable persistence, background execution, complete IMAP/POP3 transitions,
+production ML, authentication/tenant isolation or staging deployment.
 
 ## Component placement
 
@@ -390,3 +407,50 @@ No subsequent backend milestone has been architecturally selected or authorized.
 - TLS 1.3 certificate invisibility in secretless passive captures stays `not_observable`/`session_secrets_required`/`not_observable_encrypted_tls13`; never fabricated.
 - Ports are hints only; classification requires direction-consistent content evidence.
 - The frontend renders canonical state and never derives protocol-security conclusions independently; frontend implementation remains separate from the backend repository.
+
+# Backend V2 architecture (`feat/backend-v2`)
+
+**Authority:** `context/backend-v2-implementation-plan.md` is the authoritative
+implementation plan. Backend V2 starts from `f81bcc4`; read-only CI begins at
+`94b6ac9`. Deployed Backend V1 and Frontend V1, both production branches,
+Railway/Vercel settings, production URLs and production API behavior remain
+unchanged.
+
+## Current verified baseline
+
+- bounded PCAP/PCAPNG upload with capture validation, capinfos metadata and
+  SHA-256 provenance;
+- bounded TShark analysis and supported email-session reconstruction;
+- synchronous `analyze_capture_to_chain()` orchestration;
+- Chain-of-Proof adaptation and invariant validation;
+- deterministic SMTP transition facts and deterministic policy evaluation;
+- JSON, HTML and PDF artifacts;
+- `POST /api/v1/analyses` plus the existing `/api/v1` read endpoints;
+- 776 tests and read-only Backend V2 CI.
+
+## Selected target and current limitations
+
+SELECTED architecture introduces durable repository interfaces, explicit job
+identity/lifecycle and bounded execution while preserving `/api/v1`. These are
+not yet verified implementations.
+
+```text
+FastAPI boundary
+  -> submission/job service                 PLANNED
+  -> durable job repository                 PLANNED
+  -> bounded executor/event-loop isolation  PLANNED
+  -> verified analysis pipeline             VERIFIED (synchronous)
+  -> durable Chain repository               PLANNED
+```
+
+Results currently exist only in the bounded in-memory repository, and analysis
+may block the FastAPI event loop. There is no durable database, durable job
+lifecycle, bounded background executor, complete verified IMAP/POP3 transition
+analysis, production ML, authentication, authorization, tenant isolation,
+staging deployment or repository-controlled Docker runtime.
+`ml_engine_status` remains `not_run`.
+
+Scale-out workers/queues/search and optional ledger anchoring are DEFERRED until
+prerequisites and measurements justify them. Blockchain is not implemented or
+required. Future integration requires a separate staging backend and staging
+API URL; production deployment changes are not authorized.
