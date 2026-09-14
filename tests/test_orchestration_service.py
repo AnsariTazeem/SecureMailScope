@@ -64,9 +64,6 @@ class RecordingRegistry(InMemoryAnalysisChainRepository):
 
 
 class InvalidChainRejectingRegistry:
-    def get(self, analysis_id: str) -> ChainOfProof | None:
-        return None
-
     def register(self, chain: ChainOfProof) -> None:
         raise RepositoryInvalidChainError("rejected")
 

@@ -423,3 +423,47 @@ still SELECTED and UNVERIFIED. Durable storage, event-loop isolation, durable
 jobs, API V2, complete IMAP/POP3 transitions, production ML,
 authentication/tenant isolation, staging and Docker runtime are PLANNED and
 remain UNVERIFIED. No production deployment change is authorized.
+
+### Verified milestone — V2-1 Slice 2: analysis-result storage contracts (PASS)
+
+Milestone V2-1 Slice 2 added database-agnostic storage-domain boundaries for
+completed analysis results while retaining the verified Backend V1 in-memory
+adapter and `/api/v1` behavior:
+
+- segregated runtime-checkable `AnalysisResultReader` and
+  `AnalysisResultRegistry` protocols plus an `AnalysisResultRepository`
+  composite built only from those two contracts;
+- a storage error hierarchy distinguishing optional-result absence, invalid
+  registration, identity conflict, unavailable capacity, stored corruption,
+  unsupported stored schema version and internal storage failure;
+- compatibility inheritance for the existing `RepositoryInvalidChainError`,
+  `RepositoryConflictError` and `RepositoryCapacityError` names;
+- the existing `AnalysisChainRepository` remains the V1 read-only compatibility
+  protocol, while orchestration's existing `AnalysisChainRegistry` now requires
+  registration only;
+- the existing in-memory adapter remains bounded and thread-safe, and now
+  reconstructs and validates strict Chain models plus complete Chain invariants
+  on retrieval, compares full canonical Chain bytes for idempotency, and
+  translates ordinary copy, dump, reconstruction, invariant and canonical
+  serialization failures into the appropriate incoming-result or
+  stored-integrity category without mutating repository state;
+- `/api/v1` read helpers depend only on the reader contract, the application
+  composition root uses the composite contract, and stored-integrity failures
+  retain the established safe `invalid_chain` HTTP response.
+
+Verification evidence recorded on 2026-09-14:
+
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed (105 files checked);
+- focused repository/storage suite: 27 passed;
+- broader repository/orchestration/API compatibility suite: 159 passed;
+- complete suite: 907 passed;
+- no dependency or lock-file change.
+
+Scope of this PASS is completed-analysis result protocols, storage errors,
+in-memory conformance and focused contract tests only. Job repository contracts
+and explicit repeated-upload semantics remain SELECTED and UNVERIFIED V2-1
+work. Durable persistence, database tables/migrations, durable jobs, background
+execution, API V2, authentication/tenant isolation, staging, Docker runtime and
+deployment remain unimplemented. No production deployment change is authorized.

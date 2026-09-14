@@ -29,7 +29,6 @@ from securemailscope.api.models import (
     SessionEventsResponse,
 )
 from securemailscope.api.repository import (
-    AnalysisChainRepository,
     InMemoryAnalysisChainRepository,
 )
 from securemailscope.api.responses import (
@@ -71,6 +70,8 @@ from securemailscope.presentation import (
     render_finding_html,
     render_finding_pdf,
 )
+from securemailscope.storage.errors import StorageIntegrityError
+from securemailscope.storage.protocols import AnalysisResultReader, AnalysisResultRepository
 
 
 class ArtifactFormat(StrEnum):
@@ -88,7 +89,7 @@ FindingId = Annotated[str, Path(pattern=COMPACT_ID_PATTERN[PREFIX_FINDING])]
 @dataclass(frozen=True)
 class _AppState:
     settings: ApiSettings
-    repository: AnalysisChainRepository
+    repository: AnalysisResultRepository
     policy_pack: PolicyPack
     orchestration_settings: OrchestrationSettings
     orchestration_dependencies: OrchestrationDependencies | None
@@ -104,7 +105,7 @@ def _get_settings(request: Request) -> ApiSettings:
     return _get_state(request).settings
 
 
-def _get_repo(request: Request) -> AnalysisChainRepository:
+def _get_repo(request: Request) -> AnalysisResultReader:
     return _get_state(request).repository
 
 
@@ -203,7 +204,7 @@ def _orchestration_error_response(exc: OrchestrationError) -> Response:
     return _error_response(500, ApiErrorCode.ANALYSIS_FAILED, "analysis failed")
 
 
-def _require_chain(repo: AnalysisChainRepository, analysis_id: str) -> ChainOfProof:
+def _require_chain(repo: AnalysisResultReader, analysis_id: str) -> ChainOfProof:
     chain = repo.get(analysis_id)
     if chain is None:
         raise _NotFound(ApiErrorCode.ANALYSIS_NOT_FOUND, "analysis does not exist")
@@ -533,7 +534,7 @@ async def get_artifact(
 def create_app(
     *,
     settings: ApiSettings | None = None,
-    repository: AnalysisChainRepository | None = None,
+    repository: AnalysisResultRepository | None = None,
     policy_pack: PolicyPack | None = None,
     orchestration_dependencies: OrchestrationDependencies | None = None,
     clock: Callable[[], datetime] | None = None,
@@ -604,6 +605,10 @@ def create_app(
 
     @app.exception_handler(ChainValidationError)
     async def _chain_validation_handler(request: Request, exc: ChainValidationError) -> Response:
+        return _error_response(500, ApiErrorCode.INVALID_CHAIN, "invalid stored chain")
+
+    @app.exception_handler(StorageIntegrityError)
+    async def _storage_integrity_handler(request: Request, exc: StorageIntegrityError) -> Response:
         return _error_response(500, ApiErrorCode.INVALID_CHAIN, "invalid stored chain")
 
     @app.exception_handler(Exception)

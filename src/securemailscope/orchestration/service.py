@@ -8,11 +8,6 @@ from pathlib import Path
 from typing import Protocol
 
 from securemailscope.analyze import analyze_capture
-from securemailscope.api.repository import (
-    RepositoryCapacityError,
-    RepositoryConflictError,
-    RepositoryInvalidChainError,
-)
 from securemailscope.chain.errors import (
     ChainAdapterError,
     ChainValidationError,
@@ -40,14 +35,16 @@ from securemailscope.orchestration.models import (
     OrchestrationResult,
     OrchestrationSettings,
 )
+from securemailscope.storage.errors import (
+    AnalysisResultConflictError,
+    InvalidAnalysisResultError,
+    StorageCapacityUnavailableError,
+)
+from securemailscope.storage.protocols import AnalysisResultRegistry
 
 
-class AnalysisChainRegistry(Protocol):
-    """Small writable boundary required by orchestration, separate from the API protocol."""
-
-    def get(self, analysis_id: str) -> ChainOfProof | None: ...
-
-    def register(self, chain: ChainOfProof) -> None: ...
+class AnalysisChainRegistry(AnalysisResultRegistry, Protocol):
+    """Legacy orchestration name for the segregated registration-only contract."""
 
 
 @dataclass(frozen=True)
@@ -195,19 +192,19 @@ def analyze_capture_to_chain(
     analysis_id = evaluated.analysis.analysis_id
     try:
         registry.register(evaluated)
-    except RepositoryConflictError as exc:
+    except AnalysisResultConflictError as exc:
         raise OrchestrationError(
             OrchestrationErrorCode.REPOSITORY_CONFLICT,
             "repository",
             "analysis conflicts with an existing registered Chain",
         ) from exc
-    except RepositoryCapacityError as exc:
+    except StorageCapacityUnavailableError as exc:
         raise OrchestrationError(
             OrchestrationErrorCode.REPOSITORY_CAPACITY,
             "repository",
             "analysis repository capacity was reached",
         ) from exc
-    except RepositoryInvalidChainError as exc:
+    except InvalidAnalysisResultError as exc:
         raise OrchestrationError(
             OrchestrationErrorCode.FINAL_CHAIN_INVALID,
             "repository",

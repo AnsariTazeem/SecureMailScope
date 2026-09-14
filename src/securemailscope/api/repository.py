@@ -1,32 +1,38 @@
-"""Thread-safe analysis Chain repository protocol and in-memory implementation."""
+"""Backend V1 repository compatibility names and the in-memory implementation."""
 
 from __future__ import annotations
 
 import threading
 from typing import Protocol, runtime_checkable
 
-from securemailscope.chain.errors import ChainValidationError
+from securemailscope.chain.canonical import canonical_json
 from securemailscope.chain.invariants import assert_chain_valid
 from securemailscope.chain.models import ChainOfProof
+from securemailscope.storage.errors import (
+    AnalysisResultConflictError,
+    InvalidAnalysisResultError,
+    StorageCapacityUnavailableError,
+    StorageIntegrityError,
+    StoredResultCorruptionError,
+)
+from securemailscope.storage.protocols import AnalysisResultReader
 
 
-class RepositoryCapacityError(Exception):
+class RepositoryCapacityError(StorageCapacityUnavailableError):
     """Raised when the repository is full and the entry is not a duplicate."""
 
 
-class RepositoryInvalidChainError(Exception):
+class RepositoryInvalidChainError(InvalidAnalysisResultError):
     """Raised when a Chain fails invariant validation."""
 
 
-class RepositoryConflictError(Exception):
+class RepositoryConflictError(AnalysisResultConflictError):
     """Raised when a different Chain is already registered under the same key."""
 
 
 @runtime_checkable
-class AnalysisChainRepository(Protocol):
-    """Read-only repository protocol for validated Chain-of-Proof objects."""
-
-    def get(self, analysis_id: str) -> ChainOfProof | None: ...
+class AnalysisChainRepository(AnalysisResultReader, Protocol):
+    """Legacy read-only protocol name retained for Backend V1 compatibility."""
 
 
 class InMemoryAnalysisChainRepository:
@@ -59,22 +65,22 @@ class InMemoryAnalysisChainRepository:
     def get(self, analysis_id: str) -> ChainOfProof | None:
         with self._lock:
             chain = self._store.get(analysis_id)
-            return chain.model_copy(deep=True) if chain is not None else None
+            if chain is None:
+                return None
+            snapshot, _ = self._validated_stored_snapshot(chain)
+            return snapshot
 
     def register(self, chain: ChainOfProof) -> None:
         """Register a validated Chain. Idempotent for identical chains."""
         if not isinstance(chain, ChainOfProof):
             raise RepositoryInvalidChainError("registration requires a ChainOfProof")
-        snapshot = chain.model_copy(deep=True)
-        try:
-            assert_chain_valid(snapshot)
-        except ChainValidationError as exc:
-            raise RepositoryInvalidChainError("chain failed invariant validation") from exc
+        snapshot, snapshot_bytes = self._validated_incoming_snapshot(chain)
         key = snapshot.analysis.analysis_id
         with self._lock:
             existing = self._store.get(key)
             if existing is not None:
-                if existing == snapshot:
+                _, existing_bytes = self._validated_stored_snapshot(existing)
+                if existing_bytes == snapshot_bytes:
                     return
                 raise RepositoryConflictError(
                     f"a different Chain is already registered under {key!r}"
@@ -82,3 +88,32 @@ class InMemoryAnalysisChainRepository:
             if len(self._store) >= self._max_entries:
                 raise RepositoryCapacityError(f"repository capacity {self._max_entries} reached")
             self._store[key] = snapshot
+
+    @classmethod
+    def _validated_incoming_snapshot(cls, chain: ChainOfProof) -> tuple[ChainOfProof, bytes]:
+        try:
+            return cls._validated_snapshot_and_bytes(chain)
+        except StorageIntegrityError:
+            raise
+        except Exception as exc:
+            raise RepositoryInvalidChainError("chain failed invariant validation") from exc
+
+    @classmethod
+    def _validated_stored_snapshot(cls, stored: object) -> tuple[ChainOfProof, bytes]:
+        try:
+            if not isinstance(stored, ChainOfProof):
+                raise TypeError("stored result is not a ChainOfProof")
+            return cls._validated_snapshot_and_bytes(stored)
+        except StorageIntegrityError:
+            raise
+        except Exception as exc:
+            raise StoredResultCorruptionError("stored result failed validation") from exc
+
+    @staticmethod
+    def _validated_snapshot_and_bytes(chain: ChainOfProof) -> tuple[ChainOfProof, bytes]:
+        isolated = chain.model_copy(deep=True)
+        dumped = isolated.model_dump(mode="python")
+        snapshot = ChainOfProof.model_validate(dumped)
+        assert_chain_valid(snapshot)
+        canonical = canonical_json(snapshot.model_dump(mode="python")).encode("utf-8")
+        return snapshot, canonical
