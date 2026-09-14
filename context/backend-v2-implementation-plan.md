@@ -328,8 +328,9 @@ uploaded the same content.
 ### 7.3 Analysis fingerprint
 
 A canonical digest of all inputs that can affect output, including capture digest,
-analyzer and Chain schema versions, analysis configuration, policy pack/profile,
-protocol plugin versions, and ML feature/model digests when ML executes.
+analyzer and Chain schema versions, exact TShark and capinfos versions, analysis
+configuration, policy pack/profile, protocol plugin versions, and ML feature/model
+digests plus inference-runtime identity/version when ML executes.
 
 ### 7.4 Analysis ID
 

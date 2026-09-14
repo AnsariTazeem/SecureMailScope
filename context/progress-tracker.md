@@ -390,8 +390,36 @@ verified milestones below.
 
 ## Backend V2 limitations and status
 
-This documentation update completes Milestone V2-0. The next selected
-implementation milestone is V2-1 — Identity and Repository Contracts. Durable
-storage, event-loop isolation, durable jobs, complete IMAP/POP3 transitions,
-production ML, authentication/tenant isolation, staging and Docker runtime are
-PLANNED and remain UNVERIFIED. No production deployment change is authorized.
+### Verified milestone — V2-1 Slice 1: analysis identity and fingerprint contracts (PASS)
+
+Milestone V2-1 Slice 1 implemented the identity contracts required before
+durable persistence or asynchronous jobs:
+
+- opaque, public-safe, random 128-bit job IDs that are separate from capture
+  and analysis identities;
+- validated raw lowercase-hex SHA-256 capture and configuration digests using
+  the existing Chain digest convention;
+- strict immutable packet-toolchain, protocol-plugin and optional executed-ML
+  identities, including ML inference-runtime identity/version;
+- a versioned analysis-fingerprint input containing capture, analyzer, Chain
+  schema, exact TShark/capinfos, analysis configuration, policy pack, profile,
+  sorted plugin and conditional ML identity;
+- deterministic raw SHA-256 fingerprints over existing canonical JSON bytes;
+- explicit exclusion of job/request IDs, execution timestamps, filenames,
+  paths and raw capture bytes.
+
+Verification evidence recorded on 2026-09-14:
+
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed;
+- focused identity suite: 118 passed;
+- complete suite: 894 passed;
+- no dependency or lock-file change.
+
+Scope of this PASS is analysis identity and fingerprint contracts only. The
+remaining V2-1 repository protocols and shared repository behavior tests are
+still SELECTED and UNVERIFIED. Durable storage, event-loop isolation, durable
+jobs, API V2, complete IMAP/POP3 transitions, production ML,
+authentication/tenant isolation, staging and Docker runtime are PLANNED and
+remain UNVERIFIED. No production deployment change is authorized.
