@@ -492,15 +492,14 @@ orchestration behavior:
 - optimistic updates require the stored revision to equal the caller's expected
   revision and the replacement to advance exactly once; a deterministic
   12-party barrier test verified exactly one winner and 11 typed stale-revision
-  conflicts from revision zero;
-- each independently accepted upload receives a new random job ID. Identical
+  conflicts from revision zero;The selected future submission rule is to assign a new random job ID to each independently accepted upload; upload-to-job wiring is not implemented in this slice. Identical
   capture bytes may share a capture digest, and identical complete
   output-affecting inputs may share a fingerprint, but neither value causes job
   or result deduplication. A shared final analysis ID is possible only if a
   future authorized, owner-scoped result-reuse decision selects the same
   validated deterministic result;
 - there is no lookup or global deduplication by capture digest or analysis
-  fingerprint, no Idempotency-Key handling and no cross-user existence oracle.
+fingerprint, no Idempotency-Key handling and no capture-digest or fingerprint-based cross-user deduplication oracle.
 
 Verification evidence recorded on 2026-09-15:
 
