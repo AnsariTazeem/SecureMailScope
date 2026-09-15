@@ -1,6 +1,6 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 14 September 2026
+**Last updated:** 15 September 2026
 
 **Current phase:** Backend V2 on `feat/backend-v2`. Backend V1 ends at `f81bcc4`, tagged `backend-v1-public-deployed`; Backend V2 CI begins at `94b6ac9`. The authoritative plan is `context/backend-v2-implementation-plan.md`. The selection POC remains CLOSED/GO at `cf055cf`; historical verification records below are preserved.
 
@@ -467,3 +467,58 @@ and explicit repeated-upload semantics remain SELECTED and UNVERIFIED V2-1
 work. Durable persistence, database tables/migrations, durable jobs, background
 execution, API V2, authentication/tenant isolation, staging, Docker runtime and
 deployment remain unimplemented. No production deployment change is authorized.
+
+### Verified milestone — V2-1 Slice 3: job domain and repository contracts (PASS)
+
+Milestone V2-1 Slice 3 added the persistence-neutral analysis-job domain and a
+bounded in-memory repository boundary without changing Backend V1 API or
+orchestration behavior:
+
+- one strict, frozen `JobSnapshot` separates random job ID, exact-capture
+  SHA-256, optional analysis fingerprint and final validated analysis ID;
+- the closed initial job-state vocabulary is `accepted`, `queued`, `running`,
+  `completed`, `failed` and `interrupted`, with state-specific field and UTC
+  timestamp-order invariants; both terminal non-success states require a safe
+  public failure code, and neither may expose a partial analysis ID;
+- runtime-checkable reader, creator and updater protocols are segregated, with
+  a composite containing only those operations;
+- database-agnostic job errors distinguish missing jobs, invalid snapshots,
+  identity/content conflicts, stale revisions, unavailable capacity and stored
+  corruption while reusing the Slice 2 storage application/integrity hierarchy;
+- the bounded thread-safe in-memory adapter reconstructs complete strict
+  snapshots at every trust boundary, stores and returns isolated snapshots,
+  rejects corrupted state, never evicts or upserts, and permits only exact
+  same-job-ID creation to be idempotent;
+- optimistic updates require the stored revision to equal the caller's expected
+  revision and the replacement to advance exactly once; a deterministic
+  12-party barrier test verified exactly one winner and 11 typed stale-revision
+  conflicts from revision zero;
+- each independently accepted upload receives a new random job ID. Identical
+  capture bytes may share a capture digest, and identical complete
+  output-affecting inputs may share a fingerprint, but neither value causes job
+  or result deduplication. A shared final analysis ID is possible only if a
+  future authorized, owner-scoped result-reuse decision selects the same
+  validated deterministic result;
+- there is no lookup or global deduplication by capture digest or analysis
+  fingerprint, no Idempotency-Key handling and no cross-user existence oracle.
+
+Verification evidence recorded on 2026-09-15:
+
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed (112 files checked);
+- focused job model/repository suite: 109 passed;
+- existing identity suite, including the golden fingerprint vector: 118 passed;
+- existing repository/orchestration/API compatibility suite: 159 passed;
+- complete suite: 1,016 passed in 32.48 seconds;
+- no dependency or lock-file change.
+
+Scope of this PASS is immutable job snapshots, segregated job repository
+contracts, the bounded thread-safe in-memory adapter, optimistic revision
+semantics, fail-closed corruption handling and explicit repeated-upload
+identity rules only. The job repository is in-memory and is not wired into
+FastAPI or synchronous orchestration. No durable database, asynchronous API,
+job executor, transition state machine, leasing, recovery, retry,
+backpressure, authentication, authorization or tenant scope exists yet. API V2,
+staging, Docker runtime and deployment remain unimplemented. No production
+deployment change is authorized.
