@@ -1,6 +1,6 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 15 September 2026
+**Last updated:** 16 September 2026
 
 **Current phase:** Backend V2 on `feat/backend-v2`. Backend V1 ends at `f81bcc4`, tagged `backend-v1-public-deployed`; Backend V2 CI begins at `94b6ac9`. The authoritative plan is `context/backend-v2-implementation-plan.md`. The selection POC remains CLOSED/GO at `cf055cf`; historical verification records below are preserved.
 
@@ -106,24 +106,27 @@ metadata and SHA-256 provenance; bounded TShark analysis; synchronous
 reconstruction; Chain-of-Proof adaptation and invariant validation;
 deterministic SMTP transition facts; deterministic policy evaluation;
 JSON/HTML/PDF artifacts; `/api/v1` HTTP analysis and read endpoints; the
-776-test baseline; and read-only Backend V2 CI.
+776-test Backend V1 baseline; V2-1 identity/result/job contracts; the V2-2
+relational schema and migration foundation; and read-only Backend V2 CI.
 
 SELECTED: the Backend V2 architecture and milestone sequence documented in the
 authoritative implementation plan.
 
-PLANNED and UNVERIFIED: durable database persistence; a durable job lifecycle
-and bounded background executor; complete IMAP/POP3 transition analysis;
-production ML; authentication, authorization and tenant isolation; staging;
-and a repository-controlled Docker runtime.
+PLANNED and UNVERIFIED: the relational result repository adapter and durable
+result reads/writes; a durable job lifecycle and bounded background executor;
+complete IMAP/POP3 transition analysis; production ML; authentication,
+authorization and tenant isolation; staging; and a repository-controlled
+Docker runtime.
 
 DEFERRED: scale-out workers/queues/search and optional ledger anchoring until
 prerequisites and measurements justify them. Blockchain is not implemented or
 required.
 
 CURRENT LIMITATIONS: analysis executes synchronously and may block the FastAPI
-event loop; completed results exist only in the bounded in-memory repository;
-there is no durable database or durable job lifecycle; and
-`ml_engine_status=not_run` with no production ML execution.
+event loop; completed results still exist only in the bounded in-memory
+repository because the relational schema is not wired to a result adapter or
+FastAPI; there is no durable job lifecycle; and `ml_engine_status=not_run` with
+no production ML execution.
 
 Deployed Backend V1 and Frontend V1 remain unchanged. Do not modify either
 production branch, Railway, Vercel, public production URLs or production API
@@ -521,3 +524,63 @@ job executor, transition state machine, leasing, recovery, retry,
 backpressure, authentication, authorization or tenant scope exists yet. API V2,
 staging, Docker runtime and deployment remain unimplemented. No production
 deployment change is authorized.
+
+### Verified milestone — V2-2 Slice 1: relational schema and migration foundation (PASS)
+
+Milestone V2-2 Slice 1 established the explicit relational schema and migration
+boundary for immutable completed analysis results without implementing a
+repository adapter or changing Backend V1 runtime behavior:
+
+- added SQLAlchemy 2.x and Alembic through `uv`, resolving SQLAlchemy 2.0.54,
+  Alembic 1.20.0 and their required transitive packages in `uv.lock`, with no
+  PostgreSQL driver;
+- added infrastructure-only relational metadata, configuration, entity and
+  revision-inspection modules under `securemailscope.storage.relational`, with
+  no ORM types entering Chain, jobs, policy, orchestration or API contracts;
+- defined only `analysis_results`: the analysis ID primary key; unique analysis
+  fingerprint; Chain schema version; non-empty canonical Chain bytes; Chain
+  SHA-256; UTC-capable creation time; optional later expiry; portable shape,
+  nullability and timestamp checks; and created/expiry indexes;
+- added explicit Alembic baseline revision `9f3c2a1b7d4e`, which creates the
+  table from an empty database and whose reviewed downgrade drops only that
+  table;
+- kept `alembic.ini` free of database URLs and secrets; the migration command
+  requires an explicit validated absolute local SQLite path with an existing
+  writable parent and has no production fallback;
+- enabled SQLite foreign-key enforcement on every connection, bounded lock
+  waiting with a 5-second DBAPI timeout, and deliberately did not enable WAL;
+  SQLite remains a local single-instance development/test database, not a
+  multi-instance queue;
+- hardened POSIX database preparation without process-global `umask`: every
+  connection revalidates the path, securely traverses non-symlink parent
+  components, atomically creates a missing file with exclusive/no-follow flags,
+  forces owner-only `0600`, rejects unsafe existing file/parent modes without
+  chmodding them, and detects target replacement around SQLite's open;
+- added an infrastructure-only cache-safe UTC datetime type for both result
+  timestamps: binds require aware zero-offset datetimes, SQLite reads reconstruct
+  aware UTC values, nullable expiry remains nullable, and PostgreSQL DDL remains
+  `TIMESTAMP WITH TIME ZONE`;
+- added read-only revision inspection that distinguishes current, outdated and
+  unknown states and never auto-migrates at application runtime.
+
+Verification evidence recorded on 2026-09-16:
+
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed (125 files checked);
+- focused relational schema suite: 46 passed;
+- focused relational migration suite: 9 passed;
+- combined relational schema/migration suite: 55 passed;
+- existing API/storage/orchestration/job compatibility suite: 257 passed;
+- documented Alembic CLI upgrade, downgrade and re-upgrade on a fresh disposable
+  `/tmp` database: passed, with final `alembic current` reporting
+  `9f3c2a1b7d4e (head)`;
+- complete suite: 1,071 passed in 46.67 seconds;
+- `git diff --check`: passed.
+
+Scope of this PASS is the relational schema, safe local SQLite configuration,
+explicit Alembic migration path and revision detection only. Completed results
+still use the existing in-memory repository. No relational repository adapter,
+Chain persistence/read logic, job or audit table, background execution, API V2,
+authentication/tenant ownership, PostgreSQL driver/configuration, deployment,
+staging, Docker, fingerprint wiring or production database access was added.
