@@ -88,6 +88,7 @@ def test_reader_registry_and_composite_protocols_are_actually_segregated() -> No
     registry = _RegistryOnlyResultSink()
 
     assert isinstance(reader, AnalysisResultReader)
+    assert reader.get("ana_0000000000000000") is None
     assert not isinstance(reader, AnalysisResultRegistry)
     assert not isinstance(reader, AnalysisResultRepository)
     assert isinstance(registry, AnalysisResultRegistry)

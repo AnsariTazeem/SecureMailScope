@@ -297,6 +297,7 @@ def _connect_sqlite(settings: SQLiteDatabaseConfig) -> sqlite3.Connection:
         connection = sqlite3.connect(
             settings.database_path,
             timeout=settings.busy_timeout_ms / 1_000,
+            check_same_thread=False,
         )
         if prepared is not None:
             _verify_prepared_posix_target(settings, prepared)
@@ -320,8 +321,9 @@ def create_sqlite_engine(settings: SQLiteDatabaseConfig) -> Engine:
     """Create a lazy SQLAlchemy Engine with bounded local SQLite behavior.
 
     Foreign-key enforcement is enabled for every DBAPI connection, including
-    migration connections. The SQLite lock timeout is bounded. WAL is
-    intentionally not enabled by this foundation.
+    migration connections. The SQLite lock timeout is bounded. Connections may
+    move between worker threads through SQLAlchemy's pool, but are never shared
+    concurrently. WAL is intentionally not enabled by this foundation.
     """
     if not isinstance(settings, SQLiteDatabaseConfig):
         raise DatabaseConfigurationError("SQLite database configuration is invalid")

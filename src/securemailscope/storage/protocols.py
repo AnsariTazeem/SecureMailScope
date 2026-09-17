@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 from securemailscope.chain.models import ChainOfProof
+from securemailscope.storage.models import AnalysisResultRegistration
 
 
 @runtime_checkable
@@ -29,3 +30,19 @@ class AnalysisResultRegistry(Protocol):
 @runtime_checkable
 class AnalysisResultRepository(AnalysisResultReader, AnalysisResultRegistry, Protocol):
     """Composite contract for composition roots that require reading and registration."""
+
+
+@runtime_checkable
+class FingerprintAwareAnalysisResultRegistry(Protocol):
+    """Register a final result only with its explicit analysis fingerprint."""
+
+    def register(self, registration: AnalysisResultRegistration) -> None: ...
+
+
+@runtime_checkable
+class DurableAnalysisResultRepository(
+    AnalysisResultReader,
+    FingerprintAwareAnalysisResultRegistry,
+    Protocol,
+):
+    """Composite durable-result boundary without changing the V1 registry."""

@@ -13,6 +13,7 @@ from securemailscope.storage.relational.config import (
 )
 from securemailscope.storage.relational.entities import AnalysisResultEntity
 from securemailscope.storage.relational.metadata import RelationalBase, relational_metadata
+from securemailscope.storage.relational.repository import RelationalAnalysisResultRepository
 from securemailscope.storage.relational.revisions import (
     BASELINE_REVISION,
     DatabaseRevisionError,
@@ -29,6 +30,7 @@ __all__ = [
     "DatabaseRevisionError",
     "MigrationRevisionState",
     "RelationalBase",
+    "RelationalAnalysisResultRepository",
     "SQLiteDatabaseConfig",
     "assert_database_at_head",
     "create_sqlite_engine",

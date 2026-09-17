@@ -1,6 +1,6 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 16 September 2026
+**Last updated:** 17 September 2026
 
 **Current phase:** Backend V2 on `feat/backend-v2`. Backend V1 ends at `f81bcc4`, tagged `backend-v1-public-deployed`; Backend V2 CI begins at `94b6ac9`. The authoritative plan is `context/backend-v2-implementation-plan.md`. The selection POC remains CLOSED/GO at `cf055cf`; historical verification records below are preserved.
 
@@ -107,26 +107,26 @@ reconstruction; Chain-of-Proof adaptation and invariant validation;
 deterministic SMTP transition facts; deterministic policy evaluation;
 JSON/HTML/PDF artifacts; `/api/v1` HTTP analysis and read endpoints; the
 776-test Backend V1 baseline; V2-1 identity/result/job contracts; the V2-2
-relational schema and migration foundation; and read-only Backend V2 CI.
+relational schema/migration foundation and unwired durable analysis-result
+repository adapter; and read-only Backend V2 CI.
 
 SELECTED: the Backend V2 architecture and milestone sequence documented in the
 authoritative implementation plan.
 
-PLANNED and UNVERIFIED: the relational result repository adapter and durable
-result reads/writes; a durable job lifecycle and bounded background executor;
-complete IMAP/POP3 transition analysis; production ML; authentication,
-authorization and tenant isolation; staging; and a repository-controlled
-Docker runtime.
+PLANNED and UNVERIFIED: a durable job lifecycle and bounded background
+executor; complete IMAP/POP3 transition analysis; production ML;
+authentication, authorization and tenant isolation; staging; and a
+repository-controlled Docker runtime.
 
 DEFERRED: scale-out workers/queues/search and optional ledger anchoring until
 prerequisites and measurements justify them. Blockchain is not implemented or
 required.
 
 CURRENT LIMITATIONS: analysis executes synchronously and may block the FastAPI
-event loop; completed results still exist only in the bounded in-memory
-repository because the relational schema is not wired to a result adapter or
-FastAPI; there is no durable job lifecycle; and `ml_engine_status=not_run` with
-no production ML execution.
+event loop; Backend V1 still stores completed results only in its bounded
+in-memory repository because the durable adapter is not wired to FastAPI or
+orchestration; there is no durable job lifecycle; and
+`ml_engine_status=not_run` with no production ML execution.
 
 Deployed Backend V1 and Frontend V1 remain unchanged. Do not modify either
 production branch, Railway, Vercel, public production URLs or production API
@@ -584,3 +584,77 @@ still use the existing in-memory repository. No relational repository adapter,
 Chain persistence/read logic, job or audit table, background execution, API V2,
 authentication/tenant ownership, PostgreSQL driver/configuration, deployment,
 staging, Docker, fingerprint wiring or production database access was added.
+
+### Implementation record — V2-2 Slice 2: durable relational analysis-result repository (pending independent re-review)
+
+Milestone V2-2 Slice 2 added an insert-only SQLAlchemy adapter for completed
+analysis results without wiring it into Backend V1 FastAPI or orchestration:
+
+- added a strict immutable `AnalysisResultRegistration` value and segregated
+  fingerprint-aware durable registry protocol; callers must provide the
+  validated analysis fingerprint explicitly, and the adapter never derives it
+  from the Chain digest, analysis ID, capture digest or arbitrary metadata;
+- preserved the shared `AnalysisResultReader` optional lookup semantics:
+  missing analysis IDs and malformed/non-analysis IDs return `None`, with
+  malformed IDs rejected before database access; the existing V1
+  `register(chain)` protocol and bounded in-memory repository remain unchanged;
+- validates copied/untrusted incoming state, complete Chain invariants,
+  authoritative analysis identity and supported Chain schema before canonical
+  serialization and SHA-256 calculation, then inserts all result data in one
+  explicit transaction with an injected aware-UTC clock and `expires_at=NULL`;
+- treats every stored row as untrusted: verifies row identity, fingerprint,
+  exact canonical-byte digest, declared schema, timestamps, strict UTF-8 and
+  standard JSON, reconstructs strict Chain models, reruns complete invariants,
+  and requires byte-identical recanonicalization plus row/Chain identity and
+  schema agreement before returning an isolated snapshot;
+- preserves insert-only no-replacement semantics: exact ID/fingerprint/bytes
+  registrations are idempotent without an update, while every identity or
+  content collision is typed and leaves the original row unchanged; stored
+  corruption takes precedence over idempotency or conflict;
+- uses database primary-key/unique constraints and transactions as the
+  concurrency authority; deterministic identical and conflicting writer tests
+  verify one stored row, idempotent equivalent callers, one conflict winner,
+  typed losing conflicts and rollback on failure;
+- checks the database revision at construction and before every database-backed
+  read, write and collision-resolution operation, rejects
+  empty/outdated/unknown/ahead state, and never migrates automatically;
+- permits pooled SQLite DBAPI connections to move sequentially between worker
+  threads while continuing to prohibit shared SQLAlchemy sessions and retaining
+  the existing bounded lock wait, foreign-key enforcement and non-WAL behavior;
+- translates invalid registration, conflicts, corruption, unsupported stored
+  schemas, migration mismatch and internal database failures into the existing
+  fixed, path/content/SQL-safe storage taxonomy. Ordinary lookup absence is not
+  a storage failure; corruption and internal failures remain explicit typed,
+  fail-closed errors.
+
+Verification evidence recorded on 2026-09-16:
+
+- pre-change complete suite: 1,071 passed in 63.72 seconds;
+- focused relational repository suite: 39 passed in 7.02 seconds;
+- broader storage/identity/schema/migration/orchestration/API compatibility
+  suite: 371 passed in 21.90 seconds;
+- post-change complete suite: 1,110 passed in 49.68 seconds;
+- no dependency, lock-file or Alembic revision change.
+
+RED-01 correction evidence recorded on 2026-09-17:
+
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed (128 files checked);
+- focused relational repository suite: 41 passed;
+- shared storage-contract suite: 13 passed;
+- combined relational/storage-contract suite: 54 passed;
+- complete suite: 1,112 passed in 39.83 seconds;
+- `git diff --check`: passed;
+- canonical OpenAPI SHA-256 remained
+  `9f5b0f1f7a4ff16ea5c413d8c17f071498b2997ee832eaaa48fe10688a8b2f7f`;
+- no dependency, lock-file, relational schema or Alembic revision change.
+
+Scope of this implementation record is the unwired relational completed-result
+adapter and its durable read/write behavior. Restart persistence is tested for
+that adapter only. Backend V1 continues to use the in-memory repository; no
+FastAPI or orchestration wiring, PostgreSQL driver/runtime, job or audit table,
+durable job lifecycle, background worker/executor, API V2,
+authentication/tenant ownership, staging, Docker, deployment or
+production-service change was added. The corrected snapshot remains pending
+independent re-review and is not approved for commit by this record.
