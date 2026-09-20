@@ -701,11 +701,19 @@ function buildCategories(
           "analysis-limitations",
           "Declared analysis limitations",
           limitationCell(
-            result.chain.analysis.limitations,
+            result.chain.analysis.limitations.filter(
+              (item) =>
+                result.data_source !== "mock" ||
+                item.detail !== "prototype_analysis_dataset",
+            ),
             "No analysis-level limitation record is present.",
           ),
           limitationCell(
-            result.chain.analysis.limitations,
+            result.chain.analysis.limitations.filter(
+              (item) =>
+                result.data_source !== "mock" ||
+                item.detail !== "prototype_analysis_dataset",
+            ),
             "No analysis-level limitation record is present.",
           ),
         ),

@@ -17,9 +17,9 @@
       "rule_engine_status": "complete",
       "rule_pack_id": "SMS-EMAIL-STARTTLS",
       "rule_pack_version": "1.0.0",
-      "ml_engine_status": "not_run",
-      "model_id": null,
-      "model_version": null,
+      "ml_engine_status": "complete",
+      "model_id": "illustrative-mail-flow-isolation-forest",
+      "model_version": "1.0.0",
       "configuration_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
       "tls13_authorized_secrets": "not_supplied",
       "limitations": [
@@ -32,11 +32,6 @@
           "code": "not_assessed",
           "summary": "Policy findings here are illustrative contract examples. The production policy engine is not complete.",
           "detail": "policy_engine_not_production"
-        },
-        {
-          "code": "not_present",
-          "summary": "ML anomaly scoring was not run. Policy Risk and ML Anomaly remain independent; no combined score exists.",
-          "detail": "ml_engine_not_run"
         },
         {
           "code": "not_assessed",
@@ -92,13 +87,9 @@
         },
         {
           "stage": "anomaly_scoring",
-          "status": "not_run",
-          "limitation": {
-            "code": "not_present",
-            "summary": "ML anomaly engine was not run.",
-            "detail": "ml_engine_not_run"
-          },
-          "runtime_seconds": 0.0
+          "status": "complete",
+          "limitation": null,
+          "runtime_seconds": 0
         },
         {
           "stage": "report_generation",
@@ -108,7 +99,7 @@
             "summary": "Full report generation is not production-complete.",
             "detail": "reports_not_production"
           },
-          "runtime_seconds": 0.0
+          "runtime_seconds": 0
         }
       ],
       "note": "Execution envelope; not part of reproducible chain content."
@@ -1042,13 +1033,112 @@
           "severity": "high",
           "policy_risk_contribution": 25,
           "evidence_confidence": "high",
-          "confidence_factor": 1.0,
+          "confidence_factor": 1,
           "confidence_adjusted_points": 25
         }
       ],
       "limitations": []
     },
-    "anomaly_results": [],
+    "anomaly_results": [
+      {
+        "anomaly_result_id": "anm_c0ffee0000000001",
+        "session_id": "ses_05a2650d13a55335",
+        "model_id": "illustrative-mail-flow-isolation-forest",
+        "model_version": "1.0.0",
+        "feature_schema_version": "1.0.0",
+        "feature_snapshot": {
+          "destination_port": 2525,
+          "packet_count": 12,
+          "byte_count": 2048,
+          "session_duration_seconds": 1.5,
+          "tls_upgrade_completed": true,
+          "negotiated_tls_version": "TLS_1_3",
+          "key_share_group": "secp256r1"
+        },
+        "raw_score": -0.56,
+        "normalized_score": 0.64,
+        "threshold": 0.6,
+        "band": "attention",
+        "unusual_feature_indicators": [
+          "SMTP on port 2525 differs from the illustrative standard-port baseline."
+        ],
+        "linked_fact_ids": [
+          "fact_db3c94f144cfba4d",
+          "fact_bbdbb4f3f687f5eb"
+        ],
+        "linked_observation_ids": [
+          "obs_c532f8e323d3ef5d",
+          "obs_818cf698026bee14"
+        ],
+        "evidence_ids": [
+          "ev_788c417297b3d111",
+          "ev_e999c5627e64bb39"
+        ],
+        "interpretation_note": "Anomalous behavior is not proof of malicious activity.",
+        "limitations": [
+          {
+            "code": "not_assessed",
+            "summary": "Illustrative model scores and reference baseline; not calibrated against an organization’s mail flow.",
+            "detail": "No trained model was executed. Feature values describe the linked sample records; scores, threshold and unusualness are curated for this walkthrough, not measured model performance."
+          },
+          {
+            "code": "session_secrets_required",
+            "summary": "TLS 1.3 certificate contents are not observable without authorized session secrets.",
+            "detail": "Certificate properties are not model features."
+          }
+        ]
+      },
+      {
+        "anomaly_result_id": "anm_c0ffee0000000002",
+        "session_id": "ses_3ac703c890cdeada",
+        "model_id": "illustrative-mail-flow-isolation-forest",
+        "model_version": "1.0.0",
+        "feature_schema_version": "1.0.0",
+        "feature_snapshot": {
+          "destination_port": 2525,
+          "packet_count": 6,
+          "byte_count": 1024,
+          "session_duration_seconds": 0.7,
+          "starttls_advertised": true,
+          "tls_upgrade_completed": false,
+          "plaintext_commands_after_offer": 1,
+          "negotiated_tls_version": null
+        },
+        "raw_score": -0.72,
+        "normalized_score": 0.89,
+        "threshold": 0.6,
+        "band": "elevated",
+        "unusual_feature_indicators": [
+          "Plaintext command after a STARTTLS offer differs from the illustrative upgrade baseline.",
+          "Short plaintext session without a TLS handshake merits baseline review."
+        ],
+        "linked_fact_ids": [
+          "fact_9da556d717b4ce0f",
+          "fact_06514e50f05f65bb",
+          "fact_3ee3c17280709d66"
+        ],
+        "linked_observation_ids": [
+          "obs_e71da20b2b227144"
+        ],
+        "evidence_ids": [
+          "ev_19f8674446ca345e",
+          "ev_80b0cc666ae116ef"
+        ],
+        "interpretation_note": "Anomalous behavior is not proof of malicious activity.",
+        "limitations": [
+          {
+            "code": "not_assessed",
+            "summary": "Illustrative model scores and reference baseline; not calibrated against an organization’s mail flow.",
+            "detail": "No trained model was executed. Feature values describe the linked sample records; scores, threshold and unusualness are curated for this walkthrough, not measured model performance."
+          },
+          {
+            "code": "unknown_insufficient_evidence",
+            "summary": "No TLS handshake was observed; negotiated TLS properties remain unknown.",
+            "detail": "The unavailable TLS version is a missing value, not an obsolete protocol version. No attacker intent is established."
+          }
+        ]
+      }
+    ],
     "recommendations": [
       {
         "recommendation_id": "REC-EMAIL-REQUIRE-TLS",

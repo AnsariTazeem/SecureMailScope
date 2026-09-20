@@ -33,7 +33,13 @@ validateFindingsIntegrity(result);
 const policy = buildPolicyFindingsData(result);
 assert.equal(policy.findings.length, result.chain.findings.length);
 assert.equal(policy.analysisSessions.length, result.chain.sessions.length);
-assert.equal(buildAnomalyFindingsData(result).mlEngineStatus, "not_run");
+assert.equal(buildAnomalyFindingsData(result).mlEngineStatus, "complete");
+assert.equal(buildAnomalyFindingsData(result).results.length, 2);
+const notRun = structuredClone(result);
+notRun.chain.analysis.ml_engine_status = "not_run";
+notRun.chain.anomaly_results = [];
+assert.equal(buildAnomalyFindingsData(notRun).mlEngineStatus, "not_run");
+assert.equal(buildAnomalyFindingsData(notRun).results.length, 0);
 for (const session of result.chain.sessions) {
   const data = buildSessionXRayData(result, session.session_id);
   assert.equal(data.sessionId, session.session_id);
@@ -151,6 +157,7 @@ assert.deepEqual(orderProtocolEvents(tied).map(event => event.event_id), [tied[1
 assert.equal(JSON.stringify(tied), tiedBefore);
 
 const noRecords = structuredClone(result);
+noRecords.chain.anomaly_results = [];
 noRecords.chain.protocol_events = [];
 noRecords.chain.crypto_observations = [];
 noRecords.chain.derived_facts = [];

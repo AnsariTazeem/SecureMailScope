@@ -94,6 +94,58 @@ demo entry and result routes; local refusal of a real ID; JSON/print; desktop an
 Visual refinement, colour-system decisions, logo/branding review, and deployment
 planning remain separate work. V3-0 does not authorize deployment or backend work.
 
+## V3-1 — Judge-ready end-to-end demo
+
+V3-1 keeps submission mode local and fail-closed while making the complete
+sample investigation easier to follow. File selection and file drops clear the
+native input immediately, never enter application state, prevent navigation,
+and open one accessible disclosure. Its primary action follows the existing
+Processing → Complete → Overview workflow. The application header is the sole
+compact result-page disclosure: **Sample analysis**, with accessible detail that
+no uploaded file was analyzed.
+
+The locally simulated processing sequence now presents six investigation stages.
+The completion page directs reviewers to Overview, Findings, Proof Map,
+Recommendations, and Report. Findings and Proof Map have their own navigation
+destinations and active states.
+
+The validated sample fixture declares the illustrative model
+`illustrative-mail-flow-isolation-forest` version `1.0.0`, a complete anomaly
+stage, and two anomaly records. Both records reference existing sessions, facts,
+observations, and evidence. Their feature snapshots reproduce source session
+counts and durations, and their limitations state that no trained model was
+executed or calibrated against an organization baseline. Every record retains
+the required interpretation that unusual behavior is not proof of malicious
+activity. Policy Risk remains separate.
+
+Recommendations now has two semantic sections: **Policy recommendations** and
+**ML investigation guidance**. Guidance is projected from validated anomaly
+records and shows the affected session, band, normalized score, unusual
+indicators, evidence count, cautious analyst steps, and a link to the session
+anomaly evidence. It is never stored as deterministic remediation.
+
+Verification on 20 September 2026:
+
+- Next route type generation, TypeScript, ESLint, V2 model checks, proof-map
+  fit and integrity checks, V3 submission safety, the focused V3-1 fixture and
+  rendering harness, report consistency, and the webpack production build
+  passed.
+- Root verification passed: 342 tests, with two existing skips because the
+  frozen T01 PCAP is absent; Ruff lint and formatting checks passed.
+- Isolated installed Chrome passed 49 live-route checks at desktop and 390px.
+  The run covered file-input clearing, single-dialog drop handling, focus return,
+  Processing → Complete, nine sample destinations, eight arbitrary-ID local
+  refusals, both anomaly records in Findings and X-Ray, Proof Map and navigation
+  identity, separate ML guidance, JSON identity, print invocation, responsive
+  fit, and zero backend API requests.
+- Browser results and screenshots are under `/tmp/sms-v31-*`; they are temporary
+  local review artifacts and are not repository evidence or a backend-analysis
+  claim.
+- Current V3-1 fixture SHA-256:
+  `bb656b509482c7ad847f3b1fa6ab4619668a66b4e36244ee841e09051ba3be9e`.
+- No dependency, manifest, lockfile, backend, deployment, or Git-history change
+  was made.
+
 ## Verification record
 
 Verified during this implementation:
@@ -126,6 +178,8 @@ Verified during this implementation:
   existing locked dependencies there. This was an unintended verification
   side effect relative to the no-install constraint; manifests and lockfiles
   remained unchanged and no new dependency was added to the project.
-- Prototype fixture SHA-256 remains
+- Historical V3-0 fixture snapshot SHA-256:
   `397eef272da3d4107267a43470d32a533921cf98c5273a8160d8257ea40f40c5`.
+  This snapshot no longer describes the current fixture; V3-1 intentionally
+  updates it with illustrative ML anomaly records.
 - `git diff --check` passed. No commit, push, merge, tag, or deployment occurred.

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Database, ShieldX } from "lucide-react";
+import { AlertTriangle, ShieldX } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -42,24 +42,6 @@ export function FindingsDataSourceFailure({
         Start a new analysis
       </Link>
     </div>
-  );
-}
-
-export function PrototypeDatasetBanner({
-  label,
-}: {
-  label: string | null;
-}) {
-  return (
-    <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-      <Database className="size-4" aria-hidden />
-      <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-      <AlertDescription className="text-blue-900/80">
-        {label ?? "Prototype Analysis Dataset"} is a labelled, validated synthetic
-        fixture. It does not represent production API integration or live capture
-        analysis.
-      </AlertDescription>
-    </Alert>
   );
 }
 

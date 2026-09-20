@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Branch: `feat/frontend-v2`
+- Branch: `feat/frontend-v3-submission`
 - Dependency foundation: completed and present in `web/package.json`
 - F1 Start Analysis implementation: completed from the inherited partial
   foundation, including the shell, typed data-source boundary, upload workflow,
@@ -38,6 +38,35 @@
 - Production build note: Turbopack fails with an environment-specific `EPERM`;
   the webpack production build passed
 - Deployment state: deployed V1 remains unchanged; V2 has not been deployed
+- V3-1 judge-ready submission demo: implemented and verified on 20 September
+  2026; submission mode remains local, uses one compact sample disclosure, and
+  presents two validated illustrative anomaly records separately from Policy
+  Risk.
+
+## V3-1 judge-ready end-to-end demo — 20 September 2026
+
+The fixed sample workflow now runs through judge-friendly Processing and
+Complete screens into the existing investigation workspace. Submission file
+interactions clear the native input, retain no file or filename, open one
+accessible modal, and make no backend request. Repeated prototype notices were
+removed from result pages; the application header contains the single compact
+**Sample analysis** disclosure.
+
+The validated fixture now contains two linked illustrative anomaly records and
+a complete anomaly stage. Findings, Session X-Ray, Proof Map, Report, and the
+new ML investigation-guidance section consume the same records. Deterministic
+policy recommendations and Policy Risk remain independent.
+
+Current V3-1 fixture SHA-256:
+`bb656b509482c7ad847f3b1fa6ab4619668a66b4e36244ee841e09051ba3be9e`.
+
+Automated verification passed: Next type generation, TypeScript, ESLint, all
+required V2/V3 scripts, the focused V3-1 script, report consistency, webpack
+production build, root pytest (342 passed, 2 existing missing-fixture skips),
+Ruff lint/format, and `git diff --check`. Isolated Chrome passed 49 desktop and
+390px checks with zero backend API requests. Temporary results and screenshots
+are stored under `/tmp/sms-v31-*`. No dependency, backend, deployment, commit,
+push, merge, tag, rebase, or amend operation occurred.
 
 ## V1 backend integration verification record
 
@@ -935,8 +964,10 @@ Validation actually performed:
   and the original prototype notice. Rendered sections and duplicate-anchor
   absence were also inspected with Python's HTML parser. These HTML files are
   test render outputs, not a new product export format or browser proof.
-- Prototype fixture bytes still match HEAD; SHA-256:
+- Historical V3-0 fixture snapshot SHA-256:
   `397eef272da3d4107267a43470d32a533921cf98c5273a8160d8257ea40f40c5`.
+  This snapshot no longer describes the current fixture; V3-1 intentionally
+  updates it with illustrative ML anomaly records.
 - `npm audit`: PASS, zero vulnerabilities.
 - `npm run build`: FAIL on normal and permitted escalated attempts with the
   known Turbopack `EPERM` while the `@xyflow/react/dist/style.css` PostCSS worker

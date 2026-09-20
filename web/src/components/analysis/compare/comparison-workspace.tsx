@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   ArrowRight,
   BrainCircuit,
-  Database,
   GitCompareArrows,
   GitFork,
   Info,
@@ -487,17 +486,6 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
             Overview
           </Link>
         </div>
-
-        {data.dataSource === "mock" ? (
-          <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-            <Database className="size-4" aria-hidden />
-            <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-            <AlertDescription className="text-blue-900/80">
-              {data.datasetLabel ?? "Prototype Analysis Dataset"} is a labelled,
-              validated synthetic fixture. It is not a production analyzer run.
-            </AlertDescription>
-          </Alert>
-        ) : null}
 
         <div className="grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
           <div className="bg-white px-4 py-3">

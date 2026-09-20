@@ -101,7 +101,7 @@ export function ReportExportActions({
       </div>
       <p className="mt-2 text-xs leading-5 text-neutral-600 sm:text-right">
         {dataSource === "mock"
-          ? "Demo Chain JSON retains the Prototype Analysis Dataset notice in its analysis limitations. Backend finding HTML/PDF artifacts are unavailable for demo data."
+          ? "Chain JSON preserves the complete source records and integrity metadata."
           : "Chain JSON and individual finding HTML/PDF files are downloaded unchanged from the backend. Finding artifacts are not full-analysis reports."}
         {" "}Print / Save as PDF uses this report and your browser’s print
         dialog, including expanded technical details.

@@ -13,17 +13,17 @@ import {
   ProgressValue,
 } from "@/components/ui/progress";
 import { getAnalysisDataSourceForId } from "@/lib/api/client";
-import { DATASET_LABEL } from "@/lib/contracts/analysis";
 import { cn } from "@/lib/utils";
 import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
 const DEMO_PROCESSING_STAGES = [
-  "Load prototype capture dataset",
-  "Reconstruct sample communication sessions",
-  "Map cryptographic evidence",
-  "Evaluate prototype findings",
-  "Prepare analysis dashboard",
+  "Preparing investigation workspace",
+  "Reconstructing mail sessions",
+  "Linking supporting evidence",
+  "Evaluating security policy",
+  "Scoring behavioural anomalies",
+  "Preparing findings and recommendations",
 ] as const;
 
 const DEMO_STAGE_DELAY_MS = 500;
@@ -128,15 +128,11 @@ export function ProcessingView() {
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 py-4 lg:py-10">
         <div className="text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Prototype Demo
-          </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
-            Preparing demo analysis
+            Preparing investigation
           </h1>
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-            Simulated processing for the {DATASET_LABEL}. No backend request or
-            TShark analysis is running.
+            Follow the investigation from mail sessions to evidence and review actions.
           </p>
         </div>
 
@@ -144,23 +140,23 @@ export function ProcessingView() {
           <div className="flex flex-col gap-2 border-b border-neutral-200 bg-neutral-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.06em] text-neutral-700">
-                Prototype analysis ID
+                Analysis ID
               </p>
               <p className="mt-1 font-mono text-xs text-neutral-950">
                 {analysisId}
               </p>
             </div>
             <p className="text-xs font-semibold text-neutral-600">
-              Simulated presentation sequence
+              Local walkthrough
             </p>
           </div>
 
           <div className="space-y-6 p-5 sm:p-6">
             <Progress
               value={demoProgress}
-              aria-label="Simulated Prototype Demo processing progress"
+              aria-label="Simulated investigation progress"
             >
-              <ProgressLabel>Prototype Demo progress</ProgressLabel>
+              <ProgressLabel>Investigation progress</ProgressLabel>
               <ProgressValue />
             </Progress>
 

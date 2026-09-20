@@ -13,7 +13,7 @@ import {
   type FindingSessionLink,
   type PolicyFindingsData,
 } from "../findings/findings-view-model";
-import { MLAnomalyExplorer } from "../findings/ml-anomaly-explorer";
+import { MLInvestigationGuidance } from "./ml-investigation-guidance";
 import {
   selectRecommendations,
   type RecommendationGroup,
@@ -163,7 +163,6 @@ export function RecommendationsWorkspace({
   const params = useSearchParams();
   const requestedSessionId = params.get("session");
   const selection = selectRecommendations(policyData, requestedSessionId);
-  const isDemo = policyData.dataSource === "mock";
   useRecommendationAnchor();
 
   return (
@@ -177,10 +176,10 @@ export function RecommendationsWorkspace({
       </header>
 
       <Tabs defaultValue="remediation" className="gap-6">
-        <TabsList variant="line" className="h-11 gap-4" aria-label="Recommendation type">
-          <TabsTrigger value="remediation" className="px-3">Remediation</TabsTrigger>
+        <TabsList variant="line" className="h-auto flex-wrap gap-2" aria-label="Recommendation type">
+          <TabsTrigger value="remediation" className="px-3">Policy recommendations</TabsTrigger>
           <TabsTrigger value="anomalies" className="px-3">
-            Anomaly review{isDemo ? " · Demo" : ""}
+            ML investigation guidance
           </TabsTrigger>
         </TabsList>
 
@@ -361,21 +360,7 @@ export function RecommendationsWorkspace({
         </TabsContent>
 
         <TabsContent value="anomalies" className="space-y-5">
-          {isDemo ? (
-            <section className="rounded-xl border border-amber-200 bg-amber-50 p-5" aria-labelledby="anomaly-demo-heading">
-              <h2 id="anomaly-demo-heading" className="font-semibold">Anomaly-review demo illustration</h2>
-              <p className="mt-2 text-sm leading-6">This three-step review sequence is illustrative UI only, not model output or a production ML recommendation.</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {["Review an unusual session", "Inspect its supporting evidence", "Decide whether to investigate"].map((text, index) => (
-                  <div key={text} className="rounded-lg border border-amber-200 bg-card p-4 text-sm">
-                    <span className="mb-2 block text-xs text-muted-foreground">Step {index + 1}</span>
-                    {text}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
-          <MLAnomalyExplorer data={anomalyData} />
+          <MLInvestigationGuidance data={anomalyData} sessionId={requestedSessionId} />
         </TabsContent>
       </Tabs>
     </div>

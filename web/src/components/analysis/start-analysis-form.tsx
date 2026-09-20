@@ -14,7 +14,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { getRealAnalysisDataSource } from "@/lib/api/client";
 import { publicConfig } from "@/lib/config/env";
-import { DATASET_LABEL } from "@/lib/contracts/analysis";
 import { formatByteLimit } from "@/lib/validation/capture-file";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 import { useSubmissionCaptureGuard } from "@/components/analysis/submission-capture-guard";
@@ -179,8 +178,7 @@ export function StartAnalysisForm() {
                       Want to explore without a capture?
                     </p>
                     <p className="mt-1 text-xs leading-5 text-neutral-500">
-                      {DATASET_LABEL} · No file upload required · Simulated demo
-                      processing
+                      Follow mail sessions, supporting evidence, findings and review actions. No file upload required.
                     </p>
                   </div>
                 </div>
@@ -190,7 +188,7 @@ export function StartAnalysisForm() {
                   disabled={submitting}
                   onClick={handlePrototypeSelection}
                 >
-                  Explore Demo
+                  Open complete demo
                 </Button>
               </div>
             </div>

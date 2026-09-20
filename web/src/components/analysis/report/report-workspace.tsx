@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { PrototypeDatasetBanner } from "@/components/analysis/findings/findings-states";
 import { engineStatusLabels, severityStyles } from "@/components/analysis/findings/findings-view-model";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +59,7 @@ function Identity({ data }: { data: ReportPageData }) {
         <CardContent className="space-y-5">
           <dl className="grid gap-4 sm:grid-cols-2">
             <Field label="Analysis ID">{data.analysisId}</Field>
-            <Field label="Source">{data.datasetLabel ?? "Production analysis result"}</Field>
+            <Field label="Source">{data.dataSource === "mock" ? "Demonstration results. No uploaded file was analyzed." : "Production analysis result"}</Field>
             <Field label="Started (UTC)">{analysis.started_at}</Field>
             <Field label="Completed (UTC)">{analysis.completed_at ?? "Not available"}</Field>
           </dl>
@@ -123,7 +122,8 @@ function Scope({ data }: { data: ReportPageData }) {
             <p className="mt-2 text-xs">Finding-specific uncertainty appears with each finding. All {data.limitations.length} supplied limitation records and their owners are retained in the technical appendix, including session, evidence-derived, policy, ML and execution limitations.</p>
           </div>
           <div data-report-screen-only>
-          <h3 className="text-sm font-semibold">Supplied limitations</h3>
+          <details>
+          <summary className="cursor-pointer text-sm font-semibold">Supplied limitations ({data.limitations.length})</summary>
           {data.limitations.length === 0 ? <p className={textStyle}>No limitation records supplied. This is not a claim of complete observability.</p> : (
             <ul className="space-y-3">
               {data.limitations.map((limitation, index) => (
@@ -135,6 +135,7 @@ function Scope({ data }: { data: ReportPageData }) {
               ))}
             </ul>
           )}
+          </details>
           </div>
         </CardContent>
       </Card>
@@ -268,7 +269,6 @@ export function ReportWorkspace({ data, demoChain }: { data: ReportPageData; dem
         <div className="min-w-0"><p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Analysis / Report</p><h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">SecureMailScope Assessment Report</h1><p className={cn("mt-2", textStyle)}>Summary of the same analysis source used by Overview, Sessions and Recommendations.</p></div>
         <ReportExportActions analysisId={data.analysisId} dataSource={data.dataSource} demoChain={demoChain} />
       </header>
-      {data.dataSource === "mock" ? <div data-report-screen-only><PrototypeDatasetBanner label={data.datasetLabel} /></div> : null}
       <div data-report-screen-only><Identity data={data} /></div>
       <ReportPrintIdentity data={data} />
       <Scope data={data} />

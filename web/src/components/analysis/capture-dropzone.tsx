@@ -65,11 +65,13 @@ function SubmissionCaptureDropzone() {
       onDrop={event => {
         if (!isFileTransfer(event.dataTransfer)) return;
         event.preventDefault();
+        if (input.current) input.current.value = "";
         disclose(event.currentTarget);
       }}
       onPaste={event => {
         if (!isFileTransfer(event.clipboardData)) return;
         event.preventDefault();
+        if (input.current) input.current.value = "";
         disclose(event.currentTarget);
       }}
     >

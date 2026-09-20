@@ -267,7 +267,7 @@ function SummaryCardsSection({ result }: { result: AnalysisResult }) {
           }
           detail={
             result.data_source === "mock"
-              ? `${policy_risk ? pluralize(policy_risk.contributions.length, "contribution") : "No summary"} in the illustrative prototype policy result${policy_risk ? ` · ${policy_risk.profile_id}` : ""}.`
+              ? `${policy_risk ? pluralize(policy_risk.contributions.length, "contribution") : "No summary"} in the policy result${policy_risk ? ` · ${policy_risk.profile_id}` : ""}.`
               : policy_risk
                 ? `${pluralize(policy_risk.contributions.length, "contribution")} · ${policy_risk.profile_id} · deterministic policy result.`
                 : `${stateLabel(analysis.rule_engine_status)} · no Policy Risk summary available.`
@@ -622,7 +622,6 @@ function AssessmentCoverageSection({ result }: { result: AnalysisResult }) {
 }
 
 export function AnalysisOverview({ result }: { result: AnalysisResult }) {
-  const isPrototype = result.data_source === "mock";
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -640,14 +639,6 @@ export function AnalysisOverview({ result }: { result: AnalysisResult }) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {isPrototype ? (
-              <Badge
-                variant="outline"
-                className="h-6 rounded-md border-blue-300 bg-blue-50 text-blue-800"
-              >
-                {result.dataset_label ?? "Prototype Analysis Dataset"}
-              </Badge>
-            ) : null}
             <Badge
               variant="outline"
               className="h-6 rounded-md border-neutral-300 bg-white font-mono text-[11px]"

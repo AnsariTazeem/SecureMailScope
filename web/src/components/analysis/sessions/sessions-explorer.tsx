@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
-import { Database, FilterX, Search, TableProperties } from "lucide-react";
+import { FilterX, Search, TableProperties } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -205,18 +204,6 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
           </div>
         </dl>
       </header>
-
-      {data.dataSource === "mock" ? (
-        <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-          <Database className="size-4" aria-hidden />
-          <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-          <AlertDescription className="text-blue-900/80">
-            {data.datasetLabel ?? "Prototype Analysis Dataset"} is a labelled,
-            validated synthetic fixture. It does not represent production API
-            integration or live capture analysis.
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       <SessionsSummary data={data} />
 

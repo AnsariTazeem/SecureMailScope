@@ -8,7 +8,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { DATASET_LABEL } from "@/lib/contracts/analysis";
 import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
@@ -29,16 +28,17 @@ export function DatasetBanner() {
       <TooltipTrigger
         render={
           <Badge
+            tabIndex={0}
+            aria-label="Sample analysis: Demonstration results. No uploaded file was analyzed."
             variant="outline"
             className="rounded-md border-neutral-400 bg-neutral-50 font-medium text-neutral-900"
           />
         }
       >
-        {DATASET_LABEL}
+        Sample analysis
       </TooltipTrigger>
       <TooltipContent>
-        Contract fixtures assembled for prototype UI work. Not a production
-        analyzer run, live capture, or verified API result.
+        Demonstration results. No uploaded file was analyzed.
       </TooltipContent>
     </Tooltip>
   );

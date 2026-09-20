@@ -30,6 +30,8 @@ const navigationItems = [
   { label: "New analysis", segment: null, icon: PlayCircle },
   { label: "Overview", segment: "overview", icon: Activity },
   { label: "Sessions", segment: "sessions", icon: Files },
+  { label: "Findings", segment: "findings", icon: ListChecks },
+  { label: "Proof Map", segment: "proof-map", icon: Files },
   { label: "Recommendations", segment: "recommendations", icon: ListChecks },
   { label: "Report", segment: "report", icon: FileSearch },
 ] as const;
@@ -83,10 +85,7 @@ function AnalysisNavigation({
           ? pathname === href ||
             (item.segment === "sessions" &&
               (pathname.startsWith(`${href}/`) ||
-                pathname.endsWith("/proof-map") ||
-                pathname.endsWith("/compare"))) ||
-            (item.segment === "recommendations" &&
-              pathname.endsWith("/findings"))
+                pathname.endsWith("/compare")))
           : false;
         const Icon = item.icon;
 

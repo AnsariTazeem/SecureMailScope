@@ -27,8 +27,8 @@ if (!process.argv.includes("--case")) {
   assert.ok(!client.includes("catch"), "No real-to-demo recovery branch");
   const guard = read("components/analysis/submission-capture-guard.tsx");
   for (const text of [
-    "Live capture analysis is unavailable in this evaluation build",
-    "Your capture was not uploaded, stored, or analyzed. Live PCAP analysis requires the production analysis service, which is not connected to this submission build. You can explore the curated demo to review the complete investigation workflow.",
+    "Live capture analysis is not enabled in this submission build",
+    "No file was uploaded, stored, or analyzed. You can open the complete sample investigation to review the end-to-end SecureMailScope workflow.",
     "selectPrototypeDataset()", 'router.push("/analysis/processing")',
   ]) assert.ok(guard.includes(text));
   assert.ok(read("lib/api/errors.ts").includes("Live analysis results are not available in this evaluation build. No demo result was substituted."));

@@ -34,7 +34,7 @@ for (const unreachable of ['unknown', 'not_present', 'not_assessed']) {
 assert.ok(graphMarkup.includes('option value="session_secrets_required"'));
 assert.equal(graph.graphNodes.length, 45);
 assert.equal(graph.graphEdges.length, 57);
-assert.equal(graph.relationshipCount, 61);
+assert.equal(graph.relationshipCount, 73); // 61 existing + 12 explicit anomaly links (ledger only).
 assert.equal(new Set(graph.graphNodes.map(n => n.id)).size, 45);
 
 const findingId = 'fnd_475510c505d60661';

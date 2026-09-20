@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   BrainCircuit,
   CircleAlert,
-  Database,
   Info,
   ShieldAlert,
 } from "lucide-react";
@@ -192,30 +191,7 @@ function IdentityHeader({ data }: { data: SessionXRayData }) {
           Analysis {humanize(data.analysisStatus)} · Capture{" "}
           {humanize(data.captureCompleteness)}
         </span>
-        <Badge
-          variant="outline"
-          className={cn(
-            "rounded-md",
-            data.dataSource === "mock"
-              ? "border-blue-200 bg-blue-50 text-blue-800"
-              : "border-neutral-300 bg-neutral-50 text-neutral-700",
-          )}
-        >
-          {data.dataSource === "mock"
-            ? data.datasetLabel ?? "Prototype Analysis Dataset"
-            : "Production API result"}
-        </Badge>
       </div>
-      {data.dataSource === "mock" ? (
-        <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-          <Database className="size-4" aria-hidden />
-          <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-          <AlertDescription className="text-blue-900/80">
-            This is a labelled synthetic fixture, not a production analyzer
-            run.
-          </AlertDescription>
-        </Alert>
-      ) : null}
       {needsInterpretationWarning ? (
         <Alert className="border-amber-200 bg-amber-50/70 px-4 py-3 text-amber-950">
           <CircleAlert className="size-4" aria-hidden />
@@ -627,7 +603,7 @@ function CryptographyAndCertificate({ data }: { data: SessionXRayData }) {
       </CryptoSection>
       <CryptoSection title="Assessment limitations" description="Result-specific limitations appear beside the affected observation or transition. Capture and broader analysis constraints remain relevant." entries={[]}>
         <VisibleLimitations label="Capture and session limitations" limitations={data.captureLimitations} />
-        <VisibleLimitations label="Analysis-level limitations" limitations={data.analysisLimitations} />
+        <VisibleLimitations label="Analysis-level limitations" limitations={data.analysisLimitations.filter(item => data.dataSource !== "mock" || item.detail !== "prototype_analysis_dataset")} />
         {data.captureLimitations.length === 0 && data.analysisLimitations.length === 0 ? <p className="text-sm text-neutral-600">No additional session or analysis limitation records supplied.</p> : null}
       </CryptoSection>
     </div>
@@ -710,11 +686,6 @@ function FindingsSummary({ data }: { data: SessionXRayData }) {
                 >
                   <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      {data.dataSource === "mock" ? (
-                        <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-blue-700">
-                          Illustrative prototype finding
-                        </p>
-                      ) : null}
                       <h3 className="mt-1 break-words text-base font-semibold text-neutral-950">
                         {finding.title}
                       </h3>
@@ -916,7 +887,7 @@ function Limitations({ data }: { data: SessionXRayData }) {
               />
               <LimitationList
                 title="Analysis-level limitations"
-                limitations={data.analysisLimitations}
+                limitations={data.analysisLimitations.filter(item => data.dataSource !== "mock" || item.detail !== "prototype_analysis_dataset")}
               />
             </>
           ) : (
@@ -1106,11 +1077,11 @@ export function SessionXRay({
           </>
         }
       />
+      <ModelState data={data} />
       <details className="rounded-lg border border-border bg-card">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium focus-visible:outline-2">
-          ML status and declared limitations
+          Declared limitations
         </summary>
-        <ModelState data={data} />
         <Limitations data={data} />
       </details>
     </div>

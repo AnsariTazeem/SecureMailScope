@@ -57,7 +57,6 @@ import {
   type FindingDetail,
   type PolicyFindingsData,
 } from "./findings-view-model";
-import { PrototypeDatasetBanner } from "./findings-states";
 import { MLAnomalyExplorer } from "./ml-anomaly-explorer";
 
 const filterSelectClassName =
@@ -703,10 +702,6 @@ export function FindingsWorkspace({
           </div>
         </dl>
       </header>
-
-      {policyData.dataSource === "mock" ? (
-        <PrototypeDatasetBanner label={policyData.datasetLabel} />
-      ) : null}
 
       <nav aria-label="Findings view" className="flex gap-1">
         <Button

@@ -34,7 +34,9 @@ export function SubmissionCaptureGuard({ children }: { children: React.ReactNode
   const primaryAction = useRef<HTMLButtonElement | null>(null);
 
   const disclose = useCallback((initiator?: HTMLElement | null) => {
-    if (applicationCapabilities.liveAnalysis || openRef.current) return;
+    if (applicationCapabilities.liveAnalysis) return;
+    document.querySelectorAll<HTMLInputElement>("[data-submission-capture-zone] input[type=file]").forEach(input => { input.value = ""; });
+    if (openRef.current) return;
     const active = document.activeElement;
     returnFocus.current = initiator ?? (
       active instanceof HTMLElement && active !== document.body
@@ -82,12 +84,12 @@ export function SubmissionCaptureGuard({ children }: { children: React.ReactNode
             returnFocus.current?.isConnected ? returnFocus.current : document.getElementById("main-content")
           }>
             <DialogHeader>
-              <DialogTitle>Live capture analysis is unavailable in this evaluation build</DialogTitle>
-              <DialogDescription>Your capture was not uploaded, stored, or analyzed. Live PCAP analysis requires the production analysis service, which is not connected to this submission build. You can explore the curated demo to review the complete investigation workflow.</DialogDescription>
+              <DialogTitle>Live capture analysis is not enabled in this submission build</DialogTitle>
+              <DialogDescription>No file was uploaded, stored, or analyzed. You can open the complete sample investigation to review the end-to-end SecureMailScope workflow.</DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { openRef.current = false; setOpen(false); }}>Close</Button>
-              <Button ref={primaryAction} type="button" onClick={exploreDemo}>Explore Demo</Button>
+              <Button type="button" variant="outline" onClick={() => { openRef.current = false; setOpen(false); }}>Cancel</Button>
+              <Button ref={primaryAction} type="button" onClick={exploreDemo}>Open complete demo</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

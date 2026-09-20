@@ -113,7 +113,7 @@ function DetailsContent({
     { label: "Analysis ID", value: analysis.analysis_id },
     {
       label: "Source",
-      value: data_source === "mock" ? DATASET_LABEL : "Uploaded capture",
+      value: data_source === "mock" ? "Static sample" : "Uploaded capture",
     },
     {
       label: "Analysis status",
@@ -333,16 +333,9 @@ function DetailsContent({
         </div>
         <div className="border-t border-border pt-5">
           <h4 className="font-semibold">Analysis limitations</h4>
-          {data_source === "mock" ? (
-            <p className="mt-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-950">
-              These statements are metadata supplied by the static Prototype
-              Analysis Dataset. They describe the fixture and may not reflect
-              the current production backend.
-            </p>
-          ) : null}
           {analysis.limitations.length ? (
             <ul className="mt-3 space-y-3">
-              {analysis.limitations.map((item, i) => (
+              {analysis.limitations.filter(item => data_source !== "mock" || item.detail !== "prototype_analysis_dataset").map((item, i) => (
                 <li key={i} className="text-sm">
                   <p>{item.summary}</p>
                   {item.detail ? (

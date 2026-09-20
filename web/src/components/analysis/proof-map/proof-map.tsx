@@ -123,16 +123,7 @@ function Header({ data }: { data: ProofMapData }) {
         </div>
       </div>
 
-      {data.dataSource === "mock" ? (
-        <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-          <Database className="size-4" aria-hidden />
-          <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-          <AlertDescription className="text-blue-900/80">
-            {data.datasetLabel ?? "Prototype Analysis Dataset"} is a labelled,
-            validated synthetic fixture. It is not a production analyzer run.
-          </AlertDescription>
-        </Alert>
-      ) : (
+      {data.dataSource === "mock" ? null : (
         <Alert className="border-neutral-300 bg-neutral-50 px-4 py-3 text-neutral-950">
           <Database className="size-4" aria-hidden />
           <AlertTitle>Production API source</AlertTitle>
@@ -402,7 +393,7 @@ function Limitations({ data }: { data: ProofMapData }) {
         </CardHeader>
         <CardContent>
           <ul className="grid gap-3 lg:grid-cols-2">
-            {data.limitations.map((limitation, index) => (
+            {data.limitations.filter(item => data.dataSource !== "mock" || item.detail !== "prototype_analysis_dataset").map((limitation, index) => (
               <li
                 key={`${limitation.scope}:${limitation.code}:${index}`}
                 className="rounded-lg border border-neutral-200 bg-neutral-50 p-4"

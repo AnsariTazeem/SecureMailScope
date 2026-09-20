@@ -97,11 +97,11 @@ export function CompleteView() {
             <CheckCircle2 className="size-6" aria-hidden />
           </span>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-neutral-950">
-            Analysis workflow complete
+            Investigation ready
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-neutral-600">
             {result.dataset_label
-              ? "The deterministic Prototype Analysis Dataset passed the frontend runtime contract. This is not a claim that the selected capture was analyzed by a production backend."
+              ? "Begin with Overview, inspect Findings and Proof Map, then review Recommendations and Report."
               : "The production API result passed the frontend runtime contract."}
           </p>
         </div>
@@ -115,13 +115,13 @@ export function CompleteView() {
             <div>
               <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">Source</dt>
               <dd className="mt-1 text-xs text-neutral-950">
-                {result.dataset_label ?? "Production API"}
+                {result.data_source === "mock" ? "Complete sample investigation" : "Production API"}
               </dd>
             </div>
             <div>
               <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">Selected capture</dt>
               <dd className="mt-1 truncate text-xs text-neutral-950">
-                {uploadedFileName ?? "Unavailable"}
+                {uploadedFileName ?? "No capture selected"}
               </dd>
             </div>
             <div>
