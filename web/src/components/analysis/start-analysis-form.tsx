@@ -17,9 +17,12 @@ import { publicConfig } from "@/lib/config/env";
 import { DATASET_LABEL } from "@/lib/contracts/analysis";
 import { formatByteLimit } from "@/lib/validation/capture-file";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
+import { useSubmissionCaptureGuard } from "@/components/analysis/submission-capture-guard";
 
 export function StartAnalysisForm() {
   const router = useRouter();
+  const { disclose, exploreDemo } = useSubmissionCaptureGuard();
+  const liveAnalysis = publicConfig.liveAnalysis;
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -29,9 +32,6 @@ export function StartAnalysisForm() {
   );
   const lastError = useAnalysisWorkflow((state) => state.lastError);
   const setSelectedFile = useAnalysisWorkflow((state) => state.setSelectedFile);
-  const selectPrototypeDataset = useAnalysisWorkflow(
-    (state) => state.selectPrototypeDataset,
-  );
   const setAuthorizationConfirmed = useAnalysisWorkflow(
     (state) => state.setAuthorizationConfirmed,
   );
@@ -40,7 +40,7 @@ export function StartAnalysisForm() {
 
   const hasInput = Boolean(selectedFile);
   const activeStep = !hasInput ? 0 : authorizationConfirmed ? 2 : 1;
-  const canStart = hasInput && authorizationConfirmed && !submitting;
+  const canStart = liveAnalysis && hasInput && authorizationConfirmed && !submitting;
 
   const validationItems = useMemo(
     () => [
@@ -66,6 +66,7 @@ export function StartAnalysisForm() {
   );
 
   function handleFile(file: File) {
+    if (!liveAnalysis) { disclose(); return; }
     setValidationErrors([]);
     setError(null);
     setSelectedFile(file);
@@ -74,8 +75,7 @@ export function StartAnalysisForm() {
   function handlePrototypeSelection() {
     setValidationErrors([]);
     setError(null);
-    selectPrototypeDataset();
-    router.push("/analysis/processing");
+    exploreDemo();
   }
 
   async function handleStart() {
@@ -110,13 +110,13 @@ export function StartAnalysisForm() {
           Start Analysis
         </h1>
         <p className="max-w-3xl text-sm leading-6 text-neutral-600">
-          Select an authorized packet capture for evidence-bound email transport
-          assessment. The browser validates intake requirements before any
-          analysis begins.
+          {liveAnalysis
+            ? "Select an authorized packet capture for evidence-bound email transport assessment. The browser validates intake requirements before any analysis begins."
+            : "Explore the curated demo to review the complete investigation workflow. Live capture analysis is not connected in this evaluation build."}
         </p>
       </div>
 
-      <AnalysisStepIndicator activeStep={activeStep} />
+      {liveAnalysis ? <AnalysisStepIndicator activeStep={activeStep} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(300px,0.82fr)]">
         <section className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
@@ -138,12 +138,12 @@ export function StartAnalysisForm() {
               }}
             />
 
-            <CaptureValidationList items={validationItems} />
+            {liveAnalysis ? <CaptureValidationList items={validationItems} /> : null}
 
-            <AuthorizationConfirmation
+            {liveAnalysis ? <AuthorizationConfirmation
               confirmed={authorizationConfirmed}
               onConfirmedChange={setAuthorizationConfirmed}
-            />
+            /> : null}
 
             {lastError ? (
               <Alert variant="destructive">
@@ -153,7 +153,7 @@ export function StartAnalysisForm() {
               </Alert>
             ) : null}
 
-            <div className="flex flex-col gap-3 border-t border-neutral-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            {liveAnalysis ? <div className="flex flex-col gap-3 border-t border-neutral-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs leading-5 text-neutral-500">
                 Start Analysis uploads the authorized capture to the configured
                 production backend. Explore Demo never uploads a capture.
@@ -168,7 +168,7 @@ export function StartAnalysisForm() {
                 <Play className="size-4" aria-hidden />
                 {submitting ? "Starting…" : "Start offline analysis"}
               </Button>
-            </div>
+            </div> : null}
 
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -186,7 +186,7 @@ export function StartAnalysisForm() {
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant={liveAnalysis ? "outline" : "default"}
                   disabled={submitting}
                   onClick={handlePrototypeSelection}
                 >

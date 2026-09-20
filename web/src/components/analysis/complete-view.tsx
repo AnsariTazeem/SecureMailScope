@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { getAnalysisDataSourceForId } from "@/lib/api/client";
 import type { AnalysisResult } from "@/lib/contracts/analysis";
 import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
+import { applicationCapabilities } from "@/lib/config/env";
 
 export function CompleteView() {
   const router = useRouter();
@@ -148,7 +149,7 @@ export function CompleteView() {
                 router.push("/analysis/new");
               }}
             >
-              Analyze another capture
+              {applicationCapabilities.liveAnalysis ? "Analyze another capture" : "Return to Start"}
             </Button>
             <Link
               href={`/analysis/${analysisId}/overview`}

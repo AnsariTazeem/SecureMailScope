@@ -5,11 +5,14 @@ import type {
   AnalysisSubmissionDataSource,
 } from "@/lib/contracts/analysis";
 import { PROTOTYPE_ANALYSIS_ID } from "@/mocks/load-prototype-dataset";
+import { applicationCapabilities } from "@/lib/config/env";
+import { SubmissionModeDisabledError } from "@/lib/api/errors";
 
 let realInstance: AnalysisSubmissionDataSource | null = null;
 let demoInstance: AnalysisDataSource | null = null;
 
 export function getRealAnalysisDataSource(): AnalysisSubmissionDataSource {
+  if (!applicationCapabilities.liveAnalysis) throw new SubmissionModeDisabledError();
   realInstance ??= new ApiAnalysisDataSource();
   return realInstance;
 }

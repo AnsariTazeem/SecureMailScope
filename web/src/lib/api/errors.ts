@@ -8,6 +8,16 @@ export class DataSourceError extends Error {
   }
 }
 
+export class SubmissionModeDisabledError extends DataSourceError {
+  constructor() {
+    super(
+      "submission_mode_disabled",
+      "Live analysis results are not available in this evaluation build. No demo result was substituted.",
+    );
+    this.name = "SubmissionModeDisabledError";
+  }
+}
+
 export class CaptureValidationError extends DataSourceError {
   constructor(message: string) {
     super("capture_validation", message);

@@ -1,4 +1,5 @@
 import { FileCheck2 } from "lucide-react";
+import { applicationCapabilities } from "@/lib/config/env";
 
 export function EvidenceBoundaryNote() {
   return (
@@ -8,8 +9,9 @@ export function EvidenceBoundaryNote() {
         <div>
           <h2 className="text-sm font-semibold text-neutral-900">Evidence boundary</h2>
           <p className="mt-1 text-xs leading-5 text-neutral-600">
-            The frontend validates file intake only. It never derives TLS,
-            certificate, Policy Risk, or ML Anomaly conclusions.
+            {applicationCapabilities.liveAnalysis
+              ? "The frontend validates file intake only. It never derives TLS, certificate, Policy Risk, or ML Anomaly conclusions."
+              : "This evaluation build presents the curated Prototype Analysis Dataset. It does not analyze uploaded captures or derive TLS, certificate, Policy Risk, or ML Anomaly conclusions."}
           </p>
         </div>
       </div>

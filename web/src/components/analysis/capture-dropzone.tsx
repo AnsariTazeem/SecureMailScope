@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
+import { isFileTransfer, useSubmissionCaptureGuard } from "@/components/analysis/submission-capture-guard";
 import { FileUp } from "lucide-react";
 import {
   type FileError,
@@ -35,6 +36,65 @@ type CaptureDropzoneProps = {
 };
 
 export function CaptureDropzone({
+  ...props
+}: CaptureDropzoneProps) {
+  return publicConfig.liveAnalysis
+    ? <ConnectedCaptureDropzone {...props} />
+    : <SubmissionCaptureDropzone />;
+}
+
+function SubmissionCaptureDropzone() {
+  const input = useRef<HTMLInputElement>(null);
+  const chooseButton = useRef<HTMLButtonElement>(null);
+  const { disclose } = useSubmissionCaptureGuard();
+  return (
+    <div
+      data-submission-capture-zone
+      role="group"
+      aria-label="PCAP or PCAPNG file selection"
+      tabIndex={0}
+      className="flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed bg-neutral-50 px-6 py-8 text-center outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
+      onClick={() => input.current?.click()}
+      onKeyDown={event => {
+        if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          input.current?.click();
+        }
+      }}
+      onDragOver={event => { if (isFileTransfer(event.dataTransfer)) event.preventDefault(); }}
+      onDrop={event => {
+        if (!isFileTransfer(event.dataTransfer)) return;
+        event.preventDefault();
+        disclose(event.currentTarget);
+      }}
+      onPaste={event => {
+        if (!isFileTransfer(event.clipboardData)) return;
+        event.preventDefault();
+        disclose(event.currentTarget);
+      }}
+    >
+      <input
+        ref={input}
+        type="file"
+        accept=".pcap,.pcapng"
+        hidden
+        aria-label="Choose one PCAP or PCAPNG capture"
+        onClick={event => event.stopPropagation()}
+        onChange={event => {
+          const chosen = Boolean(event.currentTarget.files?.length);
+          event.currentTarget.value = "";
+          if (chosen) disclose(chooseButton.current);
+        }}
+      />
+      <span className="mb-4 flex size-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-xs"><FileUp className="size-5" aria-hidden /></span>
+      <p className="text-sm font-semibold text-neutral-950">Drag and drop a capture here</p>
+      <p className="mt-1 max-w-md text-xs leading-5 text-neutral-500">Live capture analysis is not connected in this evaluation build. Your file will not be uploaded, stored, or analyzed.</p>
+      <Button ref={chooseButton} type="button" variant="outline" className="mt-5" onClick={event => { event.stopPropagation(); input.current?.click(); }}>Choose file</Button>
+    </div>
+  );
+}
+
+function ConnectedCaptureDropzone({
   selectedFile,
   errors,
   onSelect,
