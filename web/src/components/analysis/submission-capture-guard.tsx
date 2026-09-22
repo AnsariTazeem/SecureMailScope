@@ -84,12 +84,12 @@ export function SubmissionCaptureGuard({ children }: { children: React.ReactNode
             returnFocus.current?.isConnected ? returnFocus.current : document.getElementById("main-content")
           }>
             <DialogHeader>
-              <DialogTitle>Live capture analysis is not enabled in this submission build</DialogTitle>
-              <DialogDescription>No file was uploaded, stored, or analyzed. You can open the complete sample investigation to review the end-to-end SecureMailScope workflow.</DialogDescription>
+              <DialogTitle>Backend integration in progress</DialogTitle>
+              <DialogDescription>File upload analysis is unavailable in this evaluation build. No file was uploaded, stored or analyzed. You can explore the complete demo instead.</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { openRef.current = false; setOpen(false); }}>Cancel</Button>
-              <Button ref={primaryAction} type="button" onClick={exploreDemo}>Open complete demo</Button>
+              <Button ref={primaryAction} type="button" onClick={exploreDemo}>Open Complete Demo</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

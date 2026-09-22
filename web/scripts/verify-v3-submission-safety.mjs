@@ -26,9 +26,27 @@ if (!process.argv.includes("--case")) {
   assert.ok(client.indexOf("throw new SubmissionModeDisabledError") < client.indexOf("new ApiAnalysisDataSource"));
   assert.ok(!client.includes("catch"), "No real-to-demo recovery branch");
   const guard = read("components/analysis/submission-capture-guard.tsx");
+  const start = read("components/analysis/start-analysis-form.tsx");
+  assert.ok(start.includes('<span className="font-semibold text-destructive">Backend integration is currently in progress.</span>'));
+  assert.ok(start.includes('<span className="text-foreground">File upload analysis is unavailable in this evaluation build.</span>'));
+  assert.ok(!start.includes("explore the complete demo instead"));
+  assert.ok(!start.includes("bg-emerald") && !start.includes("bg-green"));
+  assert.ok(start.includes('<div className="flex justify-end">'));
+  assert.ok(start.includes('variant={liveAnalysis ? "outline" : "default"}'));
+  assert.ok(start.includes("Open Complete Demo"));
+  assert.ok(start.indexOf('<div className="flex justify-end">') > start.indexOf("<CaptureDropzone"));
+  for (const removed of [
+    "AssessmentScopePanel", "EvidenceBoundaryNote", "Assessment scope",
+    "Evidence preserved", "Passive assessment", "Unknown stays unknown",
+    "Evidence boundary", "Want to explore without a capture?",
+    "Explore the curated demo to review the complete investigation workflow.",
+  ]) assert.ok(!start.includes(removed), `Start page still contains ${removed}`);
+  assert.ok(!start.includes("<aside"), "Start page has an empty right column");
+  assert.ok(start.includes('<section className="w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">'));
+  assert.ok(start.includes("mx-auto w-full max-w-4xl"), "Capture controls remain width-bounded");
   for (const text of [
-    "Live capture analysis is not enabled in this submission build",
-    "No file was uploaded, stored, or analyzed. You can open the complete sample investigation to review the end-to-end SecureMailScope workflow.",
+    "Backend integration in progress",
+    "File upload analysis is unavailable in this evaluation build. No file was uploaded, stored or analyzed. You can explore the complete demo instead.",
     "selectPrototypeDataset()", 'router.push("/analysis/processing")',
   ]) assert.ok(guard.includes(text));
   assert.ok(read("lib/api/errors.ts").includes("Live analysis results are not available in this evaluation build. No demo result was substituted."));
@@ -37,6 +55,9 @@ if (!process.argv.includes("--case")) {
   assert.match(layout, /strategy="beforeInteractive"/);
   const capture = read("components/analysis/capture-dropzone.tsx");
   const submission = capture.split("function SubmissionCaptureDropzone()")[1].split("function ConnectedCaptureDropzone")[0];
+  assert.ok(submission.includes("Selected files are not uploaded, stored or analyzed in this evaluation build."));
+  assert.ok(!submission.includes("Live capture analysis"));
+  assert.ok(!guard.includes("bg-emerald") && !guard.includes("bg-green"));
   for (const forbidden of ["onSelect", "validateCaptureFile", "useDropzone", "FormData", "file.name", "useState"]) assert.ok(!submission.includes(forbidden), forbidden);
   for (const [mode, url, expected] of [
     [undefined, undefined, "demo"], ["submission_demo", "https://example.invalid", "demo"],
@@ -85,8 +106,11 @@ if (!process.argv.includes("--case")) {
   assert.equal(prevented, 1);
   zone.props.onDrop({ dataTransfer: { types: ["text/plain"] }, preventDefault: () => assert.fail("Blocked text drag") });
   assert.equal(disclosures, 2);
+  zone.props.onPaste({ clipboardData: { types: ["Files"] }, preventDefault: () => prevented++, currentTarget: {} });
+  assert.equal(disclosures, 3);
+  assert.equal(prevented, 2);
   input.props.onChange({ currentTarget: { value: "", files: { length: 0 } } });
-  assert.equal(disclosures, 2, "Picker cancellation is silent");
+  assert.equal(disclosures, 3, "Picker cancellation is silent");
 
   // Execute the exact early script: only file drops are blocked; hydration retires it.
   const earlyScript = layout.match(/strategy="beforeInteractive">\{`([\s\S]*?)`\}/)[1];
@@ -96,11 +120,11 @@ if (!process.argv.includes("--case")) {
     removeEventListener: name => listeners.delete(name),
   } });
   listeners.get("drop")({ dataTransfer: { types: ["Files"], items: [] }, preventDefault: () => prevented++ });
-  assert.equal(prevented, 2);
+  assert.equal(prevented, 3);
   listeners.get("drop")({ dataTransfer: { types: ["text/uri-list"], items: [] }, preventDefault: () => assert.fail("Blocked link drag") });
   listeners.get("submission-guard-ready")();
   assert.ok(!listeners.has("drop") && !listeners.has("dragover"));
-  console.log("PASS: V3 static boundaries, nine configuration cases, zero-fetch local refusals, prototype/JSON identity, submission picker/drop handlers, early file-only protection. No browser proof claimed.");
+  console.log("PASS: V3 static boundaries, decluttered Start page, nine configuration cases, zero-fetch local refusals, prototype/JSON identity, submission picker/drop/paste handlers, early file-only protection. No browser proof claimed.");
 } else {
   const originalResolve = Module._resolveFilename;
   Module._resolveFilename = function(request, ...args) {

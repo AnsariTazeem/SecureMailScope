@@ -90,7 +90,7 @@ function SubmissionCaptureDropzone() {
       />
       <span className="mb-4 flex size-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-xs"><FileUp className="size-5" aria-hidden /></span>
       <p className="text-sm font-semibold text-neutral-950">Drag and drop a capture here</p>
-      <p className="mt-1 max-w-md text-xs leading-5 text-neutral-500">Live capture analysis is not connected in this evaluation build. Your file will not be uploaded, stored, or analyzed.</p>
+      <p className="mt-1 max-w-md text-xs leading-5 text-neutral-500">Selected files are not uploaded, stored or analyzed in this evaluation build.</p>
       <Button ref={chooseButton} type="button" variant="outline" className="mt-5" onClick={event => { event.stopPropagation(); input.current?.click(); }}>Choose file</Button>
     </div>
   );
