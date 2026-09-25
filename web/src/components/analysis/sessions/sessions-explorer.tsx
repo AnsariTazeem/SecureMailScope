@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-import { pluralize } from "./session-formatters";
 import {
   completenessLabels,
   tlsTransitionLabels,
@@ -161,16 +160,6 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
 
   return (
     <div className="mx-auto min-w-0 w-full max-w-[96rem] space-y-6">
-      <div className="flex justify-end">
-        {data.rows.length >= 2 ? (
-          <Link
-            href={`/analysis/${data.analysisId}/compare`}
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium focus-visible:outline-2"
-          >
-            Compare sessions
-          </Link>
-        ) : null}
-      </div>
       <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
@@ -180,29 +169,18 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
             Sessions Explorer
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-            Investigate validated reconstructed-session metadata. Ports support
-            navigation and search; they are not treated as protocol proof.
+            Review reconstructed email sessions and open one to trace its TLS
+            state, findings, and supporting evidence.
           </p>
         </div>
-        <dl className="w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm sm:w-80 sm:shrink-0">
-          <div>
-            <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Analysis ID
-            </dt>
-            <dd
-              className="mt-1 block truncate font-mono text-xs text-neutral-950"
-              title={data.analysisId}
-            >
-              {data.analysisId}
-            </dd>
-          </div>
-          <div className="mt-2 border-t border-neutral-100 pt-2">
-            <dt className="sr-only">Total validated sessions</dt>
-            <dd className="text-xs text-neutral-600">
-              {pluralize(data.totalSessions, "validated session")}
-            </dd>
-          </div>
-        </dl>
+        {data.rows.length >= 2 ? (
+          <Link
+            href={`/analysis/${data.analysisId}/compare`}
+            className="inline-flex min-h-9 items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium focus-visible:outline-2"
+          >
+            Compare sessions
+          </Link>
+        ) : null}
       </header>
 
       <SessionsSummary data={data} />
@@ -220,12 +198,15 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
                 <h2 id="session-inventory-heading">Session inventory</h2>
               </CardTitle>
               <CardDescription>
-                Search and filter only validated session metadata and explicit
-                record relationships.
+                Open a session to inspect its timeline, TLS state, and evidence.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-4">
+              <details className="rounded-lg border border-neutral-200 bg-neutral-50/60">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-neutral-800 outline-none hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-inset">
+                  Search and filter sessions
+                </summary>
+                <div className="space-y-4 border-t border-neutral-200 p-4">
                 <div className="min-w-0">
                   <label
                     htmlFor="session-search"
@@ -322,29 +303,29 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
                     </FilterField>
                   </div>
                 </fieldset>
-              </div>
-
-              <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p
-                  className="text-sm text-neutral-600"
-                  role="status"
-                  aria-live="polite"
-                >
-                  Showing {filteredRows.length.toLocaleString("en")} of{" "}
-                  {data.totalSessions.toLocaleString("en")} validated sessions
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={clearAll}
-                  disabled={!hasActiveControls}
-                  className="w-full sm:w-auto"
-                >
-                  <FilterX className="size-4" aria-hidden />
-                  Clear all
-                </Button>
-              </div>
+                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p
+                      className="text-sm text-neutral-600"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      Showing {filteredRows.length.toLocaleString("en")} of{" "}
+                      {data.totalSessions.toLocaleString("en")} sessions
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={clearAll}
+                      disabled={!hasActiveControls}
+                      className="w-full sm:w-auto"
+                    >
+                      <FilterX className="size-4" aria-hidden />
+                      Clear all
+                    </Button>
+                  </div>
+                </div>
+              </details>
 
               {filteredRows.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-5 py-10 text-center">
