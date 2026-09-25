@@ -143,8 +143,7 @@ export function PreparedCaptureDropzone({
       ) : null}
 
       <p className="text-xs leading-5 text-neutral-500">
-        PCAP and PCAPNG are supported by the analysis service. This walkthrough
-        recognizes the two provided PCAPNG files, up to{" "}
+        PCAP and PCAPNG are supported by the analysis service. Maximum{" "}
         {formatByteLimit(publicConfig.maxCaptureBytes)} per file.
       </p>
     </div>
