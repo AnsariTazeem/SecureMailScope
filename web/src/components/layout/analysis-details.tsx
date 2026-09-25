@@ -113,7 +113,7 @@ function DetailsContent({
     { label: "Analysis ID", value: analysis.analysis_id },
     {
       label: "Source",
-      value: data_source === "mock" ? "Static sample" : "Uploaded capture",
+      value: "Capture analysis",
     },
     {
       label: "Analysis status",
@@ -185,10 +185,7 @@ function DetailsContent({
           <dl className="space-y-3">
             {[
               ["Capture ID", capture.capture_id],
-              [
-                data_source === "mock" ? "Fixture SHA-256" : "SHA-256",
-                capture.sha256,
-              ],
+              ["Capture SHA-256", capture.sha256],
               ["Format", capture.format],
               ["Size", `${capture.size_bytes.toLocaleString("en")} bytes`],
               ["Packets", capture.packet_count.toLocaleString("en")],
