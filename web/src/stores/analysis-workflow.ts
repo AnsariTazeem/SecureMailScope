@@ -13,7 +13,7 @@ type AnalysisWorkflowState = {
   phase: WorkflowPhase;
   lastError: string | null;
   setSelectedFile: (file: File | null) => void;
-  selectPrototypeDataset: () => void;
+  selectPrototypeDataset: (uploadedFileName?: string) => void;
   setAuthorizationConfirmed: (confirmed: boolean) => void;
   setCreated: (analysisId: string, uploadedFileName: string) => void;
   setPhase: (phase: WorkflowPhase) => void;
@@ -37,13 +37,13 @@ export const useAnalysisWorkflow = create<AnalysisWorkflowState>((set) => ({
       phase: "idle",
       lastError: null,
     }),
-  selectPrototypeDataset: () =>
+  selectPrototypeDataset: (uploadedFileName) =>
     set({
       selectedFile: null,
       usingPrototypeDataset: true,
       authorizationConfirmed: false,
       analysisId: PROTOTYPE_ANALYSIS_ID,
-      uploadedFileName: null,
+      uploadedFileName: uploadedFileName ?? null,
       phase: "processing",
       lastError: null,
     }),

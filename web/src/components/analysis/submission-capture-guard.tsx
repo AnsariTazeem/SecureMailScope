@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { applicationCapabilities } from "@/lib/config/env";
-import { useAnalysisWorkflow } from "@/stores/analysis-workflow";
 
 export function isFileTransfer(transfer: DataTransfer | null): boolean {
   return Boolean(transfer && (
@@ -27,7 +26,6 @@ export function useSubmissionCaptureGuard() {
 
 export function SubmissionCaptureGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const selectPrototypeDataset = useAnalysisWorkflow(state => state.selectPrototypeDataset);
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -50,9 +48,8 @@ export function SubmissionCaptureGuard({ children }: { children: React.ReactNode
   const exploreDemo = useCallback(() => {
     openRef.current = false;
     setOpen(false);
-    selectPrototypeDataset();
-    router.push("/analysis/processing");
-  }, [router, selectPrototypeDataset]);
+    router.push("/analysis/new");
+  }, [router]);
 
   useEffect(() => {
     if (applicationCapabilities.liveAnalysis) return;
@@ -84,12 +81,12 @@ export function SubmissionCaptureGuard({ children }: { children: React.ReactNode
             returnFocus.current?.isConnected ? returnFocus.current : document.getElementById("main-content")
           }>
             <DialogHeader>
-              <DialogTitle>Backend integration in progress</DialogTitle>
-              <DialogDescription>File upload analysis is unavailable in this evaluation build. No file was uploaded, stored or analyzed. You can explore the complete demo instead.</DialogDescription>
+              <DialogTitle>Use the capture selection area</DialogTitle>
+              <DialogDescription>Drop capture files inside the Capture selection box to continue.</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { openRef.current = false; setOpen(false); }}>Cancel</Button>
-              <Button ref={primaryAction} type="button" onClick={exploreDemo}>Open Complete Demo</Button>
+              <Button ref={primaryAction} type="button" onClick={exploreDemo}>Go to Capture Selection</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

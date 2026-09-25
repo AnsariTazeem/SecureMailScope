@@ -10,13 +10,15 @@ function formatFileSize(bytes: number): string {
 
 type SelectedCaptureCardProps = {
   file: File;
-  onReplace: () => void;
+  onReplace?: () => void;
+  displayName?: string;
   onRemove: () => void;
 };
 
 export function SelectedCaptureCard({
   file,
   onReplace,
+  displayName,
   onRemove,
 }: SelectedCaptureCardProps) {
   return (
@@ -27,7 +29,7 @@ export function SelectedCaptureCard({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-neutral-950">
-            {file.name}
+            {displayName ?? file.name}
           </p>
           <p className="text-xs text-neutral-500">
             {formatFileSize(file.size)} · ready for intake validation
@@ -35,10 +37,12 @@ export function SelectedCaptureCard({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button type="button" variant="outline" onClick={onReplace}>
-          <RefreshCw className="size-3.5" aria-hidden />
-          Replace
-        </Button>
+        {onReplace ? (
+          <Button type="button" variant="outline" onClick={onReplace}>
+            <RefreshCw className="size-3.5" aria-hidden />
+            Replace
+          </Button>
+        ) : null}
         <Button type="button" variant="ghost" onClick={onRemove}>
           <Trash2 className="size-3.5" aria-hidden />
           Remove

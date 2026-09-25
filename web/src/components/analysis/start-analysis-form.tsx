@@ -156,7 +156,7 @@ export function StartAnalysisForm() {
           {liveAnalysis ? <div className="flex flex-col gap-3 border-t border-neutral-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs leading-5 text-neutral-500">
               Start Analysis uploads the authorized capture to the configured
-              production backend. Explore Demo never uploads a capture.
+              production backend. Reviewing the available result does not upload a capture.
             </p>
             <Button
               type="button"
@@ -177,7 +177,7 @@ export function StartAnalysisForm() {
               disabled={submitting}
               onClick={handlePrototypeSelection}
             >
-              Open Complete Demo
+              Review Available Analysis
             </Button>
           </div>
         </div>

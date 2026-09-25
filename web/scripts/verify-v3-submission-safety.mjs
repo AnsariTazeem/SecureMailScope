@@ -26,15 +26,42 @@ if (!process.argv.includes("--case")) {
   assert.ok(client.indexOf("throw new SubmissionModeDisabledError") < client.indexOf("new ApiAnalysisDataSource"));
   assert.ok(!client.includes("catch"), "No real-to-demo recovery branch");
   const guard = read("components/analysis/submission-capture-guard.tsx");
-  const start = read("components/analysis/start-analysis-form.tsx");
-  assert.ok(start.includes('<span className="font-semibold text-destructive">Backend integration is currently in progress.</span>'));
-  assert.ok(start.includes('<span className="text-foreground">File upload analysis is unavailable in this evaluation build.</span>'));
-  assert.ok(!start.includes("explore the complete demo instead"));
+  const start = read("components/analysis/capture-analysis-form.tsx");
+  const preparedDropzone = read("components/analysis/prepared-capture-dropzone.tsx");
+  const bundle = read("lib/walkthrough/capture-bundle.ts");
+  const processing = read("components/analysis/processing-view.tsx");
+  const processingStages = read("components/analysis/processing-stage-list.tsx");
+  assert.ok(processing.includes("validateFindingsIntegrity(result)"));
+  assert.ok(processing.includes("<ProcessingStageList"));
+  for (const stage of [
+    "Capture integrity verified",
+    "Analysis contract validated",
+    "Sessions and evidence indexed",
+    "Findings prioritized",
+    "Recommendations linked",
+    "Investigation workspace prepared",
+  ]) assert.ok(processingStages.includes(stage), `Missing processing stage: ${stage}`);
+  assert.ok(processingStages.includes("<Check"));
+  assert.ok(processingStages.includes("<LoaderCircle"));
+  assert.ok(processingStages.includes('role="progressbar"'));
+  assert.ok(bundle.includes('filename: "secure-chain.pcapng"'));
+  assert.ok(bundle.includes('filename: "insecure-chain.pcapng"'));
+  assert.ok(!start.includes("Backend integration is currently in progress."));
+  assert.ok(!start.includes("File upload analysis is unavailable"));
+  assert.ok(!start.includes("Review Available Analysis"));
   assert.ok(!start.includes("bg-emerald") && !start.includes("bg-green"));
-  assert.ok(start.includes('<div className="flex justify-end">'));
-  assert.ok(start.includes('variant={liveAnalysis ? "outline" : "default"}'));
-  assert.ok(start.includes("Open Complete Demo"));
-  assert.ok(start.indexOf('<div className="flex justify-end">') > start.indexOf("<CaptureDropzone"));
+  assert.ok(start.includes("<PreparedCaptureDropzone"));
+  assert.ok(start.includes("verifyPreparedCaptureBundle(files)"));
+  assert.ok(start.includes("selectPrototypeDataset(captureNames)"));
+  assert.ok(start.includes('router.push("/analysis/processing")'));
+  assert.ok(start.includes("Selected files are verified locally"));
+  assert.ok(preparedDropzone.includes("multiple: true"));
+  assert.ok(preparedDropzone.includes("maxFiles: PREPARED_CAPTURE_BUNDLE.length"));
+  assert.ok(!preparedDropzone.includes("Capture contents"));
+  assert.ok(bundle.includes("globalThis.crypto.subtle.digest"));
+  assert.ok(bundle.includes("receivedHashes.size === PREPARED_CAPTURE_BUNDLE.length"));
+  assert.ok(bundle.includes("7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76"));
+  assert.ok(bundle.includes("def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743"));
   for (const removed of [
     "AssessmentScopePanel", "EvidenceBoundaryNote", "Assessment scope",
     "Evidence preserved", "Passive assessment", "Unknown stays unknown",
@@ -45,10 +72,13 @@ if (!process.argv.includes("--case")) {
   assert.ok(start.includes('<section className="w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">'));
   assert.ok(start.includes("mx-auto w-full max-w-4xl"), "Capture controls remain width-bounded");
   for (const text of [
-    "Backend integration in progress",
-    "File upload analysis is unavailable in this evaluation build. No file was uploaded, stored or analyzed. You can explore the complete demo instead.",
-    "selectPrototypeDataset()", 'router.push("/analysis/processing")',
+    "Use the capture selection area",
+    "Drop capture files inside the Capture selection box to continue.",
+    'router.push("/analysis/new")',
   ]) assert.ok(guard.includes(text));
+  assert.ok(!guard.includes("selectPrototypeDataset"));
+  assert.ok(!guard.includes('router.push("/analysis/processing")'));
+  assert.ok(!guard.includes("Review Available Analysis"));
   assert.ok(read("lib/api/errors.ts").includes("Live analysis results are not available in this evaluation build. No demo result was substituted."));
   const layout = read("app/layout.tsx");
   assert.match(layout, /<SubmissionCaptureGuard>/);
