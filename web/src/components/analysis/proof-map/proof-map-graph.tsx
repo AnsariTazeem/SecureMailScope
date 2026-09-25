@@ -1056,39 +1056,53 @@ export function ProofMapGraph({ data, lockedSessionId }: { data: ProofMapData; l
             </div>
           </div>
 
-          <label className="grid min-w-0 gap-1 xl:w-80">
-            <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Session scope
-            </span>
-            <select
-              value={scope}
-              disabled={Boolean(lockedSessionId)}
-              onChange={(event) => {
-                clearSelection();
-                setScope(event.target.value);
-              }}
-              className="h-9 min-w-0 rounded-md border border-neutral-300 bg-white px-3 text-xs text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
-              aria-label="Proof graph session scope"
+          {lockedSessionId ? (
+            <div
+              className="grid min-w-0 gap-1 xl:w-80"
+              data-locked-session-scope
             >
-              <option
-                value="all"
-                data-node-count={scopeStats.all.nodes}
-                data-edge-count={scopeStats.all.edges}
+              <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
+                Session scope
+              </span>
+              <div className="flex h-9 items-center rounded-md border border-neutral-200 bg-neutral-50 px-3 text-xs text-neutral-700">
+                Current session · {scopeStats.bySession.get(scope)?.nodes ?? 0} nodes /{" "}
+                {scopeStats.bySession.get(scope)?.edges ?? 0} edges
+              </div>
+            </div>
+          ) : (
+            <label className="grid min-w-0 gap-1 xl:w-80">
+              <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
+                Session scope
+              </span>
+              <select
+                value={scope}
+                onChange={(event) => {
+                  clearSelection();
+                  setScope(event.target.value);
+                }}
+                className="h-9 min-w-0 rounded-md border border-neutral-300 bg-white px-3 text-xs text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
+                aria-label="Proof graph session scope"
               >
-                All sessions · {scopeStats.all.nodes} nodes / {scopeStats.all.edges} edges
-              </option>
-              {data.sessions.map((session) => (
                 <option
-                  key={session.sessionId}
-                  value={session.sessionId}
-                  data-node-count={scopeStats.bySession.get(session.sessionId)?.nodes}
-                  data-edge-count={scopeStats.bySession.get(session.sessionId)?.edges}
+                  value="all"
+                  data-node-count={scopeStats.all.nodes}
+                  data-edge-count={scopeStats.all.edges}
                 >
-                  {session.protocol.toUpperCase()} · stream {session.tcpStreamId} · {session.sessionId} · {scopeStats.bySession.get(session.sessionId)?.nodes} nodes / {scopeStats.bySession.get(session.sessionId)?.edges} edges
+                  All sessions · {scopeStats.all.nodes} nodes / {scopeStats.all.edges} edges
                 </option>
-              ))}
-            </select>
-          </label>
+                {data.sessions.map((session) => (
+                  <option
+                    key={session.sessionId}
+                    value={session.sessionId}
+                    data-node-count={scopeStats.bySession.get(session.sessionId)?.nodes}
+                    data-edge-count={scopeStats.bySession.get(session.sessionId)?.edges}
+                  >
+                    {session.protocol.toUpperCase()} · stream {session.tcpStreamId} · {session.sessionId} · {scopeStats.bySession.get(session.sessionId)?.nodes} nodes / {scopeStats.bySession.get(session.sessionId)?.edges} edges
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
 
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">

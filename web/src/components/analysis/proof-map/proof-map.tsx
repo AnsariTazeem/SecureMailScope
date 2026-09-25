@@ -101,8 +101,7 @@ function Header({ data }: { data: ProofMapData }) {
             Chain-of-Proof Explorer
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-            Follow only contract-declared capture, session, evidence, event,
-            observation, fact, and deterministic policy relationships.
+            Trace how captures, sessions, events, evidence, and findings connect.
           </p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
@@ -143,9 +142,9 @@ function Summary({ data }: { data: ProofMapData }) {
       <h2 id="proof-map-summary-heading" className="sr-only">
         Proof Map summary
       </h2>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-          <CardContent>
+          <CardContent className="p-4">
             <FileKey2 className="size-4 text-neutral-500" aria-hidden />
             <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
               Declared relationships
@@ -160,7 +159,7 @@ function Summary({ data }: { data: ProofMapData }) {
           </CardContent>
         </Card>
         <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-          <CardContent>
+          <CardContent className="p-4">
             <Network className="size-4 text-neutral-500" aria-hidden />
             <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
               Sessions / contract
@@ -174,7 +173,7 @@ function Summary({ data }: { data: ProofMapData }) {
           </CardContent>
         </Card>
         <Card className="rounded-lg border-violet-200 bg-violet-50/40 shadow-sm ring-0">
-          <CardContent>
+          <CardContent className="p-4">
             <ShieldAlert className="size-4 text-violet-700" aria-hidden />
             <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.06em] text-violet-700">
               Policy Risk
@@ -192,7 +191,7 @@ function Summary({ data }: { data: ProofMapData }) {
           </CardContent>
         </Card>
         <Card className="rounded-lg border-blue-200 bg-blue-50/40 shadow-sm ring-0">
-          <CardContent>
+          <CardContent className="p-4">
             <BrainCircuit className="size-4 text-blue-700" aria-hidden />
             <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.06em] text-blue-700">
               ML Anomaly
@@ -214,17 +213,11 @@ function Summary({ data }: { data: ProofMapData }) {
 function Legend() {
   const states = ["unknown", "not_present", "not_assessed", "not_observable"];
   return (
-    <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-      <CardHeader className="border-b border-neutral-200">
-        <CardTitle>
-          <h2>Path and state legend</h2>
-        </CardTitle>
-        <CardDescription>
-          Solid green edges are direct evidence references. Dashed slate edges
-          are transitive evidence reached only through declared fact sources.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 lg:grid-cols-2">
+    <details className="rounded-lg border border-neutral-200 bg-white shadow-sm">
+      <summary className="cursor-pointer px-5 py-4 text-sm font-semibold text-neutral-900 outline-none hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-inset">
+        How to read paths and uncertainty states
+      </summary>
+      <div className="grid gap-4 border-t border-neutral-200 p-5 lg:grid-cols-2">
         <div className="space-y-2 text-xs text-neutral-700">
           <p className="border-l-2 border-emerald-600 pl-3">
             <strong>Direct evidence relationship</strong> — an explicit evidence
@@ -262,8 +255,8 @@ function Legend() {
             when passive evidence does not expose them.
           </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </details>
   );
 }
 
@@ -428,18 +421,16 @@ export function ProofMap({ data }: { data: ProofMapData }) {
     <div className="mx-auto w-full min-w-0 max-w-[100rem] space-y-6 overflow-x-clip">
       <Header data={data} />
       <Summary data={data} />
-      <Legend />
 
       {data.partial ? (
         <Alert className="border-amber-200 bg-amber-50">
           <CircleAlert className="size-4" aria-hidden />
           <AlertTitle>
-            Proof graph contains incomplete or partial relationships
+            Some evidence paths are incomplete
           </AlertTitle>
           <AlertDescription>
-            The graph stops at the last contract-declared relationship. It does
-            not fill gaps from timestamps, array position, frame numbers,
-            matching labels, or text.
+            The graph stops at the last declared relationship and does not fill
+            missing links from timing, labels, or text.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -461,6 +452,8 @@ export function ProofMap({ data }: { data: ProofMapData }) {
       ) : (
         <ProofMapGraph data={data} />
       )}
+
+      <Legend />
 
       <SeparateAssessmentState data={data} />
 

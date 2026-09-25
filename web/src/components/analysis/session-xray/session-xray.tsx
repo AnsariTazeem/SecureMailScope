@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  BrainCircuit,
   CircleAlert,
   Info,
   ShieldAlert,
@@ -167,8 +166,8 @@ function IdentityHeader({ data }: { data: SessionXRayData }) {
             Session investigation
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-            Trace one reconstructed email session from ordered protocol events
-            to evidence-backed facts, limitations, and policy output.
+            Trace this session from protocol events to TLS evidence, findings,
+            and recorded limitations.
           </p>
         </div>
         <Link
@@ -311,37 +310,6 @@ function EventEvidence({ event }: { event: XRayEvent }) {
   );
 }
 
-function InlineLimitations({
-  label,
-  limitations,
-}: {
-  label: string;
-  limitations: XRayEvent["limitations"];
-}) {
-  if (limitations.length === 0) return null;
-  return (
-    <details className="mt-3 border-t border-amber-200 pt-3">
-      <summary className="cursor-pointer text-xs font-semibold text-amber-900 focus-visible:outline-2">
-        {label} · {limitations.length}
-      </summary>
-      <ul className="mt-2 space-y-2">
-        {limitations.map((limitation) => (
-          <li
-            key={`${limitation.code}:${limitation.summary}:${limitation.detail}`}
-            className="text-xs leading-5 text-neutral-700"
-          >
-            <span className="font-medium">{limitation.summary}</span>
-            <code className="mt-1 block break-all font-mono text-[11px] text-neutral-500">
-              {limitation.code}
-              {limitation.detail ? `: ${limitation.detail}` : ""}
-            </code>
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
 function Timeline({ data }: { data: SessionXRayData }) {
   const events = data.events;
   const upgradeCommand = data.protocol === "pop3" ? "STLS" : "STARTTLS";
@@ -358,27 +326,6 @@ function Timeline({ data }: { data: SessionXRayData }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-5 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-4">
-            <h3 className="text-sm font-semibold text-neutral-950">Reference milestones · not captured events</h3>
-            <p className="mt-1 text-xs leading-5 text-neutral-600">
-              A successful in-session upgrade can follow this sequence. It is a
-              reading guide, not a checklist or an assessment of this capture.
-              Implicit TLS starts with TLS negotiation instead.
-            </p>
-            {data.protocol === "unknown" ? (
-              <p className="mt-3 text-sm text-neutral-700">Protocol-specific upgrade milestones unavailable: the source protocol is unknown.</p>
-            ) : (
-              <ol className="mt-3 grid gap-2 text-xs text-neutral-700 sm:grid-cols-2 xl:grid-cols-4">
-                {[
-                  `1. ${upgradeCommand} offered`,
-                  `2. Client requests ${upgradeCommand}`,
-                  "3. Server accepts the upgrade",
-                  "4. TLS negotiation → establishment",
-                ].map((milestone) => <li key={milestone} className="rounded-md border border-dashed border-neutral-300 p-3">{milestone}</li>)}
-              </ol>
-            )}
-            <p className="mt-3 text-xs leading-5 text-neutral-600">Acceptance alone does not establish TLS. Certificate validation is a separate assessment.</p>
-          </div>
           <VisibleLimitations label="Capture and session limitations" limitations={data.captureLimitations} />
           <h3 className="mb-3 text-sm font-semibold text-neutral-950">
             Observed and inferred events · {events.length}
@@ -465,6 +412,30 @@ function Timeline({ data }: { data: SessionXRayData }) {
               ))}
             </ol>
           )}
+          <details className="mt-5 rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-neutral-800 outline-none hover:bg-neutral-100/60 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-inset">
+              Reference: how a successful {upgradeCommand} upgrade progresses
+            </summary>
+            <div className="border-t border-neutral-200 p-4">
+              <p className="text-xs leading-5 text-neutral-600">
+                This is a reading guide, not an assessment of this capture.
+                Implicit TLS starts with negotiation instead.
+              </p>
+              {data.protocol === "unknown" ? (
+                <p className="mt-3 text-sm text-neutral-700">Protocol-specific upgrade milestones are unavailable because the source protocol is unknown.</p>
+              ) : (
+                <ol className="mt-3 grid gap-2 text-xs text-neutral-700 sm:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    `1. ${upgradeCommand} offered`,
+                    `2. Client requests ${upgradeCommand}`,
+                    "3. Server accepts the upgrade",
+                    "4. TLS negotiation → establishment",
+                  ].map((milestone) => <li key={milestone} className="rounded-md border border-dashed border-neutral-300 p-3">{milestone}</li>)}
+                </ol>
+              )}
+              <p className="mt-3 text-xs leading-5 text-neutral-600">Acceptance alone does not establish TLS. Certificate validation is assessed separately.</p>
+            </div>
+          </details>
         </CardContent>
       </Card>
     </section>
@@ -902,124 +873,6 @@ function Limitations({ data }: { data: SessionXRayData }) {
   );
 }
 
-function ModelState({ data }: { data: SessionXRayData }) {
-  return (
-    <section aria-labelledby="ml-anomaly-heading">
-      <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-        <CardHeader className="border-b border-neutral-200">
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-neutral-700">
-              <BrainCircuit className="size-4" aria-hidden />
-            </span>
-            <div>
-              <CardTitle>
-                <h2 id="ml-anomaly-heading">ML Anomaly</h2>
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Model output is shown separately from deterministic Policy Risk.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {data.mlEngineStatus === "not_run" ? (
-            <Alert className="border-neutral-300 bg-neutral-50">
-              <Info className="size-4" aria-hidden />
-              <AlertTitle>ML anomaly engine was not run</AlertTitle>
-              <AlertDescription>
-                No score exists for this session. Absence is not displayed as
-                zero and is not combined with Policy Risk.
-              </AlertDescription>
-            </Alert>
-          ) : data.anomalies.length === 0 ? (
-            <Alert className="border-amber-200 bg-amber-50">
-              <Info className="size-4" aria-hidden />
-              <AlertTitle>No validated session anomaly result</AlertTitle>
-              <AlertDescription>
-                Engine status is {humanize(data.mlEngineStatus)}. No score or
-                band was inferred for this session.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="space-y-4">
-              {data.anomalies.map((anomaly) => (
-                <article
-                  key={anomaly.anomalyResultId}
-                  className="min-w-0 rounded-lg border border-neutral-200 bg-neutral-50 p-4"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                        Validated model result
-                      </p>
-                      <ScrollableCode value={anomaly.anomalyResultId} />
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="rounded-md bg-white capitalize"
-                    >
-                      {humanize(anomaly.band)}
-                    </Badge>
-                  </div>
-                  <dl className="mt-4 grid min-w-0 gap-3 border-t border-neutral-200 pt-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <MetadataItem label="Model">
-                      <span className="break-all font-mono text-xs">
-                        {anomaly.modelId} v{anomaly.modelVersion}
-                      </span>
-                    </MetadataItem>
-                    <MetadataItem label="Feature schema">
-                      <span className="font-mono text-xs">
-                        {anomaly.featureSchemaVersion}
-                      </span>
-                    </MetadataItem>
-                    <MetadataItem label="Raw / normalized score">
-                      <span className="font-mono text-xs">
-                        {anomaly.rawScore} / {anomaly.normalizedScore}
-                      </span>
-                    </MetadataItem>
-                    <MetadataItem label="Threshold">
-                      <span className="font-mono text-xs">
-                        {anomaly.threshold}
-                      </span>
-                    </MetadataItem>
-                  </dl>
-                  <p className="mt-4 text-xs leading-5 text-neutral-600">
-                    {anomaly.interpretationNote}
-                  </p>
-                  <InlineLimitations
-                    label="Model-result limitations"
-                    limitations={anomaly.limitations}
-                  />
-                  {anomaly.unusualFeatureIndicators.length > 0 ? (
-                    <div className="mt-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                        Unusual feature indicators
-                      </p>
-                      <ul className="mt-2 flex flex-wrap gap-2">
-                        {anomaly.unusualFeatureIndicators.map((indicator) => (
-                          <li
-                            key={indicator}
-                            className="max-w-full break-all rounded-md border border-neutral-200 bg-white px-2 py-1 font-mono text-[11px]"
-                          >
-                            {indicator}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  <div className="mt-4 border-t border-neutral-200 pt-4">
-                    <EvidenceActions evidence={anomaly.evidence} />
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </section>
-  );
-}
-
 export function SessionXRay({
   data,
   proofData,
@@ -1077,7 +930,6 @@ export function SessionXRay({
           </>
         }
       />
-      <ModelState data={data} />
       <details className="rounded-lg border border-border bg-card">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium focus-visible:outline-2">
           Declared limitations

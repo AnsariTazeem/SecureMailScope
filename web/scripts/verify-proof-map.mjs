@@ -28,6 +28,14 @@ const demo = loadPrototypeAnalysisDataset();
 const before = JSON.stringify(demo);
 const graph = buildProofMapData(demo);
 const graphMarkup = renderToStaticMarkup(h(ProofMapGraph, {data: graph}));
+const lockedGraphMarkup = renderToStaticMarkup(h(ProofMapGraph, {
+  data: graph,
+  lockedSessionId: graph.defaultSessionId,
+}));
+assert.ok(graphMarkup.includes('aria-label="Proof graph session scope"'));
+assert.ok(lockedGraphMarkup.includes('data-locked-session-scope="true"'));
+assert.ok(lockedGraphMarkup.includes('Current session'));
+assert.ok(!lockedGraphMarkup.includes('aria-label="Proof graph session scope"'));
 for (const unreachable of ['unknown', 'not_present', 'not_assessed']) {
   assert.ok(!graphMarkup.includes(`option value="${unreachable}"`));
 }
