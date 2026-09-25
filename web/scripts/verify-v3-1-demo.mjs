@@ -36,6 +36,9 @@ const findingsHtml = render(h(MLAnomalyExplorer, { data }));
 const guidanceHtml = render(h(MLInvestigationGuidance, { data, sessionId: null }));
 const reportHtml = render(h(ReportWorkspace, { data: buildReportPageData(sample), demoChain: chain }));
 const graph = buildProofMapData(sample);
+const sessionXRaySource = fs.readFileSync(path.join(root, 'components/analysis/session-xray/session-xray.tsx'), 'utf8');
+assert.ok(!sessionXRaySource.includes('function ModelState'));
+assert.ok(!sessionXRaySource.includes('<ModelState'));
 for (const anomaly of chain.anomaly_results) {
   assert.ok(Object.keys(anomaly.feature_snapshot).length >= 5);
   assert.equal(anomaly.model_id, chain.analysis.model_id);
@@ -48,7 +51,7 @@ for (const anomaly of chain.anomaly_results) {
   assert.ok(buildSessionXRayData(sample, session.session_id).anomalies.some(item => item.anomalyResultId === anomaly.anomaly_result_id));
   assert.ok(findingsHtml.includes(anomaly.anomaly_result_id));
   assert.ok(reportHtml.includes(anomaly.anomaly_result_id));
-  assert.ok(guidanceHtml.includes(`${session.session_id}?tab=findings#ml-anomaly-heading`));
+  assert.ok(guidanceHtml.includes(`/analysis/${PROTOTYPE_ANALYSIS_ID}/findings?view=ml#ml-anomaly-heading`));
   assert.ok(guidanceHtml.includes(String(anomaly.normalized_score)));
   for (const [field, collection, key] of [['linked_fact_ids', 'derived_facts', 'fact_id'], ['linked_observation_ids', 'crypto_observations', 'observation_id'], ['evidence_ids', 'evidence', 'evidence_id']]) {
     for (const id of anomaly[field]) {
@@ -68,4 +71,4 @@ assert.ok(invalid.includes('No validated anomaly results'));
 assert.ok(!invalid.includes('linked evidence records'));
 assert.deepEqual(JSON.parse(await createDemoChainDownload(PROTOTYPE_ANALYSIS_ID, chain).blob.text()), chain);
 assert.equal(JSON.stringify(sample), before);
-console.log('PASS: two complete illustrative ML records, feature/session consistency, every ML link and graph ledger relationship, broken-link rejection, Findings/report rendering, X-Ray projection, separate scoped advisory guidance, JSON identity and source immutability.');
+console.log('PASS: two complete illustrative ML records, feature/session consistency, every ML link and graph ledger relationship, broken-link rejection, dedicated Findings ML presentation without a duplicate X-Ray block, report rendering, X-Ray projection, separate scoped advisory guidance, JSON identity and source immutability.');

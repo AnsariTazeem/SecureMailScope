@@ -100,9 +100,8 @@ export function CompleteView() {
             Investigation ready
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-neutral-600">
-            {result.dataset_label
-              ? "Begin with Overview, inspect Findings and Proof Map, then review Recommendations and Report."
-              : "The production API result passed the frontend runtime contract."}
+            Begin with Overview, inspect Findings and Proof Map, then review
+            Recommendations and Report.
           </p>
         </div>
 
@@ -115,13 +114,15 @@ export function CompleteView() {
             <div>
               <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">Source</dt>
               <dd className="mt-1 text-xs text-neutral-950">
-                {result.data_source === "mock" ? "Complete sample investigation" : "Production API"}
+                Analysis result
               </dd>
             </div>
             <div>
               <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">Selected capture</dt>
               <dd className="mt-1 truncate text-xs text-neutral-950">
-                {uploadedFileName ?? "No capture selected"}
+                {uploadedFileName ??
+                  result.chain.captures[0]?.original_filename_sanitized ??
+                  "Filename not available"}
               </dd>
             </div>
             <div>
