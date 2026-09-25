@@ -1,6 +1,6 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 29 August 2026
+**Last updated:** 23 September 2026
 
 **Current phase:** Production backend on `feat/production-backend`. Chain Commit 1 (domain contract) completed and verified at `57fe930`. Commit 2 (POC-result adapter) is the next milestone. The selection POC remains CLOSED/GO at `cf055cf`; POC verification history below is preserved unchanged.
 
@@ -229,3 +229,321 @@ Remaining limitation: the frozen backend repository is in-memory, so a real
 analysis deep link remains retrievable only while that backend process retains
 the corresponding Chain. No deployment, backend mutation, V2 work, dependency
 change, staging, commit, or push was performed.
+
+## Verified frontend workstream — V3-2 judge presentation (PASS, 2026-09-23)
+
+An explicitly authorized frontend-only refinement on branch
+`feat/frontend-v3-submission` improved judge comprehension without changing the
+application's route structure, validated data contracts, backend adapter, or
+Chain-of-Proof source-of-truth boundary.
+
+Verified scope:
+
+- the original capture-selection Start Analysis page is retained;
+- Overview and Report place a data-derived executive finding, impact, evidence
+  counts, and direct evidence/action links before the detailed workspaces;
+- processing, completion, Overview, Findings, Session X-Ray, Proof Map,
+  Recommendations, and report actions use the same primary terminology in
+  local and backend modes instead of repeating source-specific qualifiers;
+- the local staged simulation was removed so both modes use the same processing
+  presentation;
+- a single compact source badge and Report provenance retain the truthful local
+  dataset boundary without interrupting every workspace;
+- Recommendations tab state is URL-backed for direct judge navigation; and
+- report printing is labelled accurately as browser printing, with Save as PDF
+  described as a possible browser option rather than a generated product
+  artifact.
+
+Validation recorded on 2026-09-23:
+
+- `npx --no-install next typegen`: passed.
+- `npx --no-install tsc --noEmit`: passed with no diagnostics.
+- `npm run lint`: passed with zero reported warnings or errors.
+- V2 model/proof-map checks, V3 submission-safety/demo checks, and the
+  backend-mode report-consistency check: passed.
+- `npm run build -- --webpack`: passed, including compilation, TypeScript,
+  static generation, and all route generation.
+- `npm audit`: passed with zero vulnerabilities.
+- `uv run pytest -q`: 342 passed, 2 skipped because the frozen T01 PCAP is not
+  present in this checkout.
+- `uv run ruff check .` and `uv run ruff format --check .`: passed.
+- `git diff --check`: passed.
+
+No backend, controlled evidence, fixture, schema, dependency, deployment,
+staging, commit, push, merge, tag, rebase, or amend operation occurred. The
+sample remains a presentation of validated local contract data, not evidence
+of a live analyzer or trained anomaly model run.
+
+## Verified frontend workstream — V3-3 judge readability (PASS, 2026-09-23)
+
+An explicitly authorized frontend-only review simplified information density
+across all primary analysis routes without removing underlying evidence or
+changing contracts, fixtures, data-source selection, routes, or backend code.
+
+Verified scope:
+
+- page introductions now explain the judge's immediate task in concise language;
+- Sessions and Findings remove repeated analysis metadata and place optional
+  search/filter controls behind accessible disclosures;
+- summary metrics are reduced or compacted so the result inventory appears
+  sooner, including two-column narrow layouts and four-column wide layouts;
+- Proof Map shows the evidence graph before its collapsed legend;
+- Session X-Ray shows observed events before its collapsed protocol reference;
+- Comparison replaces a metadata strip with a concise difference count;
+- Report prioritizes assessment, findings, and actions before screen provenance
+  and progressively discloses detailed policy/ML records; and
+- technical identifiers and complete source records remain available through
+  inspectors, details, provenance sections, and the print appendix.
+
+Validation recorded on 2026-09-23:
+
+- `npx --no-install tsc --noEmit` and `npm run lint`: passed.
+- V2 model/proof-map checks, V3 submission-safety/demo checks, and backend-mode
+  report-consistency verification: passed.
+- `npm run build -- --webpack`: passed with all routes generated.
+- `npm audit`: passed with zero vulnerabilities.
+- `uv run pytest -q`: 342 passed, 2 skipped because the frozen T01 PCAP is not
+  present in this checkout.
+- `uv run ruff check .` and `uv run ruff format --check .`: passed.
+- Desktop Chrome review covered every primary route and the major secondary
+  Policy/ML/evidence views; narrow 500 px review covered the key judge journey.
+- `git diff --check`: passed.
+
+No backend, controlled evidence, fixture, schema, dependency, deployment,
+staging, commit, push, merge, tag, rebase, or amend operation occurred.
+## Verified frontend workstream — V3-4 security decision workflow (PASS, 2026-09-24)
+
+An explicitly authorized frontend-only refinement aligned the primary analysis
+journey for judges, SOC analysts, and cyber-security reviewers without changing
+route structure, canonical Chain data, data-source selection, or backend code.
+
+Verified scope:
+
+- Overview now leads with the highest-priority deterministic finding, impact,
+  direct evidence/action links, a separate Policy Risk and ML Anomaly snapshot,
+  four decision metrics, prioritized sessions, and an explicit assessment
+  coverage matrix.
+- Sessions, Policy Findings, ML Anomaly, Comparison, Recommendations, and Report
+  default to readable security decisions and affected scope rather than raw
+  record identifiers, model metadata, policy internals, or duplicate counts.
+- exact session/finding/result identifiers, raw scores, thresholds, model/rule
+  versions, policy contributions, capture hashes, and source records remain
+  available in technical disclosures, inspectors, provenance, and the report
+  appendix.
+- Comparison is difference-first, hides matching fields by default, and uses
+  readable transition, TLS, finding, anomaly, evidence, and limitation labels.
+- user-facing sample/demo chrome was removed from the analysis workspace and
+  export filename; the underlying validated envelope, source checks, canonical
+  data, and no-upload/backend-unavailable safety behavior were not altered or
+  presented as a live analyzer run.
+- severity color, spacing, responsive cards/tables, and terminology are
+  consistent across the primary decision path. Policy Risk and ML Anomaly
+  remain separate, and unavailable TLS/certificate evidence remains explicit.
+
+Validation recorded on 2026-09-24:
+
+- `npx --no-install tsc --noEmit` and `npm run lint`: passed.
+- V2 model/proof-map checks, V3 submission-safety/demo checks, and the
+  backend-mode report-consistency check: passed.
+- `npm run build -- --webpack`: passed with compilation, TypeScript, static
+  generation, traces, and all routes.
+- `npm audit`: passed with zero vulnerabilities.
+- `uv run pytest -q`: 342 passed, 2 skipped because the frozen T01 PCAP is not
+  present in this checkout.
+- `uv run ruff check .` and `uv run ruff format --check .`: passed.
+- built-route Chrome review covered Overview, Sessions, Policy Findings, ML
+  Anomaly, Comparison, Recommendations, and Report at 1440 px; the primary
+  judge journey was also inspected at 500 px.
+- `git diff --check`: passed.
+
+No backend, controlled evidence, fixture, schema, dependency, deployment,
+staging, commit, push, merge, tag, rebase, or amend operation occurred.
+
+## Verified frontend workstream — V3-5 recording navigation (PASS, 2026-09-24)
+
+An explicitly authorized frontend-only change improved navigation during the
+recorded judge walkthrough without changing routes, analysis data, contracts,
+or backend behavior.
+
+Verified scope:
+
+- desktop analysis routes now provide an accessible control to collapse and
+  reopen the sidebar; the existing mobile navigation remains unchanged;
+- the analysis header now shows route-aware breadcrumbs, including session and
+  comparison drill-down context;
+- the standalone Proof Map retains its functional session-scope selector; and
+- the Session X-Ray embedded graph replaces its intentionally locked dropdown
+  with a clear current-session scope indicator and node/relationship counts.
+
+Validation recorded on 2026-09-24:
+
+- `npx --no-install tsc --noEmit`, `npm run lint`, the proof-map model and fit
+  checks, and `git diff --check`: passed.
+- `npm run build -- --webpack`: passed with all routes generated.
+- `npm audit`: passed with zero vulnerabilities.
+- live desktop Chrome checks verified sidebar close/reopen state, breadcrumb
+  labels, and the embedded current-session scope; a 500 px route check verified
+  the mobile breadcrumb presentation.
+- `uv run pytest -q`: 342 passed, 2 skipped because the frozen T01 PCAP is not
+  present in this checkout.
+- `uv run ruff check .` and `uv run ruff format --check .`: passed.
+
+The truthful backend-unavailable notice was not hidden for recording. No
+backend, controlled evidence, fixture, schema, dependency, deployment, staging,
+commit, push, merge, tag, rebase, or amend operation occurred.
+
+## Verified frontend workstream — V3-6 session anomaly deduplication (PASS, 2026-09-24)
+
+An explicitly authorized frontend-only cleanup removed the repeated ML Anomaly
+card from Session X-Ray. Timeline, TLS & Certificates, and Findings & Evidence
+now remain focused on session evidence; anomaly results remain available in the
+dedicated Findings → ML Anomaly view.
+
+Verified scope:
+
+- removed the tab-independent Session X-Ray ML presentation and its dead helper;
+- redirected ML investigation guidance to the dedicated ML Anomaly view;
+- preserved anomaly records, integrity validation, report output, and Proof Map
+  relationships; and
+- added regression coverage preventing the duplicate X-Ray block from returning.
+
+Validation recorded on 2026-09-24:
+
+- TypeScript, ESLint, V2 model checks, V3 ML checks, production build, and
+  `git diff --check`: passed.
+- live route checks returned HTTP 200 and confirmed the duplicate heading is
+  absent from Session X-Ray and present in the dedicated ML view.
+- `uv run pytest -q`: 342 passed, 2 fixture-dependent skips; Ruff check and
+  format verification passed.
+
+No canonical data, backend code, contract, fixture, dependency, deployment,
+commit, or repository history was changed.
+
+## Verified frontend workstream — V3-7 recognized capture bundle (PASS, 2026-09-24)
+
+An explicitly authorized recording workflow now lets an analyst select and
+validate controlled PCAPNG captures before entering the existing
+analysis workspace. This is an exact-file frontend adapter, not a browser-based
+packet analyzer and not a fallback for arbitrary captures.
+
+Verified scope:
+
+- added deterministic, non-sensitive `secure-chain.pcapng` and
+  `insecure-chain.pcapng` files plus a generated manifest;
+- added an offline standard-library generator and an independent bounded TShark
+  verifier; neither script performs live capture;
+- reconciled prepared-result capture hashes, sizes, timestamps, packet/frame
+  references, and one duration feature with the generated observable evidence;
+- the Start Analysis page now accepts the controlled capture selection,
+  calculates SHA-256 locally, requires analyst authorization, and follows the
+  existing Processing → Complete → Overview journey;
+- exact file contents are recognized independently of filenames; a partial
+  pair, duplicate, one-byte modification, or unrelated capture is rejected;
+- capture contents are not uploaded in the local path, and the corresponding
+  prevalidated Chain is loaded only after both hashes match; and
+- backend-connected mode retains its existing one-file API submission path.
+
+Controlled frontend fixture evidence:
+
+- `secure-chain.pcapng`: 4,096 file bytes, 12 packets, 2,048 frame
+  bytes, SHA-256
+  `7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76`;
+- `insecure-chain.pcapng`: 4,096 file bytes, 6 packets, 1,024 frame
+  bytes, SHA-256
+  `def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743`;
+- TShark 4.2.2 independently observed the secure SMTP STARTTLS transition,
+  TLS 1.3 ClientHello/ServerHello, cipher `0x1301`, key-share group 23, and
+  opaque TLS records; the insecure capture advertises STARTTLS but continues
+  with a plaintext `MAIL` command and contains no TLS handshake; and
+- the initial custom-block fixture attempt produced an unwanted TShark
+  pseudo-frame, was preserved under
+  `/tmp/securemailscope-first-walkthrough-fixture-attempt-20260924`, and was
+  replaced without using `--force`.
+
+Validation recorded on 2026-09-24:
+
+- independent capture verifier: PASS for hashes, sizes, 12/6 packet counts,
+  2048/1024 frame bytes, SMTP states, TLS 1.3 version/cipher/key share, and
+  plaintext continuation;
+- exact-file intake regression: PASS for valid renamed inputs and rejection of
+  tampered, duplicate, and partial inputs, with manifest/dataset hash parity;
+- built local HTTP checks returned 200 for Start Analysis and both capture
+  downloads; downloaded bytes reproduced the two expected SHA-256 values;
+- TypeScript, ESLint, V2 model, V3 submission-safety/demo, Proof Map, and
+  backend-mode report-consistency checks: passed;
+- `npm run build -- --webpack`: passed with every route generated;
+- `npm audit`: zero vulnerabilities;
+- `uv run pytest -q`: 342 passed and 2 skipped because the frozen T01 capture
+  is absent; Ruff check and format verification passed; and
+- `git diff --check`: passed.
+
+These are controlled frontend walkthrough fixtures, not additions to or
+replacements for the frozen selection-POC evidence. No arbitrary PCAP analysis,
+live capture, certificate extraction, backend milestone, dependency,
+deployment, commit, or repository-history operation is claimed.
+
+## Verified frontend workstream — V3-8 capture naming and processing feedback (PASS, 2026-09-24)
+
+An explicitly authorized frontend refinement shortened the controlled capture
+identities and restored clear progress feedback between Start Analysis and the
+completed investigation without changing the route structure or backend API.
+
+Verified scope:
+
+- renamed the frontend capture identities from the SMTP-specific filenames to
+  `secure-chain.pcapng` and `insecure-chain.pcapng` across the public files,
+  generated manifest, prepared dataset, generator, verifier, intake constants,
+  workflow labels, and documentation;
+- retained the exact capture bytes and SHA-256 identities, so previously
+  downloaded copies remain content-compatible while the UI presents the new
+  canonical names after verification;
+- removed the retired public filenames; built-route checks return 200 for both
+  new names and 404 for both old names;
+- restored a six-stage Processing checklist with pending numbered circles, an
+  active spinner, green completion ticks, status labels, and a progress bar;
+- the staged presentation begins only after the result passes contract parsing
+  and finding/evidence integrity validation; its labels describe workspace
+  preparation rather than unperformed browser packet analysis; and
+- added regression assertions covering all six stages, progress UI primitives,
+  integrity validation, and the two new canonical names.
+
+Validation recorded on 2026-09-24:
+
+- independent bounded TShark capture verification: passed with unchanged
+  hashes, sizes, packet counts, SMTP states, and TLS observations;
+- exact-file intake, submission-safety, V2 model, V3 dataset, and Proof Map
+  regressions: passed;
+- TypeScript and ESLint: passed;
+- `npm run build -- --webpack`: passed with every route generated;
+- local production HTTP checks: new names returned 200/4,096 bytes and retired
+  names returned 404;
+- `uv run pytest -q`: 342 passed and 2 fixture-dependent skips; and
+- Ruff check, Ruff format verification, and `git diff --check`: passed.
+
+The historical backend Chain test fixtures retain their frozen internal artifact
+names and are not rendered by the frontend; they were not rewritten. No backend
+implementation, contract schema, dependency, deployment, commit, or repository
+history operation occurred.
+
+## Verified frontend workstream — V3-9 capture format guidance (PASS, 2026-09-25)
+
+The Start Analysis prepared-capture picker now names PCAP and PCAPNG in its
+selection prompt and accessible file label. The redundant original-file and
+automatic-validation sentences were removed. The format note distinguishes
+the analysis service's two supported formats from this walkthrough's exact
+two supplied PCAPNG files; arbitrary captures are still not processed locally.
+
+Verification recorded on 2026-09-25:
+
+- Independent bounded TShark fixture verifier and exact-file intake checks:
+  passed; the prepared pair's hashes and observed protocol evidence agree.
+- Submission-safety, V3 demo, and Proof Map checks: passed.
+- Backend-mode report-consistency check: passed with an explicit local test
+  API URL; no live backend request was made.
+- ESLint, TypeScript, and the webpack production build: passed.
+- `uv run pytest -q`: 342 passed, 2 skipped because the frozen T01 capture is
+  absent from this checkout; Ruff lint and format checks passed.
+- `npm audit`: zero vulnerabilities; `git diff --check`: passed.
+
+No backend behavior, Chain contract, fixture bytes, or deployment setting was
+changed. Deployment status is recorded separately when verified.

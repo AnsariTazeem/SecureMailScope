@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SecureMailScope Frontend Change Summary</title>
+  <style>
+    @page { size: A4; margin: 16mm 15mm 17mm; }
+    * { box-sizing: border-box; }
+    html { color: #172033; font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.48; }
+    body { margin: 0; background: #fff; }
+    .cover { min-height: 252mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; padding: 12mm 8mm 4mm; }
+    .brand { display: flex; align-items: center; gap: 12px; color: #172033; font-size: 13pt; font-weight: 700; }
+    .shield { width: 38px; height: 44px; border: 3px solid #2563eb; border-radius: 18px 18px 22px 22px; display: inline-flex; align-items: center; justify-content: center; color: #2563eb; font-size: 17px; }
+    .eyebrow { margin: 0 0 10px; color: #2563eb; font-size: 9pt; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin: 0; color: #101828; font-size: 34pt; line-height: 1.08; letter-spacing: -.035em; }
+    .subtitle { max-width: 145mm; margin: 16px 0 0; color: #475467; font-size: 15pt; line-height: 1.45; }
+    .cover-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 30px; }
+    .cover-card { border: 1px solid #d0d5dd; border-radius: 10px; padding: 14px; background: #f8fafc; }
+    .cover-card strong { display: block; color: #101828; font-size: 18pt; }
+    .cover-card span { color: #667085; font-size: 8.5pt; }
+    .meta { border-top: 1px solid #d0d5dd; padding-top: 14px; color: #667085; font-size: 9pt; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d0d5dd; margin-bottom: 18px; padding-bottom: 8px; color: #667085; font-size: 8pt; }
+    main { max-width: 100%; }
+    h2 { margin: 22px 0 9px; color: #101828; font-size: 17pt; line-height: 1.2; page-break-after: avoid; }
+    h3 { margin: 15px 0 6px; color: #1d2939; font-size: 12pt; page-break-after: avoid; }
+    p { margin: 6px 0 9px; }
+    ul, ol { margin: 5px 0 12px; padding-left: 20px; }
+    li { margin: 3px 0; }
+    section { page-break-inside: auto; }
+    .summary { border-left: 4px solid #2563eb; background: #eff6ff; border-radius: 0 8px 8px 0; padding: 13px 15px; margin: 8px 0 18px; }
+    .callout { border: 1px solid #f0b429; background: #fffbeb; border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+    .good { border-color: #12b76a; background: #ecfdf3; }
+    .section-number { display: inline-flex; width: 26px; height: 26px; margin-right: 8px; align-items: center; justify-content: center; border-radius: 50%; background: #eaf2ff; color: #175cd3; font-size: 9pt; vertical-align: 2px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .panel { border: 1px solid #d0d5dd; border-radius: 8px; padding: 12px 14px; page-break-inside: avoid; }
+    .panel h3 { margin-top: 0; }
+    table { width: 100%; margin: 10px 0 16px; border-collapse: collapse; font-size: 9.2pt; }
+    th, td { padding: 8px 9px; border: 1px solid #d0d5dd; text-align: left; vertical-align: top; }
+    th { background: #f2f4f7; color: #344054; }
+    code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 8.7pt; color: #344054; }
+    .small { color: #667085; font-size: 8.7pt; }
+    .page-break { page-break-before: always; }
+    .footer-note { margin-top: 20px; border-top: 1px solid #d0d5dd; padding-top: 10px; color: #667085; font-size: 8.5pt; }
+    @media print {
+      a { color: inherit; text-decoration: none; }
+      .panel, .callout, .summary { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div class="brand"><span class="shield">S</span> SecureMailScope</div>
+    <div>
+      <p class="eyebrow">Frontend workstream · consolidated handoff</p>
+      <h1>Frontend Change Summary</h1>
+      <p class="subtitle">A complete record of the judge-focused usability, information hierarchy, workflow, reporting, Proof Map, and navigation improvements made during the review.</p>
+      <div class="cover-grid">
+        <div class="cover-card"><strong>32</strong><span>affected frontend/status files, including one new breadcrumb component</span></div>
+        <div class="cover-card"><strong>342</strong><span>repository tests passed; two expected fixture-dependent skips</span></div>
+        <div class="cover-card"><strong>0</strong><span>canonical analysis records, dependencies, or backend contracts deleted</span></div>
+      </div>
+    </div>
+    <div class="meta">
+      <strong>Prepared:</strong> 24 September 2026<br>
+      <strong>Audience:</strong> Judges, SOC analysts, cyber-security analysts, incident responders, and project reviewers<br>
+      <strong>Scope:</strong> Frontend presentation and interaction only
+    </div>
+  </section>
+
+  <header><strong>SecureMailScope</strong><span>Frontend Change Summary</span></header>
+  <main>
+    <p class="eyebrow">Executive summary</p>
+    <h2>Outcome</h2>
+    <div class="summary">
+      The frontend was refined into a cleaner security-decision workflow. Judges can identify the highest-priority issue, understand its impact, trace supporting evidence, inspect affected sessions, review remediation, and export the report without first navigating dense identifiers or repeated metadata.
+    </div>
+    <p>The route structure, Chain-of-Proof data contract, analysis records, backend adapters, and evidence-integrity boundaries were preserved. Technical detail was not deleted; lower-priority detail was moved into disclosures, inspectors, provenance sections, or the report appendix.</p>
+    <div class="callout">
+      <strong>Important capability boundary:</strong> the backend-unavailable upload notice remains truthful. It appears when attempting unavailable file analysis, not on the prepared Overview. The interface was not changed to claim that an unavailable backend processed a capture.
+    </div>
+
+    <section>
+      <h2><span class="section-number">1</span>Landing and analysis start</h2>
+      <ul>
+        <li>The temporary judge-focused landing redesign was reverted, preserving the original capture-selection Start Analysis page.</li>
+        <li><strong>Open Complete Demo</strong> was renamed to <strong>Review Available Analysis</strong>.</li>
+        <li>Distracting “demo” language was removed from the primary workflow while internal source validation remained intact.</li>
+        <li>The unavailable-upload message now clearly states that no file was uploaded, stored, or analyzed.</li>
+        <li>The prepared investigation remains reachable without submitting a capture.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">2</span>Processing and completion</h2>
+      <ul>
+        <li>Removed the simulated six-stage analysis sequence, fake percentages, and “Simulating” status labels.</li>
+        <li>Replaced them with a concise analysis-preparation state shared by prepared and backend result flows.</li>
+        <li>The completion page now guides users through Overview, Findings, Proof Map, Recommendations, and Report.</li>
+        <li>Capture filename fallback now comes from the supplied analysis record when no local filename exists.</li>
+        <li>Removed source-specific labels such as “Complete sample investigation” and “Production API” from the main presentation.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">3</span>Overview dashboard</h2>
+      <ul>
+        <li>Added a decision-focused lead section for the highest-priority deterministic finding.</li>
+        <li>Added impact and direct navigation to supporting evidence, session investigation, and remediation.</li>
+        <li>Reduced competing summary cards and introduced four concise decision metrics.</li>
+        <li>Kept <strong>Policy Risk</strong> and <strong>ML Anomaly</strong> visibly separate.</li>
+        <li>Added prioritized sessions so analysts immediately see where attention is required.</li>
+        <li>Added an Assessment Coverage matrix distinguishing assessed, observed, unavailable, not observed, and not assessed states.</li>
+        <li>Simplified protocol and TLS-outcome visualizations and improved card spacing, responsive behavior, severity treatment, and hierarchy.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">4</span>Sessions</h2>
+      <ul>
+        <li>Simplified the introduction and removed repeated analysis metadata.</li>
+        <li>Reduced and compacted summary metrics so the session inventory appears sooner.</li>
+        <li>Prioritized readable protocol, stream, endpoint, transition, TLS, evidence, finding, and limitation information.</li>
+        <li>Removed raw session IDs from the primary visual hierarchy while keeping them available in technical views.</li>
+        <li>Placed optional search and filtering controls inside an accessible disclosure.</li>
+        <li>Improved both desktop table spacing and mobile session cards.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">5</span>Session X-Ray</h2>
+      <ul>
+        <li>Shortened the introduction and brought the observed session timeline forward.</li>
+        <li>Moved the generic STARTTLS sequence into a collapsed reference guide.</li>
+        <li>Reorganized crypto data into TLS outcome, negotiated parameters, other observations, certificate observations, certificate assessment, and limitations.</li>
+        <li>Simplified linked findings while preserving evidence, limitations, Policy Risk, and ML Anomaly separation.</li>
+        <li>Replaced the misleading disabled scope dropdown with a clear current-session indicator and node/relationship counts.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">6</span>Findings and ML results</h2>
+      <ul>
+        <li>Presented deterministic policy findings first as security decisions with severity, affected scope, rationale, and impact.</li>
+        <li>Moved rule internals, raw records, fact references, and technical identifiers into disclosures.</li>
+        <li>Placed optional filtering controls behind an accessible disclosure.</li>
+        <li>Separated Policy Findings from ML Anomaly results and improved empty, unavailable, and not-run states.</li>
+        <li>Prevented ML outputs from being presented as deterministic policy conclusions.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">7</span>Proof Map</h2>
+      <ul>
+        <li>Moved the evidence graph above its explanatory legend.</li>
+        <li>Converted the large legend into a collapsed “How to read paths and uncertainty states” section.</li>
+        <li>Simplified the incomplete-evidence warning and compacted summary metrics.</li>
+        <li>Preserved every contract-declared relationship and maintained exact support-path behavior.</li>
+        <li>Kept the standalone session selector functional while showing a fixed current-session state inside Session X-Ray.</li>
+        <li>Verified scope changes, finding highlighting, filtering, fit controls, inspectors, focus behavior, and mobile interaction.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">8</span>Session comparison</h2>
+      <ul>
+        <li>Changed the workspace to be difference-first and hide matching fields by default.</li>
+        <li>Added a concise difference count and readable labels for transitions, TLS, findings, anomalies, evidence, and limitations.</li>
+        <li>Improved posture summaries for both selected sessions.</li>
+        <li>Preserved exact technical values in expandable detail.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">9</span>Recommendations</h2>
+      <ul>
+        <li>Refocused the page around what to fix, why it matters, and how to verify the change.</li>
+        <li>Kept policy remediation and ML-related guidance separate.</li>
+        <li>Added URL-backed tabs so direct links open the intended recommendation view.</li>
+        <li>Removed finding/session identifiers from the main cards but retained them in technical details.</li>
+        <li>Improved grouping of linked findings, affected sessions, remediation steps, verification steps, and evidence.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">10</span>Report and export</h2>
+      <p>The report now follows the review order below:</p>
+      <ol>
+        <li>Executive summary</li>
+        <li>Findings and affected sessions</li>
+        <li>Recommendations and verification</li>
+        <li>Policy Risk and separate ML status</li>
+        <li>Scope and limitations</li>
+        <li>Capture and analysis provenance</li>
+        <li>Evidence and technical records</li>
+      </ol>
+      <ul>
+        <li>Added an executive finding with impact and direct evidence references.</li>
+        <li>Moved hashes, IDs, versions, raw scores, thresholds, contributions, manifests, and source records into technical disclosures.</li>
+        <li>Renamed the export action to <strong>Download Chain JSON</strong>.</li>
+        <li>Renamed <strong>Print / Save as PDF</strong> to <strong>Print report</strong> and clarified that Save as PDF is a browser capability.</li>
+        <li>Changed the local filename from <code>analysis-id.demo-chain.json</code> to <code>analysis-id.chain.json</code>.</li>
+        <li>Removed the sample-data prefix from the browser report title.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">11</span>Presentation cleanup</h2>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Removed from primary presentation</h3>
+          <ul>
+            <li>Repeated dataset banners</li>
+            <li>“Static sample” labels</li>
+            <li>“Complete demo” wording</li>
+            <li>“Local walkthrough” and simulation labels</li>
+            <li>Source-specific report titles</li>
+            <li>Demo-specific export text and filenames</li>
+            <li>Repeated notices and metadata blocks</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Preserved internally</h3>
+          <ul>
+            <li>Validated local Chain dataset</li>
+            <li>Prototype-ID source routing</li>
+            <li>Runtime and integrity checks</li>
+            <li>Evidence boundaries and limitations</li>
+            <li>Backend-unavailable safeguards</li>
+            <li>Protection against silent fallback</li>
+            <li>Complete technical source records</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-number">12</span>Navigation</h2>
+      <ul>
+        <li>Added an accessible desktop sidebar hide/show control similar to ChatGPT.</li>
+        <li>Preserved the existing mobile navigation.</li>
+        <li>Added route-aware breadcrumbs for Overview, Sessions, Session X-Ray, Compare, Findings, Proof Map, Recommendations, and Report.</li>
+        <li>Made parent breadcrumb items navigable and ensured narrow-screen truncation.</li>
+      </ul>
+    </section>
+
+    <section class="page-break">
+      <p class="eyebrow">Data integrity</p>
+      <h2>Data removed versus presentation removed</h2>
+      <div class="summary good">
+        <strong>No canonical analysis data was deleted.</strong> The work changed presentation priority, progressive disclosure, wording, and navigation—not the underlying Chain records.
+      </div>
+      <table>
+        <thead><tr><th>Preserved data</th><th>Presentation treatment</th></tr></thead>
+        <tbody>
+          <tr><td>Captures, sessions, protocol events and TLS observations</td><td>Summarized first; complete records remain available.</td></tr>
+          <tr><td>Certificate observations, facts, findings and recommendations</td><td>Readable decisions first; exact records in technical details.</td></tr>
+          <tr><td>Evidence references and limitations</td><td>Kept explicit and linked to relevant findings and sessions.</td></tr>
+          <tr><td>Policy scores and ML results</td><td>Kept separate and independently labelled.</td></tr>
+          <tr><td>IDs, hashes, thresholds, versions and manifests</td><td>Removed from the default visual layer, not deleted.</td></tr>
+          <tr><td>Provenance and integrity metadata</td><td>Retained in report provenance and appendices.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Structural boundaries preserved</h2>
+      <ul>
+        <li>Routes and major application structure remain unchanged.</li>
+        <li>The Chain remains the report and dashboard source of truth.</li>
+        <li>Analysis data contracts and backend adapters remain intact.</li>
+        <li>Policy Risk and ML Anomaly remain separate outputs.</li>
+        <li>No authentication, SIEM integration, live capture, or product-generated PDF system was added.</li>
+        <li>No dependency, backend implementation, controlled evidence, or fixture was changed.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Verification completed</h2>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Automated checks</h3>
+          <ul>
+            <li>TypeScript passed</li>
+            <li>ESLint passed</li>
+            <li>Production build passed for all routes</li>
+            <li>Dependency audit: zero vulnerabilities</li>
+            <li>Proof Map regression and fit checks passed</li>
+            <li>Report consistency checks passed</li>
+            <li>Ruff and formatting checks passed</li>
+            <li><code>git diff --check</code> passed</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Runtime review</h3>
+          <ul>
+            <li>342 repository tests passed</li>
+            <li>2 expected skips: frozen T01 PCAP absent</li>
+            <li>Desktop judge journey inspected</li>
+            <li>500 px responsive journey inspected</li>
+            <li>Sidebar and breadcrumbs tested in Chrome</li>
+            <li>Proof Map scope behavior tested live</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Final repository state</h2>
+      <p>The accumulated frontend work contains 31 modified tracked files plus one new breadcrumb component. No commit, push, deployment, backend mutation, fixture regeneration, evidence rewrite, or dependency addition was performed.</p>
+      <p class="footer-note">This document summarizes the verified frontend working-tree changes as of 24 September 2026. It does not claim implementation of capabilities that are absent from the backend.</p>
+    </section>
+  </main>
+</body>
+</html>

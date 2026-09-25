@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Construction, Database, Info } from "lucide-react";
 
-import { DatasetBanner } from "@/components/layout/dataset-banner";
 
 type FutureRoutePlaceholderProps = {
   analysisId: string;
@@ -32,7 +31,6 @@ export function FutureRoutePlaceholder({
             <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">Analysis ID</p>
             <p className="mt-1 font-mono text-xs text-neutral-950">{analysisId}</p>
           </div>
-          <DatasetBanner />
         </div>
         <div className="flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center">
           <span className="flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-neutral-600">
