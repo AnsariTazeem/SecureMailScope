@@ -76,7 +76,7 @@ export async function generateMetadata({
     loaded.result.chain.analysis.analysis_id === analysisId;
   return valid
     ? {
-        title: `${loaded.result.data_source === "mock" ? `${DATASET_LABEL} — ` : ""}${analysisId} — SecureMailScope Report`,
+        title: `${analysisId} — SecureMailScope Report`,
       }
     : { ...baseMetadata, robots: { index: false, follow: false } };
 }

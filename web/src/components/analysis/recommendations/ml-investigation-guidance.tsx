@@ -31,7 +31,7 @@ export function MLInvestigationGuidance({ data, sessionId }: {
               <li>Validate the unusual indicators before taking action.</li>
             </ol>
             <p className="text-sm text-muted-foreground">{result.interpretationNote}</p>
-            <Link className="inline-block text-sm font-medium underline underline-offset-4" href={`/analysis/${data.analysisId}/sessions/${result.session.sessionId}?tab=findings#ml-anomaly-heading`}>Review linked session and anomaly evidence</Link>
+            <Link className="inline-block text-sm font-medium underline underline-offset-4" href={`/analysis/${data.analysisId}/findings?view=ml#ml-anomaly-heading`}>Review anomaly result in Findings</Link>
           </article>
         );
       })}

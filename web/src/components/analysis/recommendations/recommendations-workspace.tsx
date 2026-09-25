@@ -2,7 +2,7 @@
 
 import { useLayoutEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,9 +29,6 @@ function SessionContext({ session }: { session: FindingSessionLink }) {
       <p className="break-words text-sm text-neutral-800">
         {session.protocol.toUpperCase()} · stream {session.tcpStreamId} · {session.sourceEndpoint} → {session.destinationEndpoint}
       </p>
-      <code className="mt-1 block break-all font-mono text-[11px] text-muted-foreground">
-        {session.sessionId}
-      </code>
     </div>
   );
 }
@@ -161,7 +158,10 @@ export function RecommendationsWorkspace({
   anomalyData: AnomalyFindingsData;
 }) {
   const params = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const requestedSessionId = params.get("session");
+  const activeView = params.get("view") === "ml" ? "anomalies" : "remediation";
   const selection = selectRecommendations(policyData, requestedSessionId);
   useRecommendationAnchor();
 
@@ -171,11 +171,23 @@ export function RecommendationsWorkspace({
         <p className="text-xs text-muted-foreground">Analysis / Recommendations</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Recommendations</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Review supplied policy actions, trace their evidence and plan verification.
+          See what to fix, why it matters, and how to verify the change.
         </p>
       </header>
 
-      <Tabs defaultValue="remediation" className="gap-6">
+      <Tabs
+        value={activeView}
+        onValueChange={(value) => {
+          const next = new URLSearchParams(params.toString());
+          if (value === "anomalies") next.set("view", "ml");
+          else next.delete("view");
+          const query = next.toString();
+          router.push(query ? `${pathname}?${query}` : pathname, {
+            scroll: false,
+          });
+        }}
+        className="gap-6"
+      >
         <TabsList variant="line" className="h-auto flex-wrap gap-2" aria-label="Recommendation type">
           <TabsTrigger value="remediation" className="px-3">Policy recommendations</TabsTrigger>
           <TabsTrigger value="anomalies" className="px-3">
@@ -254,7 +266,6 @@ export function RecommendationsWorkspace({
                           <p className="font-medium">{finding.title}</p>
                           <Badge variant="outline" className={severityStyles[finding.severity]}>{finding.severity}</Badge>
                         </div>
-                        <code className="mt-1 block break-all font-mono text-[11px] text-muted-foreground">{finding.findingId}</code>
                         <div className="mt-3 space-y-3">
                           {finding.linkedSessions.map((session) => <SessionContext key={session.sessionId} session={session} />)}
                         </div>
@@ -337,6 +348,9 @@ export function RecommendationsWorkspace({
                       <div key={finding.findingId} className="sm:col-span-2">
                         <dt className="text-xs font-semibold text-muted-foreground">{finding.title}</dt>
                         <dd className="mt-1 space-y-2 text-muted-foreground">
+                          <p className="break-all font-mono text-[11px]">
+                            Finding ID: {finding.findingId}
+                          </p>
                           <p>{finding.rationale}</p>
                           <p><span className="font-medium text-foreground">Impact:</span> {finding.impact}</p>
                           <p className="break-all font-mono text-[11px]">Direct evidence: {finding.directEvidence.map((item) => item.evidenceId).join(", ") || "none supplied"}</p>

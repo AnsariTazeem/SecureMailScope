@@ -54,7 +54,7 @@ export function ReportExportActions({
       if (dataSource === "mock") {
         if (!demoChain) {
           throw new ExportDownloadError(
-            "The Prototype Analysis Dataset Chain is unavailable. No file was downloaded.",
+            "The validated Chain is unavailable. No file was downloaded.",
           );
         }
         file = createDemoChainDownload(analysisId, demoChain);
@@ -85,9 +85,7 @@ export function ReportExportActions({
           ) : (
             <Download aria-hidden />
           )}
-          {dataSource === "mock"
-            ? "Download demo Chain JSON"
-            : "Download backend Chain JSON"}
+          Download Chain JSON
         </Button>
         <Button
           type="button"
@@ -96,19 +94,16 @@ export function ReportExportActions({
           onClick={() => window.print()}
         >
           <Printer aria-hidden />
-          Print / Save as PDF
+          Print report
         </Button>
       </div>
       <p className="mt-2 text-xs leading-5 text-neutral-600 sm:text-right">
-        {dataSource === "mock"
-          ? "Chain JSON preserves the complete source records and integrity metadata."
-          : "Chain JSON and individual finding HTML/PDF files are downloaded unchanged from the backend. Finding artifacts are not full-analysis reports."}
-        {" "}Print / Save as PDF uses this report and your browser’s print
-        dialog, including expanded technical details.
+        Download the complete Chain JSON or print this report. Your browser may
+        also offer Save as PDF.
       </p>
       {dataSource === "mock" && !demoChain ? (
         <p role="status" className="mt-2 text-xs">
-          Demo JSON is unavailable because its source Chain is missing.
+          Chain JSON is unavailable because its source Chain is missing.
         </p>
       ) : null}
       {error ? (

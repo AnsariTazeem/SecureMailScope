@@ -156,7 +156,7 @@ const json = await demoDownload.blob.text();
 const decoded = JSON.parse(json);
 assert.deepEqual(decoded, demo.chain);
 assert.ok(decoded.analysis.limitations.some(item => item.summary.includes(DATASET_LABEL)), "Preserve the existing in-document prototype notice without changing the Chain JSON shape");
-assert.equal(demoDownload.filename, `${PROTOTYPE_ANALYSIS_ID}.demo-chain.json`);
+assert.equal(demoDownload.filename, `${PROTOTYPE_ANALYSIS_ID}.chain.json`);
 fs.writeFileSync(path.join(output, demoDownload.filename), json);
 assert.throws(() => createDemoChainDownload("ana_ffffffffffffffff", demo.chain));
 const unavailable = renderToStaticMarkup(createElement(ReportExportActions, { analysisId: PROTOTYPE_ANALYSIS_ID, dataSource: "mock", demoChain: null }));

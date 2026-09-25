@@ -104,7 +104,7 @@ export function createDemoChainDownload(
     parsed.data.analysis.analysis_id !== analysisId
   ) {
     throw new ExportDownloadError(
-      "The Prototype Analysis Dataset Chain is invalid. No file was downloaded.",
+      "The validated Chain is invalid. No file was downloaded.",
     );
   }
 
@@ -112,7 +112,7 @@ export function createDemoChainDownload(
     blob: new Blob([`${JSON.stringify(parsed.data, null, 2)}\n`], {
       type: "application/json",
     }),
-    filename: `${analysisId}.demo-chain.json`,
+    filename: `${analysisId}.chain.json`,
   };
 }
 
