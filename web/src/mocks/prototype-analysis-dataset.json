@@ -107,12 +107,12 @@
     "captures": [
       {
         "capture_id": "cap_d25934ad4f2ad02e",
-        "original_filename_sanitized": "secure-smtp-chain.pcapng",
+        "original_filename_sanitized": "secure-chain.pcapng",
         "format": "pcapng",
         "size_bytes": 4096,
-        "sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "packet_count": 12,
-        "captured_at_start": "2026-08-27T10:00:02Z",
+        "captured_at_start": "2026-08-27T10:00:02.100000Z",
         "captured_at_end": "2026-08-27T10:00:03.500000Z",
         "link_layer_types": [
           "ethernet"
@@ -126,13 +126,13 @@
       },
       {
         "capture_id": "cap_57936ac41b3d6c4b",
-        "original_filename_sanitized": "insecure-smtp-chain.pcapng",
+        "original_filename_sanitized": "insecure-chain.pcapng",
         "format": "pcapng",
         "size_bytes": 4096,
-        "sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+        "sha256": "def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743",
         "packet_count": 6,
-        "captured_at_start": "2026-08-27T11:00:02Z",
-        "captured_at_end": "2026-08-27T11:00:02.700000Z",
+        "captured_at_start": "2026-08-27T11:00:02.100000Z",
+        "captured_at_end": "2026-08-27T11:00:02.800000Z",
         "link_layer_types": [
           "ethernet"
         ],
@@ -160,7 +160,7 @@
         },
         "first_frame": 1,
         "last_frame": 12,
-        "started_at": "2026-08-27T10:00:02Z",
+        "started_at": "2026-08-27T10:00:02.100000Z",
         "ended_at": "2026-08-27T10:00:03.500000Z",
         "packet_count": 12,
         "byte_count": 2048,
@@ -188,8 +188,8 @@
         },
         "first_frame": 1,
         "last_frame": 4,
-        "started_at": "2026-08-27T11:00:02Z",
-        "ended_at": "2026-08-27T11:00:02.700000Z",
+        "started_at": "2026-08-27T11:00:02.100000Z",
+        "ended_at": "2026-08-27T11:00:02.800000Z",
         "packet_count": 6,
         "byte_count": 1024,
         "protocol": "smtp",
@@ -206,7 +206,7 @@
       {
         "evidence_id": "ev_26a2b0d087a9f68f",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
           1
@@ -227,7 +227,7 @@
       {
         "evidence_id": "ev_47753260b1942432",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
           3
@@ -248,10 +248,10 @@
       {
         "evidence_id": "ev_aaf1767ab0f7c8e5",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          5
+          6
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:02.900000Z",
@@ -269,10 +269,10 @@
       {
         "evidence_id": "ev_2aa2014fc6d23f8e",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          6
+          7
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:03Z",
@@ -290,17 +290,17 @@
       {
         "evidence_id": "ev_e999c5627e64bb39",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          6
+          7
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:03Z",
         "timestamp_end": "2026-08-27T10:00:03Z",
         "direction": "server_to_client",
         "source_kind": "tshark_field",
-        "source_field": "tls.handshake.extensions_keyshare_group",
+        "source_field": "tls.handshake.extensions_key_share_group",
         "normalized_value": "secp256r1",
         "safe_excerpt": "",
         "display_filter": "tcp.stream eq 0 && tls.handshake.type == 2",
@@ -311,10 +311,10 @@
       {
         "evidence_id": "ev_7a42f749fb4294ca",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          7
+          8
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:03.300000Z",
@@ -332,7 +332,7 @@
       {
         "evidence_id": "ev_943e11269a77b190",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
           4
@@ -353,10 +353,10 @@
       {
         "evidence_id": "ev_f93c21a1c3675070",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          4
+          5
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:02.800000Z",
@@ -374,10 +374,10 @@
       {
         "evidence_id": "ev_333c7dbf43022df6",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          6
+          7
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:03Z",
@@ -395,10 +395,10 @@
       {
         "evidence_id": "ev_788c417297b3d111",
         "capture_id": "cap_d25934ad4f2ad02e",
-        "capture_sha256": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+        "capture_sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
         "session_id": "ses_05a2650d13a55335",
         "frame_numbers": [
-          6
+          7
         ],
         "occurrence_index": 0,
         "timestamp_start": "2026-08-27T10:00:03Z",
@@ -416,7 +416,7 @@
       {
         "evidence_id": "ev_b98d88d0ec274d84",
         "capture_id": "cap_57936ac41b3d6c4b",
-        "capture_sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+        "capture_sha256": "def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743",
         "session_id": "ses_3ac703c890cdeada",
         "frame_numbers": [
           1
@@ -437,7 +437,7 @@
       {
         "evidence_id": "ev_19f8674446ca345e",
         "capture_id": "cap_57936ac41b3d6c4b",
-        "capture_sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+        "capture_sha256": "def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743",
         "session_id": "ses_3ac703c890cdeada",
         "frame_numbers": [
           3
@@ -458,7 +458,7 @@
       {
         "evidence_id": "ev_80b0cc666ae116ef",
         "capture_id": "cap_57936ac41b3d6c4b",
-        "capture_sha256": "2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+        "capture_sha256": "def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743",
         "session_id": "ses_3ac703c890cdeada",
         "frame_numbers": [
           4
@@ -486,7 +486,7 @@
         "protocol": "smtp",
         "state_before": "connection_open",
         "state_after": "connection_open",
-        "timestamp": "2026-08-27T10:00:02Z",
+        "timestamp": "2026-08-27T10:00:02.100000Z",
         "direction": "client_to_server",
         "evidence_ids": [],
         "event_status": "observed",
@@ -679,7 +679,7 @@
         "protocol": "smtp",
         "state_before": "connection_open",
         "state_after": "connection_open",
-        "timestamp": "2026-08-27T11:00:02Z",
+        "timestamp": "2026-08-27T11:00:02.100000Z",
         "direction": "client_to_server",
         "evidence_ids": [],
         "event_status": "observed",
@@ -1050,7 +1050,7 @@
           "destination_port": 2525,
           "packet_count": 12,
           "byte_count": 2048,
-          "session_duration_seconds": 1.5,
+          "session_duration_seconds": 1.4,
           "tls_upgrade_completed": true,
           "negotiated_tls_version": "TLS_1_3",
           "key_share_group": "secp256r1"

@@ -1,0 +1,58 @@
+{
+  "files": [
+    {
+      "capture_id": "cap_d25934ad4f2ad02e",
+      "captured_at_end": "2026-08-27T10:00:03.500000Z",
+      "captured_at_start": "2026-08-27T10:00:02.100000Z",
+      "expected": {
+        "plaintext_mail_after_offer": false,
+        "protocol": "smtp",
+        "smtp_commands": [
+          "EHLO",
+          "STARTTLS"
+        ],
+        "starttls_advertised": true,
+        "starttls_requested": true,
+        "tls_cipher_suite": "0x1301",
+        "tls_handshake_types": [
+          1,
+          2
+        ],
+        "tls_key_share_group": 23,
+        "tls_supported_version": "0x0304"
+      },
+      "filename": "secure-chain.pcapng",
+      "frame_bytes": 2048,
+      "packet_count": 12,
+      "sha256": "7f519c11f650392819e3d3d78dba5e1d286a08bc8b6375252c0097c898033a76",
+      "size_bytes": 4096
+    },
+    {
+      "capture_id": "cap_57936ac41b3d6c4b",
+      "captured_at_end": "2026-08-27T11:00:02.800000Z",
+      "captured_at_start": "2026-08-27T11:00:02.100000Z",
+      "expected": {
+        "plaintext_mail_after_offer": true,
+        "protocol": "smtp",
+        "smtp_commands": [
+          "EHLO",
+          "MAIL",
+          "QUIT"
+        ],
+        "starttls_advertised": true,
+        "starttls_requested": false,
+        "tls_handshake_types": []
+      },
+      "filename": "insecure-chain.pcapng",
+      "frame_bytes": 1024,
+      "packet_count": 6,
+      "sha256": "def0ffe96f4da89bf98d7192644b0caa4f590114fac2bec4612e6bd0de4c6743",
+      "size_bytes": 4096
+    }
+  ],
+  "generator_version": "frontend-walkthrough-fixture/1.0.0",
+  "non_sensitive": true,
+  "purpose": "Recognized offline frontend walkthrough capture bundle",
+  "schema_version": "1.0.0",
+  "synthetic": true
+}
