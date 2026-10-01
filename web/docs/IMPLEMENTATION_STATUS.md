@@ -364,3 +364,40 @@ production HTTP responses.
 The authorized V1 backend-integration slice is implemented and locally
 verified. Deployment, backend mutation, V2 work, and additional frontend scope
 require separate authorization.
+
+## Frontend dependency security maintenance (2026-10-01)
+
+Scope: the existing V1 interface on `fix/frontend-dependencies`, based on
+`da8c4b7`; no interface, data-contract, backend, or fixture changes.
+
+| Dependency | Previous resolution | Updated resolution |
+| --- | --- | --- |
+| next / eslint-config-next | 16.3.3 | 16.3.8 |
+| brace-expansion | 1.1.18 / 5.0.9 | 1.1.21 / 5.0.12 |
+| fast-uri | 3.1.6 | 3.1.8 |
+| hono | 4.13.5 | 4.13.12 |
+| ip-address | 10.7.0 | 10.7.2 |
+| undici | 7.29.0 | 7.30.0 |
+
+The lockfile was generated through npm, without `--force` or dependency
+overrides. Its regeneration also filled six transitive entries in the existing
+Tailwind WASM dependency tree. No direct dependency was added.
+
+| Verification | Actual result |
+| --- | --- |
+| `npm ci` | Passed; zero reported vulnerabilities. Existing ESLint 9 deprecation warning remains. |
+| `npm run lint` | Passed. |
+| `npx --no-install tsc --noEmit` | Passed. |
+| `npm run build` | Passed with Next.js 16.3.8 Turbopack and all listed routes. |
+| `npm audit --json` | Zero vulnerabilities at every severity. |
+| `uv run --locked pytest -q` | 342 passed, 2 frozen-T01-PCAP-dependent skips, 48.06 seconds. |
+| Ruff lint / formatting | Passed; 65 files already formatted. A WSL connection timeout affected the first formatting-check launch; the later launch passed. |
+| `git diff --check` | Passed. |
+| Local production HTTP smoke | Ten routes returned 200; prototype provenance remained visible on Overview and Report. Server stopped afterward. |
+
+The HTTP check covered `/`, `/analysis/new`, `/analysis/processing`,
+`/analysis/complete`, and Overview, Sessions, Proof Map, Findings, Compare,
+and Report for the existing `ana_c0ffee0000000001` prototype. No capture was
+uploaded. Browser hydration, interactive clicks, and live API integration were
+not tested by this security slice. No staging, commit, push, merge, or
+deployment was performed.

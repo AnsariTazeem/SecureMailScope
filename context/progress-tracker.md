@@ -229,3 +229,37 @@ Remaining limitation: the frozen backend repository is in-memory, so a real
 analysis deep link remains retrievable only while that backend process retains
 the corresponding Chain. No deployment, backend mutation, V2 work, dependency
 change, staging, commit, or push was performed.
+
+## Verified frontend maintenance — dependency security update (PASS, 2026-10-01)
+
+The authorized security update is isolated on `fix/frontend-dependencies`,
+based on the V1 baseline at `da8c4b7`. Next.js and `eslint-config-next` are
+pinned to `16.3.8` instead of `16.3.3`. The npm lockfile also updates the
+affected brace-expansion, fast-uri, hono, ip-address, and undici resolutions
+within the existing dependency constraints. No direct dependency was added.
+
+Verification actually executed:
+
+- `npm ci`: succeeded; zero reported vulnerabilities.
+- `npm run lint`, `npx --no-install tsc --noEmit`, and `npm run build`:
+  passed; the production build used Next.js 16.3.8 with Turbopack.
+- `npm audit --json`: zero vulnerabilities at every severity.
+- `uv sync --locked` and `uv run --locked pytest -q`: succeeded;
+  342 passed and 2 skipped in 48.06 seconds. Both skips require the frozen
+  T01 PCAP, which is absent from this worktree.
+- `uv run --locked ruff check .` and
+  `uv run --locked ruff format --check .`: passed; 65 files already formatted.
+- `git diff --check`: passed.
+- Ten local production HTTP routes returned 200: the homepage, new analysis,
+  processing, completion, and the existing prototype Overview, Sessions,
+  Proof Map, Findings, Compare, and Report routes. Overview and Report retained
+  the Prototype Analysis Dataset disclosure. The local server was stopped.
+
+The first formatting-check launch failed with WSL connection error
+`0x8007274c`; its subsequent launch passed. Installation retains the existing
+ESLint 9 deprecation warning; a major tooling upgrade was not part of this fix.
+
+Application source, Python dependencies, contracts, and controlled evidence are
+unchanged. No live backend upload or hydrated browser interaction was tested.
+No staging, commit, push, merge, or deployment occurred; these patches are not
+yet serving on the public site.
