@@ -14,7 +14,7 @@ export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
         <div className="flex min-h-16 items-center px-4 sm:px-6">
           <Link
             href="/analysis/new"
-            className="flex min-w-0 items-center gap-2 rounded-md text-sm font-semibold tracking-tight text-neutral-950 outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
+            className="flex min-h-11 min-w-0 items-center gap-2 rounded-md text-sm font-semibold tracking-tight text-neutral-950 outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
           >
             <Shield className="size-5 shrink-0" aria-hidden />
             <span>SecureMailScope</span>

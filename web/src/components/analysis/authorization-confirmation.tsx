@@ -16,10 +16,14 @@ export function AuthorizationConfirmation({
       <Checkbox
         checked={confirmed}
         onCheckedChange={onConfirmedChange}
+        aria-labelledby="authorization-label"
         aria-describedby="authorization-description"
       />
       <span>
-        <span className="block text-sm font-semibold text-neutral-900">
+        <span
+          id="authorization-label"
+          className="block text-sm font-semibold text-neutral-900"
+        >
           I am authorized to analyze this capture
         </span>
         <span

@@ -83,9 +83,10 @@ export function CaptureDropzone({
         {...getRootProps({
           role: "group",
           "aria-label": "PCAP or PCAPNG file selection",
+          "aria-describedby": "capture-file-guidance",
         })}
         className={cn(
-          "flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed bg-neutral-50 px-6 py-8 text-center transition-colors",
+          "flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed bg-neutral-50 px-6 py-8 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2",
           isDragActive && "border-neutral-500 bg-neutral-100",
           isDragAccept && "border-[#027a48] bg-[#ecfdf3]",
           isDragReject && "border-[#b42318] bg-[#fef3f2]",
@@ -95,6 +96,7 @@ export function CaptureDropzone({
         <input
           {...getInputProps({
             "aria-label": "Choose one PCAP or PCAPNG capture",
+            "aria-describedby": "capture-file-guidance",
           })}
         />
         <span className="mb-4 flex size-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-xs">
@@ -110,7 +112,17 @@ export function CaptureDropzone({
         <p className="mt-1 max-w-md text-xs leading-5 text-neutral-500">
           Select PCAP or PCAPNG capture files.
         </p>
-        <Button type="button" variant="outline" className="mt-5" onClick={open}>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-5 min-h-11"
+          aria-describedby={
+            errors.length > 0
+              ? "capture-file-guidance capture-validation-errors"
+              : "capture-file-guidance"
+          }
+          onClick={open}
+        >
           Choose files
         </Button>
       </div>
@@ -125,6 +137,7 @@ export function CaptureDropzone({
 
       {errors.length > 0 ? (
         <div
+          id="capture-validation-errors"
           role="alert"
           className="rounded-lg border border-[#fecdca] bg-[#fef3f2] px-4 py-3 text-sm text-[#b42318]"
         >
@@ -137,7 +150,10 @@ export function CaptureDropzone({
         </div>
       ) : null}
 
-      <p className="text-xs leading-5 text-neutral-500">
+      <p
+        id="capture-file-guidance"
+        className="text-xs leading-5 text-neutral-500"
+      >
         PCAP and PCAPNG are supported by the analysis service. Maximum{" "}
         {formatByteLimit(publicConfig.maxCaptureBytes)} per file.
       </p>

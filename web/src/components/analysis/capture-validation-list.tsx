@@ -19,7 +19,10 @@ export function CaptureValidationList({
       >
         Validation results
       </h2>
-      <ul className="mt-3 divide-y divide-neutral-200 rounded-lg border border-neutral-200">
+      <ul
+        aria-live="polite"
+        className="mt-3 divide-y divide-neutral-200 rounded-lg border border-neutral-200"
+      >
         {items.map((item) => (
           <li key={item.label} className="flex items-start gap-3 px-4 py-3">
             <CheckCircle2

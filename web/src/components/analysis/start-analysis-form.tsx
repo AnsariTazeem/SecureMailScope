@@ -97,7 +97,7 @@ export function StartAnalysisForm() {
   return (
     <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-600">
           Capture intake
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
@@ -166,7 +166,7 @@ export function StartAnalysisForm() {
               size="lg"
               disabled={!canStart}
               onClick={handleStart}
-              className="min-w-44"
+              className="min-h-11 min-w-44"
             >
               <Play className="size-4" aria-hidden />
               {submitting ? "Starting…" : "Start Analysis"}
@@ -190,6 +190,7 @@ export function StartAnalysisForm() {
               <Button
                 type="button"
                 variant="outline"
+                className="min-h-11"
                 disabled={submitting}
                 onClick={handlePrototypeSelection}
               >
