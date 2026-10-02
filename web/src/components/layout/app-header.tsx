@@ -1,10 +1,29 @@
 import Link from "next/link";
-import { FilePlus2 } from "lucide-react";
+import { FilePlus2, Shield } from "lucide-react";
 
 import { DatasetBanner } from "@/components/layout/dataset-banner";
 import { AppMobileNavigation } from "@/components/layout/app-sidebar";
 
-export function AppHeader() {
+export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
+  if (isUploadPage) {
+    return (
+      <header
+        data-print-hide
+        className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-sm"
+      >
+        <div className="flex min-h-16 items-center px-4 sm:px-6">
+          <Link
+            href="/analysis/new"
+            className="flex min-w-0 items-center gap-2 rounded-md text-sm font-semibold tracking-tight text-neutral-950 outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
+          >
+            <Shield className="size-5 shrink-0" aria-hidden />
+            <span>SecureMailScope</span>
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header
       data-print-hide
