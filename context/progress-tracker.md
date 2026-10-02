@@ -263,3 +263,157 @@ Application source, Python dependencies, contracts, and controlled evidence are
 unchanged. No live backend upload or hydrated browser interaction was tested.
 No staging, commit, push, merge, or deployment occurred; these patches are not
 yet serving on the public site.
+
+## Verified frontend refinement — upload entry shell (PASS, 2026-10-02)
+
+Authorized slice on `feat/frontend-refinement`, based on released `main`
+at `fcb6c7b`: only the shared shell and header implementation changed.
+The upload route `/analysis/new` and homepage redirect shell omit the desktop
+sidebar, mobile navigation menu, and duplicate header New analysis action.
+The entry header retains a linked SecureMailScope identity, using V3 as the
+layout reference. Processing, completion, and all results routes retain the
+existing navigation. Upload, demo, API, data contracts, fixtures, dependencies,
+and other screen implementations were not changed.
+
+Verification actually executed:
+
+- `npm ci --offline --no-audit --no-fund`: installed 665 locked packages from
+  the local cache; the existing ESLint 9 deprecation warning remains.
+- `npm run lint`, `npm run build`, and `npx --no-install tsc --noEmit`:
+  passed. Build used Next.js 16.3.8 with the existing production API URL.
+- `npm audit --json`: zero vulnerabilities at every severity.
+- `uv sync --locked --offline` and `uv run --locked --offline pytest -q`:
+  passed; 342 tests passed and 2 frozen-T01-PCAP-dependent tests skipped
+  in 21.00 seconds.
+- `uv run --locked --offline ruff check .` and
+  `uv run --locked --offline ruff format --check .`: passed;
+  65 files already formatted.
+- `git diff --check`: passed.
+- Local production HTTP checks: 11 routes returned 200. Parsed rendered HTML
+  confirmed navigation is absent on entry and present on processing, completion,
+  and six prototype result routes. File selection, Explore Demo, and prototype
+  provenance remained present. Windows localhost reachability returned 200.
+
+The first HTTP assertion incorrectly expected upload-form controls on `/`.
+Inspection confirmed its existing meta redirect to `/analysis/new`; the
+corrected check verifies that redirect separately and then the upload page.
+Automated browser startup failed with the Windows sandbox helper setup error;
+no screenshot, hydration, interactive-click, or live backend upload PASS is
+claimed. The local production preview remains running on port 4181 for review.
+No staging, commit, push, merge, or deployment was performed.
+
+
+## Verified frontend refinement — centered upload entry (2026-10-02)
+
+- Authorized frontend-only slice on local `feat/frontend-refinement`, based on
+  `main` at `fcb6c7b`; no stage, commit, push, merge, or deployment performed.
+- Adopted V3's centered single-card capture layout and concise entry heading;
+  removed the entry-only assessment/evidence aside panels.
+- Added the requested construction status notice while keeping supported real
+  uploads enabled. Included both the existing Explore Demo callout and the saved
+  V3 screen's Review Available Analysis button for visual comparison.
+- Intake state, validation, authorization, API submission, and demo selection
+  handlers are byte-for-byte unchanged. Both demo buttons use the existing
+  explicit prototype-selection workflow; no prepared-capture substitution added.
+- Verification: `npm run lint`, `npm run build` (with
+  `NEXT_PUBLIC_API_BASE_URL=https://securemailscope-production.up.railway.app`),
+  `npx --no-install tsc --noEmit`, and `npm audit --json` passed; audit reported
+  zero vulnerabilities. `uv run --locked --offline pytest -q`: 342 passed,
+  2 skipped in 25.54s (existing absent frozen T01 PCAP). Both
+  `uv run --locked --offline ruff check .` and
+  `uv run --locked --offline ruff format --check .` passed.
+- Bounded HTTP structural checks passed for 11 local routes: root redirect,
+  new upload (including query string), processing, complete, and six prototype
+  result views. Confirmed construction status, one upload input, two enabled demo
+  actions, initially disabled Start Analysis, and retained result navigation.
+  Windows `http://localhost:4181/analysis/new` returned HTTP 200.
+- Check-script corrections: initial navigation assertion used the wrong aria
+  label; inspected actual markup and corrected it to `Primary`. The initial
+  preservation comparison also included a trailing empty status line; normalized
+  that line and confirmed original worktrees/14 backend file hashes unchanged.
+- Browser automation remains blocked by the Windows sandbox helper initialization
+  error. Responsive visual review, hydrated button clicks, and a new Railway
+  upload were not verified in this slice. The local preview remains on port 4181.
+
+
+## Upload entry wording correction (2026-10-02)
+
+- Corrected the upload box to V3's active prepared-capture wording, including
+  drag states, Choose files, and the PCAP/PCAPNG size note below the box.
+- Adopted V3's Capture selection/Capture integrity validation labels and waiting
+  states. Accepted real captures say Format and size verified: the real flow
+  validates format/size, not V3's frozen demo bundle hashes.
+- Replaced the boxed amber notice with the unused V3 screen's plain status
+  paragraph, red integration-in-progress emphasis, and black supporting text.
+  Supporting wording reflects that real uploads remain available. Kept both
+  existing demo entry presentations.
+- Verified unchanged file acceptance/authorization/API/demo handlers and prior
+  layout edits. `npm run build`, `npm run lint`, `npx --no-install tsc --noEmit`,
+  `npm audit --json` (zero vulnerabilities), `uv run --locked --offline pytest -q`
+  (342 passed, 2 existing missing-T01-PCAP skips in 11.04s),
+  `uv run --locked --offline ruff check .`,
+  `uv run --locked --offline ruff format --check .`, and `git diff --check` passed.
+- Bounded rendered-HTML checks passed on all 11 existing local routes; checked
+  exact upload/footer/waiting copy, a plain black status paragraph with red
+  emphasis, both enabled demo actions, one upload input and initial authorization
+  gate. Original main/V3/backend worktrees and backend user-file hashes preserved.
+- Browser click/responsive visual automation remains unavailable due to the
+  previously reported Windows helper error; no new real upload tested.
+  Local preview stays at port 4181. No stage, commit, push, merge or deployment.
+
+
+## Demo entry consolidation (2026-10-02)
+
+- Updated the plain notice to: Production backend development is in progress.
+  Explore Demo to review a sample analysis and see the full workflow.
+- Removed Review Available Analysis; retained the existing Explore Demo callout.
+  Real upload, validation, authorization and demo handlers remain unchanged.
+- Required build/lint/TypeScript/audit (zero vulnerabilities), pytest (342 passed,
+  2 existing missing-T01-PCAP skips in 28.31s), Ruff lint/format and diff checks
+  passed. Commands used the same locked/offline Python environment as above.
+  Focused rendered-HTML checks passed on new-entry and its query-string variant:
+  exactly one enabled Explore Demo action, no review button, plain notice and
+  initially gated real upload. Browser click/visual verification and a fresh
+  backend upload remain untested; previously reported browser helper limitation.
+- No staging, commit, push, merge or deployment. Preview remains on port 4181.
+
+
+## Upload entry accessibility and mobile verification (2026-10-02)
+
+- Fixed the observed Capture intake contrast failure (4.38:1 before the change)
+  and clipped progress labels at narrow widths. Kept desktop progress horizontal
+  and wrapped labels on mobile. Added 44px main controls, visible dropzone focus,
+  an entry-only skip link, live validation updates, and explicit checkbox
+  name/description associations. Intake validation, API and demo handlers remain
+  unchanged.
+- Separate headless Microsoft Edge + bundled Playwright tests worked despite
+  the in-app helper limitation reported above. Axe-core 4.13.0 was installed
+  only in a temporary audit directory; no project dependencies changed.
+- Axe WCAG A/AA checks reported zero automatic violations across seven viewports:
+  320x900, 360x800, 390x844, 768x1024, 844x390, 1024x768 and 1440x900.
+  No horizontal overflow or clipped progress labels; main buttons measured at
+  least 44px high. Screenshots were reviewed at mobile and desktop sizes.
+- Also verified 200% text resizing, accepted/authorized and rejected-file states.
+  Axe's remaining manual checkbox-label check was reviewed: the visible title
+  supplies the accessible name and permission copy supplies its description.
+  Actual role/name lookup, description association and Space toggle passed.
+- Browser interaction checks passed for keyboard skip/focus, file choosing,
+  authorization/start gating, file removal, invalid-file alert association,
+  Explore Demo -> completion -> Open Overview, and mobile navigation opening
+  with Enter and closing with Escape. No browser runtime errors and no requests
+  to the real Railway backend during these tests; no real upload was submitted.
+- Test-script corrections used the visible Open Overview link and the actual
+  Mobile primary drawer label; waits included the closing animation before the
+  final screenshot. Full-page selected-state audits used top scroll position to
+  avoid sticky-header occlusion. These corrections did not change product code.
+- Required checks passed: `npm run build` with the existing Railway public URL,
+  `npm run lint`, `npx --no-install tsc --noEmit`, `npm audit --json` (zero
+  vulnerabilities), `uv run --locked --offline pytest -q` (342 passed, 2 existing
+  missing-T01-PCAP skips in 18.55s), both required Ruff checks, and diff checks.
+- User-authorized source commits are separated by scope: `a1167cd` (entry
+  navigation), `e9daefd` (entry design/copy/demo guidance), `677fdf8`
+  (accessibility/mobile fixes). Verification records remain a separate commit
+  for local main integration. No push or deployment is performed in this slice.
+- Evidence: local headless audit JSON and PNGs outside the repository. This is
+  browser/static/frontend proof, not production backend end-to-end or a manual
+  assistive-technology certification. Frozen POC evidence is unchanged.
