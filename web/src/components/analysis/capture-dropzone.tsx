@@ -102,18 +102,16 @@ export function CaptureDropzone({
         </span>
         <p className="text-sm font-semibold text-neutral-950">
           {isDragReject
-            ? "This capture cannot be accepted"
+            ? "These captures cannot be accepted"
             : isDragActive
-              ? "Drop the capture to validate it"
-              : "Drag and drop a capture here"}
+              ? "Drop the capture files to continue"
+              : "Drag and drop capture files here"}
         </p>
         <p className="mt-1 max-w-md text-xs leading-5 text-neutral-500">
-          One .pcap or .pcapng file, up to{" "}
-          {formatByteLimit(publicConfig.maxCaptureBytes)}. Selection does not
-          modify the original capture.
+          Select PCAP or PCAPNG capture files.
         </p>
         <Button type="button" variant="outline" className="mt-5" onClick={open}>
-          Choose file
+          Choose files
         </Button>
       </div>
 
@@ -138,6 +136,11 @@ export function CaptureDropzone({
           </ul>
         </div>
       ) : null}
+
+      <p className="text-xs leading-5 text-neutral-500">
+        PCAP and PCAPNG are supported by the analysis service. Maximum{" "}
+        {formatByteLimit(publicConfig.maxCaptureBytes)} per file.
+      </p>
     </div>
   );
 }
