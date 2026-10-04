@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
-import { Database, FilterX, Search, TableProperties } from "lucide-react";
+import { FilterX, Search, TableProperties } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-import { pluralize } from "./session-formatters";
 import {
   completenessLabels,
   tlsTransitionLabels,
@@ -37,8 +36,8 @@ function EmptyDataset() {
         No reconstructed sessions
       </h2>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-neutral-600">
-        The validated analysis result contains an empty sessions collection.
-        No session records or conclusions were synthesized.
+        The validated analysis result contains an empty sessions collection. No
+        session records or conclusions were synthesized.
       </p>
     </section>
   );
@@ -116,11 +115,9 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
       const matchesCapture =
         captureFilter === "all" || row.captureId === captureFilter;
       const matchesCompleteness =
-        completenessFilter === "all" ||
-        row.completeness === completenessFilter;
+        completenessFilter === "all" || row.completeness === completenessFilter;
       const matchesTransition =
-        transitionFilter === "all" ||
-        row.tlsTransition === transitionFilter;
+        transitionFilter === "all" || row.tlsTransition === transitionFilter;
       const matchesFindings =
         findingFilter === "all" ||
         (findingFilter === "with" && row.linkedFindingCount > 0) ||
@@ -172,61 +169,47 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
             Sessions Explorer
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-            Investigate validated reconstructed-session metadata. Ports support
-            navigation and search; they are not treated as protocol proof.
+            Review reconstructed email sessions and open one to trace its TLS
+            state, findings, and supporting evidence.
+          </p>
+          <p className="mt-2 text-xs text-neutral-500">
+            Analysis ID: <code className="break-all font-mono">{data.analysisId}</code>
           </p>
         </div>
-        <dl className="w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm sm:w-80 sm:shrink-0">
-          <div>
-            <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Analysis ID
-            </dt>
-            <dd
-              className="mt-1 block truncate font-mono text-xs text-neutral-950"
-              title={data.analysisId}
-            >
-              {data.analysisId}
-            </dd>
-          </div>
-          <div className="mt-2 border-t border-neutral-100 pt-2">
-            <dt className="sr-only">Total validated sessions</dt>
-            <dd className="text-xs text-neutral-600">
-              {pluralize(data.totalSessions, "validated session")}
-            </dd>
-          </div>
-        </dl>
+        {data.rows.length >= 2 ? (
+          <Link
+            href={`/analysis/${data.analysisId}/compare`}
+            className="inline-flex min-h-9 items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium focus-visible:outline-2"
+          >
+            Compare sessions
+          </Link>
+        ) : null}
       </header>
-
-      {data.dataSource === "mock" ? (
-        <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-          <Database className="size-4" aria-hidden />
-          <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-          <AlertDescription className="text-blue-900/80">
-            {data.datasetLabel ?? "Prototype Analysis Dataset"} is a labelled,
-            validated synthetic fixture. It does not represent production API
-            integration or live capture analysis.
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       <SessionsSummary data={data} />
 
       {data.totalSessions === 0 ? (
         <EmptyDataset />
       ) : (
-        <section aria-labelledby="session-inventory-heading" className="min-w-0">
+        <section
+          aria-labelledby="session-inventory-heading"
+          className="min-w-0"
+        >
           <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
             <CardHeader className="border-b border-neutral-200">
               <CardTitle>
                 <h2 id="session-inventory-heading">Session inventory</h2>
               </CardTitle>
               <CardDescription>
-                Search and filter only validated session metadata and explicit
-                record relationships.
+                Open a session to inspect its timeline, TLS state, and evidence.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-4">
+              <details className="rounded-lg border border-neutral-200 bg-neutral-50/60">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-neutral-800 outline-none hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-inset">
+                  Search and filter sessions
+                </summary>
+                <div className="space-y-4 border-t border-neutral-200 p-4">
                 <div className="min-w-0">
                   <label
                     htmlFor="session-search"
@@ -323,29 +306,29 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
                     </FilterField>
                   </div>
                 </fieldset>
-              </div>
-
-              <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p
-                  className="text-sm text-neutral-600"
-                  role="status"
-                  aria-live="polite"
-                >
-                  Showing {filteredRows.length.toLocaleString("en")} of{" "}
-                  {data.totalSessions.toLocaleString("en")} validated sessions
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={clearAll}
-                  disabled={!hasActiveControls}
-                  className="w-full sm:w-auto"
-                >
-                  <FilterX className="size-4" aria-hidden />
-                  Clear all
-                </Button>
-              </div>
+                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p
+                      className="text-sm text-neutral-600"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      Showing {filteredRows.length.toLocaleString("en")} of{" "}
+                      {data.totalSessions.toLocaleString("en")} sessions
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={clearAll}
+                      disabled={!hasActiveControls}
+                      className="w-full sm:w-auto"
+                    >
+                      <FilterX className="size-4" aria-hidden />
+                      Clear all
+                    </Button>
+                  </div>
+                </div>
+              </details>
 
               {filteredRows.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-5 py-10 text-center">

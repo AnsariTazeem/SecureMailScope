@@ -1,14 +1,7 @@
-import {
-  BrainCircuit,
-  Database,
-  Network,
-  ShieldCheck,
-  TableProperties,
-} from "lucide-react";
+import { Database, Network, ShieldCheck, TableProperties } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
-import { humanize, pluralize } from "./session-formatters";
 import type { SessionsExplorerData } from "./session-view-model";
 
 function MetricCard({
@@ -24,7 +17,7 @@ function MetricCard({
 }) {
   return (
     <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-      <CardContent className="flex h-full items-start justify-between gap-3">
+      <CardContent className="flex h-full items-start justify-between gap-3 p-4">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
             {label}
@@ -50,46 +43,33 @@ export function SessionsSummary({ data }: { data: SessionsExplorerData }) {
         .map(({ protocol, count }) => `${protocol.toUpperCase()} ${count}`)
         .join(" · ")
     : "No protocol records";
-  const mlValue = humanize(data.mlEngineStatus);
-  const mlDetail = (() => {
-    if (data.mlEngineStatus === "not_run") {
-      return "Anomaly scoring was not run; no ML value is implied.";
-    }
-    if (
-      data.mlEngineStatus === "failed" ||
-      data.mlEngineStatus === "unavailable"
-    ) {
-      return `The engine reported ${humanize(data.mlEngineStatus)}; no anomaly value is inferred.`;
-    }
-    return `${pluralize(data.anomalyResultCount, "validated anomaly result")} available; Policy Risk remains separate.`;
-  })();
-
   return (
     <section aria-labelledby="sessions-summary-heading">
       <div className="mb-3 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Validated result
-          </p>
           <h2
             id="sessions-summary-heading"
-            className="mt-1 text-base font-semibold text-neutral-950"
+            className="text-base font-semibold text-neutral-950"
           >
             Session summary
           </h2>
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <MetricCard
           label="Reconstructed"
           value={data.totalSessions.toLocaleString("en")}
-          detail="Validated session records in this analysis."
+          detail="Sessions reconstructed from the supplied capture records."
           icon={Network}
         />
         <MetricCard
           label="Completeness"
           value={`${data.completeSessions} complete`}
-          detail={`${notComplete} not complete: ${data.captureIncompleteSessions} capture incomplete, ${data.insufficientSessions} insufficient.`}
+          detail={
+            notComplete === 0
+              ? "All reconstructed sessions are complete."
+              : `${notComplete} session${notComplete === 1 ? "" : "s"} need completeness review.`
+          }
           icon={TableProperties}
         />
         <MetricCard
@@ -99,16 +79,10 @@ export function SessionsSummary({ data }: { data: SessionsExplorerData }) {
           icon={Database}
         />
         <MetricCard
-          label="Linked policy findings"
+          label="Sessions with findings"
           value={data.sessionsWithFindings.toLocaleString("en")}
-          detail="Sessions with at least one validated finding link; no severity is inferred here."
+          detail="Open these sessions first to review the linked evidence."
           icon={ShieldCheck}
-        />
-        <MetricCard
-          label="ML anomaly state"
-          value={mlValue}
-          detail={mlDetail}
-          icon={BrainCircuit}
         />
       </div>
     </section>

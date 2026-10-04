@@ -35,6 +35,8 @@ export type SessionExplorerRow = {
   tlsTransition: TlsTransitionState;
   transitionEvidenceStates: TransitionEvidenceState[];
   linkedFindingCount: number;
+  highestFindingSeverity: string | null;
+  evidenceConfidence: string | null;
 };
 
 export type SessionsExplorerData = {
@@ -98,13 +100,19 @@ export function buildSessionsExplorerData(
   const capturesById = new Map(
     captures.map((capture) => [capture.capture_id, capture]),
   );
-  const findingsBySession = new Map<string, number>();
+  const findingsBySession = new Map<string, typeof findings>();
   for (const finding of findings) {
-    findingsBySession.set(
-      finding.session_id,
-      (findingsBySession.get(finding.session_id) ?? 0) + 1,
-    );
+    const sessionFindings = findingsBySession.get(finding.session_id) ?? [];
+    sessionFindings.push(finding);
+    findingsBySession.set(finding.session_id, sessionFindings);
   }
+  const severityOrder: Record<string, number> = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    info: 4,
+  };
 
   const eventsBySession = new Map<
     string,
@@ -142,6 +150,12 @@ export function buildSessionsExplorerData(
         ),
       );
       const capture = capturesById.get(session.capture_id);
+      const sessionFindings = [...(findingsBySession.get(session.session_id) ?? [])].sort(
+        (left, right) =>
+          (severityOrder[left.severity] ?? 99) -
+          (severityOrder[right.severity] ?? 99),
+      );
+      const primaryFinding = sessionFindings[0];
 
       return {
         sessionId: session.session_id,
@@ -156,7 +170,9 @@ export function buildSessionsExplorerData(
         completeness: session.capture_completeness,
         tlsTransition: state,
         transitionEvidenceStates,
-        linkedFindingCount: findingsBySession.get(session.session_id) ?? 0,
+        linkedFindingCount: sessionFindings.length,
+        highestFindingSeverity: primaryFinding?.severity ?? null,
+        evidenceConfidence: primaryFinding?.evidence_confidence ?? null,
       };
     })
     .sort((left, right) => left.sessionId.localeCompare(right.sessionId));

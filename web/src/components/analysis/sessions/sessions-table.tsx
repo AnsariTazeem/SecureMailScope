@@ -51,6 +51,14 @@ const columnHelper = createColumnHelper<
   SessionExplorerRow
 >();
 
+const severityStyles: Record<string, string> = {
+  critical: "border-red-300 bg-red-50 text-red-800",
+  high: "border-orange-300 bg-orange-50 text-orange-800",
+  medium: "border-amber-300 bg-amber-50 text-amber-800",
+  low: "border-neutral-300 bg-neutral-50 text-neutral-700",
+  info: "border-blue-300 bg-blue-50 text-blue-800",
+};
+
 function SessionLink({
   analysisId,
   sessionId,
@@ -138,15 +146,6 @@ export function SessionsTable({
   const columns = useMemo(
     () =>
       columnHelper.columns([
-        columnHelper.accessor("sessionId", {
-          header: "Session ID",
-          sortFn: "alphanumeric",
-          cell: ({ getValue }) => (
-            <span className="font-mono text-xs text-neutral-950">
-              {getValue()}
-            </span>
-          ),
-        }),
         columnHelper.accessor("protocol", {
           header: "Protocol",
           sortFn: "text",
@@ -167,28 +166,17 @@ export function SessionsTable({
             )}`,
           {
             id: "endpoints",
-            header: "Endpoints",
+            header: "Affected endpoints",
             sortFn: "alphanumeric",
             cell: ({ row }) => <EndpointsCell row={row.original} />,
           },
         ),
-        columnHelper.accessor("tcpStreamId", {
-          header: "TCP stream",
-          cell: ({ getValue }) => (
-            <span className="font-mono text-xs">{getValue()}</span>
-          ),
-        }),
-        columnHelper.accessor("completeness", {
-          header: "Completeness",
-          sortFn: "text",
-          cell: ({ getValue }) => completenessLabels[getValue()],
-        }),
         columnHelper.accessor("tlsTransition", {
-          header: "TLS upgrade transition",
+          header: "Encryption transition",
           sortFn: "text",
           cell: ({ getValue, row }) => (
             <div className="space-y-1 text-xs leading-4">
-              <span className="block text-neutral-950">
+              <span className="block font-medium text-neutral-950">
                 {tlsTransitionLabels[getValue()]}
               </span>
               <span className="block text-[11px] leading-4 text-neutral-600">
@@ -197,19 +185,65 @@ export function SessionsTable({
             </div>
           ),
         }),
-        columnHelper.accessor("linkedFindingCount", {
-          header: "Linked findings",
-          cell: ({ getValue }) =>
-            getValue() > 0 ? `${getValue()} linked` : "None linked",
+        columnHelper.accessor("highestFindingSeverity", {
+          header: "Risk",
+          sortFn: (left, right) => {
+            const order: Record<string, number> = {
+              critical: 0,
+              high: 1,
+              medium: 2,
+              low: 3,
+              info: 4,
+            };
+            return (
+              (order[left.original.highestFindingSeverity ?? ""] ?? 99) -
+              (order[right.original.highestFindingSeverity ?? ""] ?? 99)
+            );
+          },
+          cell: ({ row }) =>
+            row.original.highestFindingSeverity ? (
+              <div className="space-y-1">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "rounded-md uppercase",
+                    severityStyles[row.original.highestFindingSeverity] ??
+                      severityStyles.info,
+                  )}
+                >
+                  {row.original.highestFindingSeverity}
+                </Badge>
+                <span className="block text-[11px] text-neutral-600">
+                  {row.original.linkedFindingCount} linked finding
+                  {row.original.linkedFindingCount === 1 ? "" : "s"}
+                </span>
+              </div>
+            ) : (
+              <span className="text-neutral-600">No linked finding</span>
+            ),
+        }),
+        columnHelper.accessor("evidenceConfidence", {
+          header: "Evidence",
+          sortFn: "text",
+          cell: ({ getValue, row }) => (
+            <div className="text-xs leading-4">
+              <span className="font-medium text-neutral-950">
+                {getValue() ? `${humanize(getValue()!)} confidence` : "Not supplied"}
+              </span>
+              <span className="mt-1 block text-[11px] text-neutral-600">
+                {completenessLabels[row.original.completeness]}
+              </span>
+            </div>
+          ),
         }),
         columnHelper.display({
           id: "open",
-          header: "Open",
+          header: "Action",
           cell: ({ row }) => (
             <SessionLink
               analysisId={analysisId}
               sessionId={row.original.sessionId}
-              label="Open"
+              label="Investigate"
             />
           ),
         }),
@@ -223,7 +257,10 @@ export function SessionsTable({
     data: rows,
     getRowId: (row) => row.sessionId,
     initialState: {
-      sorting: [{ id: "sessionId", desc: false }],
+      sorting: [
+        { id: "highestFindingSeverity", desc: false },
+        { id: "protocol", desc: false },
+      ],
     },
     enableSortingRemoval: false,
   });
@@ -237,14 +274,12 @@ export function SessionsTable({
           className="w-full table-fixed text-xs"
         >
           <colgroup>
-            <col className="w-[15%]" />
-            <col className="w-[8%]" />
-            <col className="w-[25%]" />
-            <col className="w-[7%]" />
             <col className="w-[10%]" />
-            <col className="w-[20%]" />
-            <col className="w-[7%]" />
-            <col className="w-[8%]" />
+            <col className="w-[27%]" />
+            <col className="w-[25%]" />
+            <col className="w-[13%]" />
+            <col className="w-[13%]" />
+            <col className="w-[12%]" />
           </colgroup>
           <TableHeader className="bg-neutral-50">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -315,61 +350,36 @@ export function SessionsTable({
               key={row.sessionId}
               className="min-w-0 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
             >
-              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="break-all font-mono text-xs font-semibold text-neutral-950">
-                    {row.sessionId}
-                  </p>
-                  <p className="mt-1 break-all text-xs text-neutral-500">
-                    {row.captureName ?? "Capture record unavailable"}
+                  <Badge
+                    variant="outline"
+                    className="rounded-md border-neutral-300 bg-neutral-50 font-mono uppercase"
+                  >
+                    {row.protocol}
+                  </Badge>
+                  <p className="mt-2 break-all font-mono text-xs leading-5 text-neutral-800">
+                    {formatEndpoint(row.sourceIp, row.sourcePort)} →{" "}
+                    {formatEndpoint(row.destinationIp, row.destinationPort)}
                   </p>
                 </div>
-                <Badge
-                  variant="outline"
-                  className="rounded-md border-neutral-300 bg-neutral-50 font-mono uppercase"
-                >
-                  {row.protocol}
-                </Badge>
+                {row.highestFindingSeverity ? (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "rounded-md uppercase",
+                      severityStyles[row.highestFindingSeverity] ??
+                        severityStyles.info,
+                    )}
+                  >
+                    {row.highestFindingSeverity}
+                  </Badge>
+                ) : null}
               </div>
               <dl className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Source endpoint
-                  </dt>
-                  <dd className="mt-1 break-all font-mono text-xs text-neutral-950">
-                    {formatEndpoint(row.sourceIp, row.sourcePort)}
-                  </dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Destination endpoint
-                  </dt>
-                  <dd className="mt-1 break-all font-mono text-xs text-neutral-950">
-                    {formatEndpoint(
-                      row.destinationIp,
-                      row.destinationPort,
-                    )}
-                  </dd>
-                </div>
                 <div>
                   <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    TCP stream
-                  </dt>
-                  <dd className="mt-1 font-mono text-xs text-neutral-950">
-                    {row.tcpStreamId}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Completeness
-                  </dt>
-                  <dd className="mt-1 text-xs text-neutral-950">
-                    {completenessLabels[row.completeness]}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    TLS upgrade transition
+                    Encryption transition
                   </dt>
                   <dd className="mt-1 text-xs leading-5 text-neutral-950">
                     {tlsTransitionLabels[row.tlsTransition]}
@@ -377,28 +387,46 @@ export function SessionsTable({
                 </div>
                 <div>
                   <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Policy findings
+                    Findings
                   </dt>
                   <dd className="mt-1 text-xs text-neutral-950">
                     {row.linkedFindingCount > 0
-                      ? `${row.linkedFindingCount} linked`
-                      : "None linked"}
-                  </dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Evidence / observability
-                  </dt>
-                  <dd className="mt-1 text-xs leading-5 text-neutral-950">
-                    <TransitionEvidence row={row} />
+                      ? `${row.linkedFindingCount} linked · ${humanize(row.evidenceConfidence ?? "unknown")} confidence`
+                      : "No linked finding"}
                   </dd>
                 </div>
               </dl>
+              <details className="mt-4 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
+                <summary className="cursor-pointer text-xs font-medium text-neutral-700">
+                  Technical session details
+                </summary>
+                <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className="text-neutral-500">Session ID</dt>
+                    <dd className="break-all font-mono">{row.sessionId}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-neutral-500">TCP stream</dt>
+                    <dd className="font-mono">{row.tcpStreamId}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-neutral-500">Completeness</dt>
+                    <dd>{completenessLabels[row.completeness]}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-neutral-500">Capture</dt>
+                    <dd className="break-all">
+                      {row.captureName ?? "Not supplied"}
+                    </dd>
+                  </div>
+                </dl>
+              </details>
               <div className="mt-4 border-t border-neutral-200 pt-4">
                 <SessionLink
                   analysisId={analysisId}
                   sessionId={row.sessionId}
                   compact
+                  label="Investigate session"
                 />
               </div>
             </article>
