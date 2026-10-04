@@ -57,7 +57,6 @@ import {
   type FindingDetail,
   type PolicyFindingsData,
 } from "./findings-view-model";
-import { PrototypeDatasetBanner } from "./findings-states";
 import { MLAnomalyExplorer } from "./ml-anomaly-explorer";
 
 const filterSelectClassName =
@@ -118,7 +117,7 @@ function PolicyRiskPostureCard({
   if (!policyRisk) {
     return (
       <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-        <CardContent className="flex h-full items-start justify-between gap-4">
+        <CardContent className="flex h-full items-start justify-between gap-4 p-4">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
               Policy Risk
@@ -140,7 +139,7 @@ function PolicyRiskPostureCard({
 
   return (
     <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-      <CardContent className="flex h-full items-start justify-between gap-4">
+      <CardContent className="flex h-full items-start justify-between gap-4 p-4">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
             Policy Risk
@@ -148,13 +147,11 @@ function PolicyRiskPostureCard({
           <p className="mt-2 break-words text-2xl font-semibold tracking-tight text-neutral-950">
             {policyRisk.cappedScore}
             <span className="ml-1 text-sm font-normal text-neutral-500">
-              (uncapped: {policyRisk.uncappedScore})
+              / 100
             </span>
           </p>
           <p className="mt-2 text-xs leading-5 text-neutral-600">
-            Profile: {policyRisk.profileId} &middot;{" "}
-            {policyRisk.contributionCount} contribution
-            {policyRisk.contributionCount !== 1 ? "s" : ""} &middot;{" "}
+            Higher means more deterministic policy risk ·{" "}
             {policyRisk.affectedSessionCount} affected session
             {policyRisk.affectedSessionCount !== 1 ? "s" : ""}
           </p>
@@ -174,26 +171,26 @@ function MLAnomalyPostureCard({
 }) {
   const statusLabel =
     engineStatusLabels[anomaly.mlEngineStatus] ?? anomaly.mlEngineStatus;
+  const bands = [...new Set(anomaly.results.map((result) => result.band))];
+  const resultLabel =
+    bands.length > 0
+      ? bands.map((band) => band.replaceAll("_", " ")).join(", ")
+      : statusLabel;
 
   return (
     <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
-      <CardContent className="flex h-full items-start justify-between gap-4">
+      <CardContent className="flex h-full items-start justify-between gap-4 p-4">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
             ML Anomaly
           </p>
           <p className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
-            {statusLabel}
+            {resultLabel}
           </p>
           <p className="mt-2 text-xs leading-5 text-neutral-600">
             {anomaly.resultCount} result
-            {anomaly.resultCount !== 1 ? "s" : ""}
-            {anomaly.modelId ? ` · Model: ${anomaly.modelId}` : ""}
-            {anomaly.modelVersion
-              ? ` v${anomaly.modelVersion}`
-              : ""}
-            {". "}
-            Independent of Policy Risk.
+            {anomaly.resultCount !== 1 ? "s" : ""} · Kept separate from Policy
+            Risk.
           </p>
         </div>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-neutral-600">
@@ -265,17 +262,14 @@ function FindingDesktopTable({
               <p className="break-words text-sm font-medium text-neutral-950">
                 {row.original.title}
               </p>
-              <code
-                className="mt-0.5 block max-w-full break-all font-mono text-[11px] text-neutral-500"
-                title={row.original.findingId}
-              >
-                {row.original.findingId}
-              </code>
+              <p className="mt-1 text-[11px] text-neutral-500">
+                {categoryLabels[row.original.category] ?? row.original.category}
+              </p>
             </div>
           ),
         }),
         columnHelper.accessor("severity", {
-          header: "Severity",
+          header: "Priority",
           sortFn: (left, right) =>
             (severityOrder[left.original.severity] ?? 99) -
             (severityOrder[right.original.severity] ?? 99),
@@ -291,67 +285,65 @@ function FindingDesktopTable({
                 {getValue()}
               </Badge>
               <p className="mt-1 text-[10px] text-neutral-500">
-                Confidence: {row.original.evidenceConfidence}
+                {row.original.evidenceConfidence} confidence
               </p>
             </div>
           ),
         }),
-        columnHelper.accessor("category", {
-          header: "Category",
+        columnHelper.accessor("impact", {
+          header: "Why it matters",
           sortFn: "text",
           cell: ({ getValue }) => (
-            <span className="font-mono text-xs">
-              {categoryLabels[getValue()] ?? getValue()}
-            </span>
-          ),
-        }),
-        columnHelper.accessor("policyRiskContribution", {
-          header: "Contribution",
-          sortFn: "alphanumeric",
-          cell: ({ getValue }) => (
-            <span className="font-mono text-xs">{getValue()}</span>
-          ),
-        }),
-        columnHelper.accessor("ruleId", {
-          header: "Rule",
-          sortFn: "alphanumeric",
-          cell: ({ getValue, row }) => (
-            <div className="min-w-0">
-              <code
-                className="block max-w-full break-all font-mono text-[11px]"
-                title={getValue()}
-              >
-                {getValue()}
-              </code>
-              <span className="text-[11px] text-neutral-500">
-                v{row.original.ruleVersion} · {row.original.profileId}
-              </span>
-              <span className="block text-[10px] text-neutral-500">
-                {row.original.ruleOutcome} / {row.original.ruleReasonCode}
-              </span>
-            </div>
+            <p className="line-clamp-3 text-xs leading-5 text-neutral-700">
+              {getValue()}
+            </p>
           ),
         }),
         columnHelper.accessor("linkedSessions", {
-          header: "Sessions",
+          header: "Affected scope",
           sortFn: (a, b) =>
             a.original.linkedSessions.length -
             b.original.linkedSessions.length,
-          cell: ({ getValue, row }) => {
-            const count = getValue().length;
-            return (
-              <div className="text-xs">
-                <span>{count > 0 ? `${count} linked` : "None"}</span>
-                <span className="mt-1 block text-[10px] text-neutral-500">
-                  {row.original.directEvidence.length} evidence · {row.original.linkedFacts.length} facts
+          cell: ({ getValue }) => {
+            const sessions = getValue();
+            const primary = sessions[0];
+            return primary ? (
+              <div className="text-xs leading-5">
+                <span className="font-medium uppercase">{primary.protocol}</span>
+                <span className="block break-all font-mono text-[11px] text-neutral-600">
+                  {primary.sourceEndpoint} → {primary.destinationEndpoint}
                 </span>
+                {sessions.length > 1 ? (
+                  <span className="block text-[11px] text-neutral-500">
+                    +{sessions.length - 1} more session
+                    {sessions.length === 2 ? "" : "s"}
+                  </span>
+                ) : null}
               </div>
+            ) : (
+              <span className="text-neutral-500">No linked session</span>
             );
           },
         }),
         columnHelper.display({
+          id: "evidence",
+          header: "Evidence",
+          cell: ({ row }) => (
+            <div className="text-xs">
+              <span className="font-medium text-neutral-950">
+                {row.original.directEvidence.length} direct reference
+                {row.original.directEvidence.length === 1 ? "" : "s"}
+              </span>
+              <span className="mt-1 block text-[10px] text-neutral-500">
+                {row.original.linkedFacts.length} linked fact
+                {row.original.linkedFacts.length === 1 ? "" : "s"}
+              </span>
+            </div>
+          ),
+        }),
+        columnHelper.display({
           id: "open",
-          header: "Inspect",
+          header: "Action",
           cell: ({ row }) => (
             <Button
               type="button"
@@ -359,7 +351,6 @@ function FindingDesktopTable({
               size="sm"
               onClick={(event) => onSelect(row.original, event.currentTarget)}
               aria-label={`Inspect finding ${row.original.title}`}
-              className="font-mono text-[11px]"
             >
               <Search className="size-3.5" aria-hidden />
               Inspect
@@ -378,7 +369,6 @@ function FindingDesktopTable({
     initialState: {
       sorting: [
         { id: "severity", desc: false },
-        { id: "policyRiskContribution", desc: true },
         { id: "title", desc: false },
       ],
     },
@@ -394,13 +384,12 @@ function FindingDesktopTable({
           className="w-full table-fixed text-xs"
         >
           <colgroup>
-            <col className="w-[26%]" />
-            <col className="w-[9%]" />
-            <col className="w-[14%]" />
+            <col className="w-[21%]" />
             <col className="w-[10%]" />
-            <col className="w-[18%]" />
-            <col className="w-[8%]" />
-            <col className="w-[15%]" />
+            <col className="w-[25%]" />
+            <col className="w-[22%]" />
+            <col className="w-[12%]" />
+            <col className="w-[10%]" />
           </colgroup>
           <TableHeader className="bg-neutral-50">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -420,7 +409,7 @@ function FindingDesktopTable({
                               : "none"
                           : undefined
                       }
-                      className="px-2 text-[10px] font-bold uppercase tracking-[0.06em] whitespace-normal text-neutral-600"
+                      className="px-3 text-[10px] font-bold uppercase tracking-[0.06em] whitespace-normal text-neutral-600"
                     >
                       {header.isPlaceholder ? null : canSort ? (
                         <button
@@ -463,7 +452,7 @@ function FindingDesktopTable({
                 {row.getAllCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className="min-w-0 px-2 py-3 text-xs whitespace-normal"
+                    className="min-w-0 px-3 py-3 text-xs whitespace-normal"
                   >
                     <table.FlexRender cell={cell} />
                   </TableCell>
@@ -477,22 +466,20 @@ function FindingDesktopTable({
       <div className="grid gap-3 lg:hidden">
         {tableRows.map((tableRow) => {
           const finding = tableRow.original;
+          const primarySession = finding.linkedSessions[0];
           return (
             <article
               key={finding.findingId}
               className="min-w-0 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
             >
-              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="break-words text-sm font-semibold text-neutral-950">
                     {finding.title}
                   </p>
-                  <code
-                    className="mt-1 block max-w-full break-all font-mono text-[11px] text-neutral-500"
-                    title={finding.findingId}
-                  >
-                    {finding.findingId}
-                  </code>
+                  <p className="mt-1 text-[11px] text-neutral-500">
+                    {categoryLabels[finding.category] ?? finding.category}
+                  </p>
                 </div>
                 <Badge
                   variant="outline"
@@ -503,49 +490,38 @@ function FindingDesktopTable({
                 >
                   {finding.severity}
                 </Badge>
-                <p className="text-[10px] text-neutral-500">
-                  Confidence: {finding.evidenceConfidence}
-                </p>
               </div>
+              <p className="mt-3 text-sm leading-6 text-neutral-700">
+                <strong className="text-neutral-950">Why it matters:</strong>{" "}
+                {finding.impact}
+              </p>
               <dl className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
                 <div>
                   <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Category
+                    Affected scope
                   </dt>
-                  <dd className="mt-1 font-mono text-xs text-neutral-950">
-                    {categoryLabels[finding.category] ?? finding.category}
+                  <dd className="mt-1 text-xs leading-5 text-neutral-950">
+                    {primarySession ? (
+                      <>
+                        <span className="uppercase">{primarySession.protocol}</span>
+                        <span className="block break-all font-mono text-[11px]">
+                          {primarySession.sourceEndpoint} →{" "}
+                          {primarySession.destinationEndpoint}
+                        </span>
+                      </>
+                    ) : (
+                      "No linked session"
+                    )}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Contribution
+                    Evidence
                   </dt>
-                  <dd className="mt-1 font-mono text-xs text-neutral-950">
-                    {finding.policyRiskContribution}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Rule
-                  </dt>
-                  <dd className="mt-1 font-mono text-[11px] text-neutral-950">
-                    {finding.ruleId} v{finding.ruleVersion}
-                    <span className="block text-neutral-500">
-                      {finding.profileId} · {finding.ruleOutcome} / {finding.ruleReasonCode}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Sessions
-                  </dt>
-                  <dd className="mt-1 text-xs text-neutral-950">
-                    {finding.linkedSessions.length > 0
-                      ? `${finding.linkedSessions.length} linked`
-                      : "None"}
-                    <span className="block text-[10px] text-neutral-500">
-                      {finding.directEvidence.length} evidence · {finding.linkedFacts.length} facts
-                    </span>
+                  <dd className="mt-1 text-xs leading-5 text-neutral-950">
+                    {finding.evidenceConfidence} confidence ·{" "}
+                    {finding.directEvidence.length} direct reference
+                    {finding.directEvidence.length === 1 ? "" : "s"}
                   </dd>
                 </div>
               </dl>
@@ -599,7 +575,6 @@ export function FindingsWorkspace({
   const [severityFilter, setSeverityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sessionFilter, setSessionFilter] = useState("all");
-  const [profileFilter, setProfileFilter] = useState("all");
   const [selectedFinding, setSelectedFinding] =
     useState<FindingDetail | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -631,14 +606,11 @@ export function FindingsWorkspace({
       const matchesSession =
         sessionFilter === "all" ||
         finding.linkedSessions.some((s) => s.sessionId === sessionFilter);
-      const matchesProfile =
-        profileFilter === "all" || finding.profileId === profileFilter;
       return (
         matchesSearch &&
         matchesSeverity &&
         matchesCategory &&
-        matchesSession &&
-        matchesProfile
+        matchesSession
       );
     });
   }, [
@@ -647,27 +619,24 @@ export function FindingsWorkspace({
     severityFilter,
     categoryFilter,
     sessionFilter,
-    profileFilter,
   ]);
 
   const hasActiveControls =
     search !== "" ||
     severityFilter !== "all" ||
     categoryFilter !== "all" ||
-    sessionFilter !== "all" ||
-    profileFilter !== "all";
+    sessionFilter !== "all";
 
   function clearAll() {
     setSearch("");
     setSeverityFilter("all");
     setCategoryFilter("all");
     setSessionFilter("all");
-    setProfileFilter("all");
   }
 
   return (
     <div className="mx-auto min-w-0 w-full max-w-[96rem] space-y-6">
-      <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="min-w-0">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
             Analysis / Findings
@@ -676,37 +645,15 @@ export function FindingsWorkspace({
             Findings
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-            Deterministic Policy Risk and ML Anomaly remain independent. This
-            workspace renders only validated contract fields; no scores,
-            severities, or evidence are generated in the browser.
+            Review deterministic policy findings and anomaly results without
+            combining them into one score.
+          </p>
+          <p className="mt-2 text-xs text-neutral-500">
+            Analysis ID:{" "}
+            <code className="break-all font-mono">{policyData.analysisId}</code>
           </p>
         </div>
-        <dl className="w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm sm:w-80 sm:shrink-0">
-          <div>
-            <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Analysis ID
-            </dt>
-            <dd
-              className="mt-1 block truncate font-mono text-xs text-neutral-950"
-              title={policyData.analysisId}
-            >
-              {policyData.analysisId}
-            </dd>
-          </div>
-          <div className="mt-2 border-t border-neutral-100 pt-2">
-            <dt className="sr-only">Analysis status</dt>
-            <dd className="text-xs text-neutral-600">
-              {policyData.analysisStatus === "complete"
-                ? "Analysis complete"
-                : `Status: ${policyData.analysisStatus}`}
-            </dd>
-          </div>
-        </dl>
       </header>
-
-      {policyData.dataSource === "mock" ? (
-        <PrototypeDatasetBanner label={policyData.datasetLabel} />
-      ) : null}
 
       <nav aria-label="Findings view" className="flex gap-1">
         <Button
@@ -731,7 +678,7 @@ export function FindingsWorkspace({
         </Button>
       </nav>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <PolicyRiskPostureCard policyRisk={policyData.policyRisk} />
         <MLAnomalyPostureCard anomaly={anomalyData} />
       </div>
@@ -747,13 +694,11 @@ export function FindingsWorkspace({
                 <div>
                   <CardTitle>
                     <h2 id="policy-findings-heading">
-                      Validated policy findings
+                      Policy findings
                     </h2>
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    Deterministic findings from the validated Chain-of-Proof
-                    contract. Severity and contribution come directly from the
-                    contract; they are never derived in the browser.
+                    Prioritized policy issues with linked sessions and evidence.
                   </CardDescription>
                 </div>
               </div>
@@ -763,7 +708,11 @@ export function FindingsWorkspace({
                 <EmptyFindingsState />
               ) : (
                 <>
-                  <div className="space-y-4">
+                  <details className="rounded-lg border border-neutral-200 bg-neutral-50/60">
+                    <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-neutral-800 outline-none hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-inset">
+                      Search and filter findings
+                    </summary>
+                    <div className="space-y-4 border-t border-neutral-200 p-4">
                     <div className="min-w-0">
                       <label
                         htmlFor="finding-search"
@@ -795,7 +744,7 @@ export function FindingsWorkspace({
                       <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
                         Filters
                       </legend>
-                      <div className="grid min-w-0 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                      <div className="grid min-w-0 gap-3 sm:grid-cols-3">
                         <FilterField
                           id="severity-filter"
                           label="Severity"
@@ -837,45 +786,31 @@ export function FindingsWorkspace({
                             </option>
                           ))}
                         </FilterField>
-                        <FilterField
-                          id="profile-filter"
-                          label="Policy profile"
-                          value={profileFilter}
-                          onChange={setProfileFilter}
-                        >
-                          <option value="all">All profiles</option>
-                          {policyData.profiles.map(({ key, count }) => (
-                            <option key={key} value={key}>
-                              {key} ({count})
-                            </option>
-                          ))}
-                        </FilterField>
                       </div>
                     </fieldset>
-                  </div>
-
-                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p
-                      className="text-sm text-neutral-600"
-                      role="status"
-                      aria-live="polite"
-                    >
-                      Showing {filteredFindings.length.toLocaleString("en")} of{" "}
-                      {policyData.totalFindings.toLocaleString("en")} validated
-                      findings
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      onClick={clearAll}
-                      disabled={!hasActiveControls}
-                      className="w-full sm:w-auto"
-                    >
-                      <FilterX className="size-4" aria-hidden />
-                      Clear all
-                    </Button>
-                  </div>
+                      <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p
+                          className="text-sm text-neutral-600"
+                          role="status"
+                          aria-live="polite"
+                        >
+                          Showing {filteredFindings.length.toLocaleString("en")} of{" "}
+                          {policyData.totalFindings.toLocaleString("en")} findings
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          onClick={clearAll}
+                          disabled={!hasActiveControls}
+                          className="w-full sm:w-auto"
+                        >
+                          <FilterX className="size-4" aria-hidden />
+                          Clear all
+                        </Button>
+                      </div>
+                    </div>
+                  </details>
 
                   {filteredFindings.length === 0 ? (
                     <NoFilterResultsState onClear={clearAll} />
@@ -927,50 +862,14 @@ export function FindingsWorkspace({
                     <h2 id="ml-anomaly-heading">ML Anomaly results</h2>
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    Independent ML engine output. This remains separate from
-                    deterministic Policy Risk; no combined score is presented.
+                    Unusual session behavior for analyst review. This is not a
+                    policy score.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <MLAnomalyExplorer data={anomalyData} />
-
-              <div className="mt-4 rounded-lg border border-neutral-200 px-4">
-                <dl>
-                  <div className="grid gap-1 border-b border-neutral-100 py-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
-                    <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                      Engine status
-                    </dt>
-                    <dd className="text-sm text-neutral-900">
-                      {engineStatusLabels[anomalyData.mlEngineStatus] ??
-                        anomalyData.mlEngineStatus}
-                    </dd>
-                  </div>
-                  {anomalyData.modelId ? (
-                    <div className="grid gap-1 border-b border-neutral-100 py-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
-                      <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                        Model
-                      </dt>
-                      <dd className="font-mono text-xs text-neutral-900">
-                        {anomalyData.modelId}
-                        {anomalyData.modelVersion
-                          ? ` v${anomalyData.modelVersion}`
-                          : ""}
-                      </dd>
-                    </div>
-                  ) : null}
-                  <div className="grid gap-1 py-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
-                    <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                      Result count
-                    </dt>
-                    <dd className="font-mono text-xs text-neutral-900">
-                      {anomalyData.resultCount}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
             </CardContent>
           </Card>
         </section>
