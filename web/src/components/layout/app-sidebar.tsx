@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  ClipboardCheck,
   FileSearch,
   Files,
   GitCompareArrows,
@@ -34,6 +35,7 @@ const navigationItems = [
   { label: "Sessions", segment: "sessions", icon: Files },
   { label: "Proof Map", segment: "proof-map", icon: GitFork },
   { label: "Findings", segment: "findings", icon: ListChecks },
+  { label: "Recommendations", segment: "recommendations", icon: ClipboardCheck },
   { label: "Compare", segment: "compare", icon: GitCompareArrows },
   { label: "Report", segment: "report", icon: FileSearch },
 ] as const;
