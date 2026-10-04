@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
 import { AnalysisDetails } from "@/components/layout/analysis-details";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -792,9 +793,7 @@ export function AnalysisOverview({ result }: { result: AnalysisResult }) {
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <header>
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / Overview
-        </p>
+        <AnalysisBreadcrumbs />
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">

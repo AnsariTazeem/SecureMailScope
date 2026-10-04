@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FilePlus2, Shield } from "lucide-react";
 
-import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
 import { DatasetBanner } from "@/components/layout/dataset-banner";
 import { AppMobileNavigation } from "@/components/layout/app-sidebar";
 
@@ -40,7 +39,7 @@ export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
           <AppMobileNavigation />
           <Link
             href="/analysis/new"
-            className={`${isOverviewPage ? "hidden sm:block" : ""} min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2`}
+            className="min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
           >
             <span className="block truncate text-sm font-semibold tracking-tight text-neutral-950">
               SecureMailScope
@@ -50,14 +49,12 @@ export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
             </span>
           </Link>
         </div>
-        {isOverviewPage ? (
-          <AnalysisBreadcrumbs />
-        ) : (
+        {isOverviewPage ? null : (
           <p className="hidden text-sm font-semibold text-neutral-900 lg:block">
             Analysis workspace
           </p>
         )}
-        <div className="flex min-w-0 items-center justify-end gap-2">
+        <div className={`${isOverviewPage ? "ml-auto " : ""}flex min-w-0 items-center justify-end gap-2`}>
           {isOverviewPage ? null : (
             <div className="hidden sm:block">
               <DatasetBanner />
