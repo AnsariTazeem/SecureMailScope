@@ -5,14 +5,13 @@ import {
   Database,
   EyeOff,
   FileCheck2,
-  Fingerprint,
   Info,
-  LockKeyhole,
   Network,
   ShieldCheck,
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AnalysisDetails } from "@/components/layout/analysis-details";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -43,6 +42,11 @@ function humanize(value: string): string {
   return value.replaceAll("_", " ");
 }
 
+function stateLabel(value: string): string {
+  const readable = humanize(value);
+  return readable.charAt(0).toUpperCase() + readable.slice(1);
+}
+
 function formatDateTime(value: string | null): string {
   if (!value) return "Not available";
 
@@ -51,20 +55,6 @@ function formatDateTime(value: string | null): string {
     timeStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(value));
-}
-
-function formatBytes(value: number): string {
-  if (value < 1024) return `${value.toLocaleString("en")} B`;
-
-  const units = ["KB", "MB", "GB", "TB"];
-  let size = value / 1024;
-  let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex += 1;
-  }
-  const digits = size >= 10 || Number.isInteger(size) ? 0 : 1;
-  return `${size.toFixed(digits)} ${units[unitIndex]} (${value.toLocaleString("en")} bytes)`;
 }
 
 function formatEndpoint(endpoint: Session["source_endpoint"]): string {
@@ -284,83 +274,9 @@ function IdentitySection({ result }: { result: AnalysisResult }) {
   );
 }
 
-function CaptureIntegritySection({ result }: { result: AnalysisResult }) {
-  return (
-    <Card
-      className="rounded-lg border-neutral-200 shadow-sm ring-0"
-      aria-labelledby="capture-integrity-heading"
-    >
-      <CardHeader className="border-b border-neutral-200">
-        <CardTitle>
-          <h2 id="capture-integrity-heading">Capture integrity</h2>
-        </CardTitle>
-        <CardDescription>
-          Provenance fields are rendered exactly from the validated result.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {result.chain.captures.map((capture) => (
-          <article
-            key={capture.capture_id}
-            className="rounded-lg border border-neutral-200 bg-neutral-50 p-4"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h3 className="break-all text-sm font-semibold text-neutral-950">
-                  {capture.original_filename_sanitized || "Not available"}
-                </h3>
-                <p className="mt-1 break-all font-mono text-[11px] text-neutral-500">
-                  {capture.capture_id}
-                </p>
-              </div>
-              <Badge
-                variant="outline"
-                className="h-6 rounded-md border-neutral-300 bg-white font-mono uppercase"
-              >
-                {capture.format === "unknown" ? "unknown" : capture.format}
-              </Badge>
-            </div>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-[0.65fr_0.65fr_2fr]">
-              <div>
-                <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                  File size
-                </dt>
-                <dd className="mt-1 text-xs text-neutral-900">
-                  {formatBytes(capture.size_bytes)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                  Packets
-                </dt>
-                <dd className="mt-1 text-xs text-neutral-900">
-                  {capture.packet_count.toLocaleString("en")}
-                </dd>
-              </div>
-              <div className="min-w-0">
-                <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                  <Fingerprint className="size-3" aria-hidden />
-                  {result.data_source === "mock"
-                    ? "Fixture SHA-256"
-                    : "SHA-256"}
-                </dt>
-                <dd className="mt-1 break-all font-mono text-[11px] leading-5 text-neutral-900">
-                  {capture.sha256 || "Not available"}
-                </dd>
-              </div>
-            </dl>
-          </article>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
 function SecurityPostureSection({ result }: { result: AnalysisResult }) {
-  const { analysis, sessions, protocol_events, policy_risk, anomaly_results } =
+  const { analysis, sessions, policy_risk, anomaly_results } =
     result.chain;
-  const protocolDistribution = buildProtocolDistribution(sessions);
-  const tlsOutcomes = buildTlsOutcomeDistribution(sessions, protocol_events);
   const anomalyBandCounts = new Map<string, number>();
   for (const anomaly of anomaly_results) {
     anomalyBandCounts.set(
@@ -437,6 +353,28 @@ function SecurityPostureSection({ result }: { result: AnalysisResult }) {
         />
       </div>
 
+    </section>
+  );
+}
+
+function DistributionsSection({ result }: { result: AnalysisResult }) {
+  const { sessions, protocol_events } = result.chain;
+  const protocolDistribution = buildProtocolDistribution(sessions);
+  const tlsOutcomes = buildTlsOutcomeDistribution(sessions, protocol_events);
+
+  return (
+    <section aria-labelledby="session-distributions-heading" className="space-y-4">
+      <div>
+        <h2
+          id="session-distributions-heading"
+          className="text-lg font-semibold tracking-tight text-neutral-950"
+        >
+          Session distribution
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-neutral-600">
+          Protocol mix and observed TLS-upgrade outcomes.
+        </p>
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
           <CardHeader className="border-b border-neutral-200">
@@ -461,7 +399,8 @@ function SecurityPostureSection({ result }: { result: AnalysisResult }) {
               <h3>TLS-upgrade event outcomes</h3>
             </CardTitle>
             <CardDescription>
-              Exact transition-event presence; absence is not classified as failure.
+              Exact transition-event presence; absence is not classified as
+              failure.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -470,107 +409,7 @@ function SecurityPostureSection({ result }: { result: AnalysisResult }) {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <ShieldCheck
-              className="mt-0.5 size-4 shrink-0 text-neutral-600"
-              aria-hidden
-            />
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-950">
-                Policy Risk
-              </h3>
-              <p className="mt-1 text-xs leading-5 text-neutral-600">
-                {policy_risk
-                  ? `${pluralize(policy_risk.contributions.length, "validated contribution")} under profile ${policy_risk.profile_id}.`
-                  : "No Policy Risk summary is present in the validated result."}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <EyeOff
-              className="mt-0.5 size-4 shrink-0 text-neutral-600"
-              aria-hidden
-            />
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-950">
-                ML Anomaly
-              </h3>
-              <p className="mt-1 text-xs leading-5 text-neutral-600">
-                {anomaly_results.length > 0
-                  ? `${pluralize(anomaly_results.length, "validated per-session result")}. Anomaly is not proof of malicious activity.`
-                  : `Engine status is ${humanize(analysis.ml_engine_status)}. No anomaly conclusion is shown.`}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
-  );
-}
-
-function EvidenceBoundariesSection({ result }: { result: AnalysisResult }) {
-  const tls13Unavailable = result.chain.crypto_observations.filter(
-    (observation) => observation.kind === "tls13_certificate_unavailable",
-  );
-  const authorizedSecrets = result.chain.analysis.tls13_authorized_secrets;
-
-  return (
-    <Card
-      className="rounded-lg border-amber-200 bg-amber-50/50 shadow-sm ring-0"
-      aria-labelledby="evidence-boundaries-heading"
-    >
-      <CardHeader className="border-b border-amber-200">
-        <div className="flex items-start gap-3">
-          <LockKeyhole
-            className="mt-0.5 size-5 shrink-0 text-amber-800"
-            aria-hidden
-          />
-          <div>
-            <CardTitle>
-              <h2 id="evidence-boundaries-heading">Evidence boundaries</h2>
-            </CardTitle>
-            <CardDescription className="mt-1 text-neutral-700">
-              Passive observation establishes visible transport events, not
-              decrypted message content.
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4 text-xs leading-5 text-neutral-700">
-        <p>
-          SecureMailScope does not display packet payloads, message bodies,
-          AUTH credentials, or secrets in this Overview. Encrypted application
-          data is reported only as encrypted traffic; this interface never
-          implies decryption.
-        </p>
-        <div className="rounded-md border border-amber-200 bg-white p-3">
-          <p className="font-semibold text-neutral-950">
-            TLS 1.3 certificate visibility
-          </p>
-          <p className="mt-1">
-            Authorized session secrets: <code>{humanize(authorizedSecrets)}</code>.
-            {tls13Unavailable.length > 0
-              ? ` ${pluralize(tls13Unavailable.length, "certificate observation")} retain ${[
-                  ...new Set(
-                    tls13Unavailable.map((item) => item.observability),
-                  ),
-                ]
-                  .map(humanize)
-                  .join(", ")} semantics.`
-              : " No TLS 1.3 certificate-unavailability observation is present in this result."}
-          </p>
-          <p className="mt-1">
-            Without authorized secrets, TLS 1.3 certificate contents after
-            ServerHello are not observable. That state must not be interpreted
-            as missing, invalid, expired, or trusted.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -634,8 +473,8 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
           <h2 id="prioritized-sessions-heading">Prioritized sessions</h2>
         </CardTitle>
         <CardDescription>
-          Sessions with validated linked findings appear first. No client-side
-          severity, finding, or evidence is generated.
+          Sessions with linked findings appear first. Open a session to review
+          its timeline, cryptography and evidence.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -652,15 +491,12 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
         ) : (
           <>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[52rem] border-collapse text-left text-xs">
+              <table className="w-full min-w-[44rem] border-collapse text-left text-xs">
                 <caption className="sr-only">
                   Reconstructed sessions with Session X-Ray navigation
                 </caption>
                 <thead>
                   <tr className="border-b border-neutral-200 text-[10px] uppercase tracking-[0.06em] text-neutral-500">
-                    <th scope="col" className="px-3 py-3 font-bold">
-                      Session
-                    </th>
                     <th scope="col" className="px-3 py-3 font-bold">
                       Protocol
                     </th>
@@ -673,10 +509,7 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
                     <th scope="col" className="px-3 py-3 font-bold">
                       Policy findings
                     </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3 text-right font-bold"
-                    >
+                    <th scope="col" className="px-3 py-3 text-right font-bold">
                       Session X-Ray
                     </th>
                   </tr>
@@ -687,15 +520,6 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
                       key={review.session.session_id}
                       className="border-b border-neutral-100 last:border-0"
                     >
-                      <td className="px-3 py-4 align-top">
-                        <p className="font-mono text-[11px] text-neutral-950">
-                          {review.session.session_id}
-                        </p>
-                        <p className="mt-1 text-[11px] text-neutral-500">
-                          Stream {review.session.tcp_stream_id} ·{" "}
-                          {humanize(review.session.capture_completeness)}
-                        </p>
-                      </td>
                       <td className="px-3 py-4 align-top font-medium uppercase text-neutral-800">
                         {review.session.protocol}
                       </td>
@@ -704,7 +528,8 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
                           {formatEndpoint(review.session.source_endpoint)}
                         </span>
                         <span className="block">
-                          → {formatEndpoint(review.session.destination_endpoint)}
+                          →{" "}
+                          {formatEndpoint(review.session.destination_endpoint)}
                         </span>
                       </td>
                       <td className="px-3 py-4 align-top text-neutral-700">
@@ -737,12 +562,11 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="break-all font-mono text-xs font-semibold text-neutral-950">
-                        {review.session.session_id}
+                      <h3 className="text-sm font-semibold text-neutral-950">
+                        {review.session.protocol.toUpperCase()} session
                       </h3>
-                      <p className="mt-1 text-[11px] uppercase text-neutral-500">
-                        {review.session.protocol} · Stream{" "}
-                        {review.session.tcp_stream_id}
+                      <p className="mt-1 text-[11px] text-neutral-500">
+                        Reconstructed transport flow
                       </p>
                     </div>
                     <Badge
@@ -796,38 +620,167 @@ function PrioritizedSessionsSection({ result }: { result: AnalysisResult }) {
   );
 }
 
-function LimitationsSection({ result }: { result: AnalysisResult }) {
-  if (result.chain.analysis.limitations.length === 0) return null;
+function AssessmentCoverageSection({ result }: { result: AnalysisResult }) {
+  const limitationCount = result.chain.analysis.limitations.length;
+  const captureWarningCount = result.chain.captures.reduce(
+    (count, capture) => count + capture.capture_warnings.length,
+    0,
+  );
+  const tls13UnavailableCount = result.chain.crypto_observations.filter(
+    (observation) => observation.kind === "tls13_certificate_unavailable",
+  ).length;
+  const hasInterpretationLimits =
+    limitationCount > 0 || captureWarningCount > 0 || tls13UnavailableCount > 0;
+  const eventTypes = new Set<string>(
+    result.chain.protocol_events.map((event) => event.event_type),
+  );
+  const observationKinds = new Set<string>(
+    result.chain.crypto_observations.map((observation) => observation.kind),
+  );
+  const factTypes = new Set<string>(
+    result.chain.derived_facts.map((fact) => fact.fact_type),
+  );
+  const protocols = [
+    ...new Set(
+      result.chain.sessions.map((session) => session.protocol.toUpperCase()),
+    ),
+  ].sort();
+  const hasTransitionEvidence = [
+    "tls_upgrade_requested",
+    "tls_upgrade_accepted",
+    "tls_upgrade_rejected",
+  ].some((eventType) => eventTypes.has(eventType));
+  const hasTlsObservations = [
+    "tls_negotiated_version",
+    "selected_cipher_suite",
+    "key_share_group",
+  ].some((kind) => observationKinds.has(kind));
+  const hasCertificateObservations = result.chain.crypto_observations.some(
+    (observation) => observation.kind.startsWith("certificate_"),
+  );
+  const coverageRows = [
+    {
+      label: "Protocol identification",
+      status: result.chain.sessions.length > 0 ? "Assessed" : "Not assessed",
+      detail:
+        protocols.length > 0
+          ? `${protocols.join(", ")} observed in reconstructed sessions`
+          : "No reconstructed session was supplied",
+    },
+    {
+      label: "Encryption transition",
+      status:
+        result.chain.sessions.length === 0
+          ? "Not assessed"
+          : hasTransitionEvidence
+            ? "Assessed"
+            : "No evidence supplied",
+      detail: "STARTTLS or equivalent transition evidence",
+    },
+    {
+      label: "TLS negotiation",
+      status: hasTlsObservations ? "Assessed" : "No evidence supplied",
+      detail: "Version, cipher, or key-share observations",
+    },
+    {
+      label: "Certificates",
+      status: hasCertificateObservations
+        ? "Assessed"
+        : tls13UnavailableCount > 0
+          ? "Not observable"
+          : "Not assessed",
+      detail:
+        tls13UnavailableCount > 0 && !hasCertificateObservations
+          ? "Encrypted TLS 1.3 certificate contents"
+          : "Observable certificate evidence",
+    },
+    {
+      label: "Forward Secrecy",
+      status: factTypes.has("forward_secrecy") ? "Assessed" : "Not assessed",
+      detail: "Derived only from supplied cryptographic facts",
+    },
+    {
+      label: "Policy Risk",
+      status: result.chain.policy_risk ? "Assessed" : "Not assessed",
+      detail: "Deterministic policy result",
+    },
+    {
+      label: "ML Anomaly",
+      status:
+        result.chain.anomaly_results.length > 0
+          ? "Assessed"
+          : result.chain.analysis.ml_engine_status === "complete"
+            ? "No results"
+            : stateLabel(result.chain.analysis.ml_engine_status),
+      detail: "Separate behavioral signal",
+    },
+  ];
 
   return (
-    <Card className="rounded-lg border-neutral-200 shadow-sm ring-0">
+    <Card
+      className={`rounded-lg shadow-sm ring-0 ${
+        hasInterpretationLimits
+          ? "border-amber-200 bg-amber-50/30"
+          : "border-neutral-200"
+      }`}
+      aria-labelledby="assessment-coverage-heading"
+    >
       <CardHeader className="border-b border-neutral-200">
-        <CardTitle>
-          <h2>Declared analysis limitations</h2>
-        </CardTitle>
-        <CardDescription>
-          Limitations supplied by the validated result remain visible.
-        </CardDescription>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <Info
+              className={`mt-0.5 size-5 shrink-0 ${
+                hasInterpretationLimits ? "text-amber-800" : "text-neutral-600"
+              }`}
+              aria-hidden
+            />
+            <div>
+              <CardTitle>
+                <h2 id="assessment-coverage-heading">Assessment coverage</h2>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                What this report assessed, did not observe, or could not
+                observe from the supplied capture.
+              </CardDescription>
+              {hasInterpretationLimits ? (
+                <p className="mt-2 text-xs leading-5 text-amber-900">
+                  {pluralize(limitationCount, "limitation")} ·{" "}
+                  {pluralize(captureWarningCount, "capture warning")} ·{" "}
+                  {pluralize(
+                    tls13UnavailableCount,
+                    "TLS 1.3 visibility constraint",
+                  )}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <AnalysisDetails trigger="coverage" />
+        </div>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-3">
-          {result.chain.analysis.limitations.map((limitation, index) => (
-            <li
-              key={`${limitation.code}-${index}`}
-              className="flex items-start gap-3 rounded-md border border-neutral-200 bg-neutral-50 p-3"
-            >
-              <Info
-                className="mt-0.5 size-4 shrink-0 text-neutral-500"
-                aria-hidden
-              />
-              <div>
-                <p className="font-mono text-[11px] text-neutral-500">
-                  {limitation.code}
+        <ul className="grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-2 xl:grid-cols-4">
+          {coverageRows.map((item) => (
+            <li key={item.label} className="min-w-0 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-semibold text-neutral-950">
+                  {item.label}
                 </p>
-                <p className="mt-1 text-xs leading-5 text-neutral-700">
-                  {limitation.summary}
-                </p>
+                <Badge
+                  variant="outline"
+                  className={`shrink-0 rounded-md text-[10px] ${
+                    item.status === "Assessed"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : item.status === "Not observable"
+                        ? "border-amber-200 bg-amber-50 text-amber-900"
+                        : "border-neutral-300 bg-neutral-50 text-neutral-700"
+                  }`}
+                >
+                  {item.status}
+                </Badge>
               </div>
+              <p className="mt-2 text-xs leading-5 text-neutral-600">
+                {item.detail}
+              </p>
             </li>
           ))}
         </ul>
@@ -835,10 +788,7 @@ function LimitationsSection({ result }: { result: AnalysisResult }) {
     </Card>
   );
 }
-
 export function AnalysisOverview({ result }: { result: AnalysisResult }) {
-  const isPrototype = result.data_source === "mock";
-
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <header>
@@ -865,30 +815,12 @@ export function AnalysisOverview({ result }: { result: AnalysisResult }) {
         </div>
       </header>
 
-      {isPrototype ? (
-        <Alert className="border-blue-200 bg-blue-50 p-4 text-blue-950">
-          <Database className="text-blue-700" aria-hidden />
-          <AlertTitle>
-            {result.dataset_label ?? "Prototype Analysis Dataset"}
-          </AlertTitle>
-          <AlertDescription className="text-blue-900/80">
-            Deterministic contract fixtures for frontend validation. This is
-            not a production analyzer run and does not represent analysis of a
-            newly uploaded capture.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
       <IdentitySection result={result} />
       <SecurityPostureSection result={result} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.8fr)]">
-        <CaptureIntegritySection result={result} />
-        <EvidenceBoundariesSection result={result} />
-      </div>
-
       <PrioritizedSessionsSection result={result} />
-      <LimitationsSection result={result} />
+      <DistributionsSection result={result} />
+      <AssessmentCoverageSection result={result} />
     </div>
   );
 }

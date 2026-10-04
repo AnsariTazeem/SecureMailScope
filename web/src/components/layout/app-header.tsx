@@ -1,10 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FilePlus2, Shield } from "lucide-react";
 
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
 import { DatasetBanner } from "@/components/layout/dataset-banner";
 import { AppMobileNavigation } from "@/components/layout/app-sidebar";
 
 export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
+  const pathname = usePathname();
+  const isOverviewPage = /^\/analysis\/ana_[0-9a-f]{16}\/overview\/?$/.test(pathname);
   if (isUploadPage) {
     return (
       <header
@@ -34,7 +40,7 @@ export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
           <AppMobileNavigation />
           <Link
             href="/analysis/new"
-            className="min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2"
+            className={`${isOverviewPage ? "hidden sm:block" : ""} min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2`}
           >
             <span className="block truncate text-sm font-semibold tracking-tight text-neutral-950">
               SecureMailScope
@@ -44,13 +50,19 @@ export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
             </span>
           </Link>
         </div>
-        <p className="hidden text-sm font-semibold text-neutral-900 lg:block">
-          Analysis workspace
-        </p>
+        {isOverviewPage ? (
+          <AnalysisBreadcrumbs />
+        ) : (
+          <p className="hidden text-sm font-semibold text-neutral-900 lg:block">
+            Analysis workspace
+          </p>
+        )}
         <div className="flex min-w-0 items-center justify-end gap-2">
-          <div className="hidden sm:block">
-            <DatasetBanner />
-          </div>
+          {isOverviewPage ? null : (
+            <div className="hidden sm:block">
+              <DatasetBanner />
+            </div>
+          )}
           <Link
             href="/analysis/new"
             className="hidden h-9 items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 text-sm font-medium text-neutral-800 shadow-xs transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 sm:flex"
