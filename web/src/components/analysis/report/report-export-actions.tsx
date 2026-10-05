@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, LoaderCircle, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,31 @@ export function ReportExportActions({
 }: ReportExportActionsProps) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [includeAppendix, setIncludeAppendix] = useState(false);
+
+  useEffect(() => {
+    const root = document.querySelector<HTMLElement>("[data-assessment-report]");
+    if (!root) return;
+    root.dataset.includeAppendix = String(includeAppendix);
+    let closedDetails: HTMLDetailsElement[] = [];
+    const preparePrint = () => {
+      closedDetails = Array.from(root.querySelectorAll<HTMLDetailsElement>("details[data-report-print-expand]:not([open])"))
+        .filter((details) => includeAppendix || !details.closest("[data-report-appendix]"));
+      for (const details of closedDetails) details.open = true;
+    };
+    const restoreScreen = () => {
+      for (const details of closedDetails) details.open = false;
+      closedDetails = [];
+    };
+    window.addEventListener("beforeprint", preparePrint);
+    window.addEventListener("afterprint", restoreScreen);
+    return () => {
+      restoreScreen();
+      window.removeEventListener("beforeprint", preparePrint);
+      window.removeEventListener("afterprint", restoreScreen);
+    };
+  }, [includeAppendix]);
+
 
   const downloadChain = async () => {
     setDownloading(true);
@@ -97,6 +122,15 @@ export function ReportExportActions({
           Print / Save as PDF
         </Button>
       </div>
+      <label className="mt-3 flex min-h-9 items-center gap-2 text-xs leading-5 text-neutral-600 sm:justify-end">
+        <input
+          type="checkbox"
+          checked={includeAppendix}
+          onChange={(event) => setIncludeAppendix(event.target.checked)}
+          className="size-4 shrink-0 accent-neutral-950"
+        />
+        Include technical appendix when printing
+      </label>
       {error ? (
         <p
           role="alert"
