@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FilePlus2, Shield } from "lucide-react";
 
-import { DatasetBanner } from "@/components/layout/dataset-banner";
 import { AppMobileNavigation } from "@/components/layout/app-sidebar";
 
 export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
@@ -55,11 +54,6 @@ export function AppHeader({ isUploadPage }: { isUploadPage: boolean }) {
           </p>
         )}
         <div className={`${isOverviewPage ? "ml-auto " : ""}flex min-w-0 items-center justify-end gap-2`}>
-          {isOverviewPage ? null : (
-            <div className="hidden sm:block">
-              <DatasetBanner />
-            </div>
-          )}
           <Link
             href="/analysis/new"
             className="hidden h-9 items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 text-sm font-medium text-neutral-800 shadow-xs transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 sm:flex"
