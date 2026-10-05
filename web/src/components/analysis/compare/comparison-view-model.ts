@@ -116,7 +116,7 @@ function missingCell(
   state: "not_present" | "not_assessed" | "not_observable",
   detail: string,
 ): ComparisonCell {
-  return textCell(state, { state, detail: [detail] });
+  return textCell(readableLabel(state), { state, detail: [detail] });
 }
 
 function formatValue(value: unknown): string {
@@ -126,6 +126,32 @@ function formatValue(value: unknown): string {
   }
   if (value === null) return "null";
   return JSON.stringify(value);
+}
+
+function readableLabel(value: string): string {
+  const readable = humanize(value)
+    .replace(/\btls\b/gi, "TLS")
+    .replace(/\bml\b/gi, "ML")
+    .replace(/\bstarttls\b/gi, "STARTTLS");
+  return readable.charAt(0).toUpperCase() + readable.slice(1);
+}
+
+function observationValue(
+  kind: CryptoObservation["kind"],
+  value: string,
+): string {
+  const tlsVersion = value.match(/^TLS_(\d)_(\d)$/);
+  if (tlsVersion) return `TLS ${tlsVersion[1]}.${tlsVersion[2]}`;
+  if (
+    kind === "psk_key_exchange_mode" ||
+    kind === "tls13_certificate_unavailable" ||
+    value === "not_observable" ||
+    value === "not_assessed" ||
+    value === "not_present"
+  ) {
+    return readableLabel(value);
+  }
+  return value;
 }
 
 function uniqueEvidence(records: XRayEvidence[]): XRayEvidence[] {
@@ -238,7 +264,7 @@ function eventCell(
     );
   if (events.length === 0) return missingCell("not_present", absentDetail);
 
-  return textCell(events.map((event) => event.event_type).join(" · "), {
+  return textCell(events.map((event) => readableLabel(event.event_type)).join(" · "), {
     state: [...new Set(events.map((event) => event.observability))].join(" · "),
     detail: events.map(
       (event) =>
@@ -270,8 +296,8 @@ function observationCell(
     observations
       .map((observation) =>
         observations.length === 1
-          ? observation.normalized_value
-          : `${observation.kind}: ${observation.normalized_value}`,
+          ? observationValue(observation.kind, observation.normalized_value)
+          : `${readableLabel(observation.kind)}: ${observationValue(observation.kind, observation.normalized_value)}`,
       )
       .join(" · "),
     {
@@ -308,7 +334,11 @@ function factCell(
     facts
       .map((fact) =>
         facts.length === 1
-          ? formatValue(fact.value)
+          ? typeof fact.value === "boolean"
+            ? fact.value
+              ? "Yes"
+              : "No"
+            : readableLabel(formatValue(fact.value))
           : `${fact.fact_id}: ${formatValue(fact.value)}`,
       )
       .join(" · "),
@@ -360,11 +390,11 @@ function findingCell(context: SessionContext): ComparisonCell {
   const findings = [...context.findings].sort((left, right) =>
     left.finding_id.localeCompare(right.finding_id),
   );
-  return textCell(findings.map((finding) => finding.finding_id).join(" · "), {
+  return textCell(findings.map((finding) => finding.title).join(" · "), {
     state: "policy_inferred",
     detail: findings.map(
       (finding) =>
-        `${finding.title} · severity ${finding.severity} · ${finding.rule_id} v${finding.rule_version}`,
+        `${finding.finding_id} · severity ${finding.severity} · ${finding.rule_id} v${finding.rule_version}`,
     ),
     evidence: uniqueEvidence(
       findings.flatMap((finding) =>
@@ -398,15 +428,14 @@ function policyContributionCell(
   return textCell(
     contributions
       .map(
-        (contribution) =>
-          `${contribution.finding_id}: ${contribution.policy_risk_contribution}`,
+        (contribution) => `${contribution.policy_risk_contribution} risk points`,
       )
       .join(" · "),
     {
       state: "policy_inferred",
       detail: contributions.map(
         (contribution) =>
-          `${contribution.contribution_id} · adjusted ${contribution.confidence_adjusted_points} · factor ${contribution.confidence_factor} · ${contribution.severity} / ${contribution.evidence_confidence} confidence`,
+          `${contribution.contribution_id} · ${contribution.finding_id} · adjusted ${contribution.confidence_adjusted_points} · factor ${contribution.confidence_factor} · ${contribution.severity} / ${contribution.evidence_confidence} confidence`,
       ),
       evidence: findingCell(context).evidence,
       evidenceRelationship: "direct",
@@ -418,7 +447,7 @@ function mlEngineCell(
   result: AnalysisResult,
   context: SessionContext,
 ): ComparisonCell {
-  return textCell(result.chain.analysis.ml_engine_status, {
+  return textCell(readableLabel(result.chain.analysis.ml_engine_status), {
     state: result.chain.analysis.ml_engine_status,
     detail: [
       `${context.anomalies.length} explicit session result${context.anomalies.length === 1 ? "" : "s"} supplied`,
@@ -438,12 +467,12 @@ function anomalyCell(context: SessionContext): ComparisonCell {
     left.anomaly_result_id.localeCompare(right.anomaly_result_id),
   );
   return textCell(
-    anomalies.map((anomaly) => anomaly.anomaly_result_id).join(" · "),
+    anomalies.map((anomaly) => readableLabel(anomaly.band)).join(" · "),
     {
       state: anomalies.map((anomaly) => anomaly.band).join(" · "),
       detail: anomalies.map(
         (anomaly) =>
-          `${anomaly.model_id} v${anomaly.model_version} · raw ${anomaly.raw_score} · normalized ${anomaly.normalized_score} · threshold ${anomaly.threshold} · ${anomaly.interpretation_note}`,
+          `${anomaly.anomaly_result_id} · ${anomaly.model_id} v${anomaly.model_version} · raw ${anomaly.raw_score} · normalized ${anomaly.normalized_score} · threshold ${anomaly.threshold} · ${anomaly.interpretation_note}`,
       ),
       evidence: uniqueEvidence(
         anomalies.flatMap((anomaly) =>
@@ -463,7 +492,7 @@ function evidenceCell(context: SessionContext): ComparisonCell {
     );
   }
   return textCell(
-    context.evidence.map((evidence) => evidence.evidenceId).join(" · "),
+    `${context.evidence.length} evidence reference${context.evidence.length === 1 ? "" : "s"}`,
     {
       state: "observed",
       detail: context.evidence.map(
@@ -482,7 +511,7 @@ function limitationCell(
 ): ComparisonCell {
   const records = uniqueLimitations(limitations);
   if (records.length === 0) return missingCell("not_present", emptyDetail);
-  return textCell(records.map((limitation) => limitation.code).join(" · "), {
+  return textCell(records.map((limitation) => limitation.summary).join(" · "), {
     state: records.map((limitation) => limitation.code).join(" · "),
     detail: records.map(
       (limitation) =>
@@ -493,9 +522,10 @@ function limitationCell(
 
 function captureIdentityCell(context: SessionContext): ComparisonCell {
   return textCell(
-    `${context.capture.capture_id} · ${context.capture.original_filename_sanitized}`,
+    context.capture.original_filename_sanitized,
     {
       detail: [
+        context.capture.capture_id,
         `${context.capture.format} · ${context.capture.size_bytes.toLocaleString("en")} bytes`,
       ],
     },
@@ -529,7 +559,7 @@ function buildCategories(
         ),
         both("protocol", "Protocol and confidence", (context) =>
           textCell(
-            `${context.session.protocol.toUpperCase()} · ${context.session.protocol_confidence}`,
+            context.session.protocol.toUpperCase(),
             {
               state: context.session.protocol_confidence,
               evidence: evidenceByIds(
@@ -701,11 +731,19 @@ function buildCategories(
           "analysis-limitations",
           "Declared analysis limitations",
           limitationCell(
-            result.chain.analysis.limitations,
+            result.chain.analysis.limitations.filter(
+              (item) =>
+                result.data_source !== "mock" ||
+                item.detail !== "prototype_analysis_dataset",
+            ),
             "No analysis-level limitation record is present.",
           ),
           limitationCell(
-            result.chain.analysis.limitations,
+            result.chain.analysis.limitations.filter(
+              (item) =>
+                result.data_source !== "mock" ||
+                item.detail !== "prototype_analysis_dataset",
+            ),
             "No analysis-level limitation record is present.",
           ),
         ),

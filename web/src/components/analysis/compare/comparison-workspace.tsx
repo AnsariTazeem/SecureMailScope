@@ -1,8 +1,8 @@
 "use client";
 
-import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
-
 import Link from "next/link";
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -10,7 +10,6 @@ import {
   BrainCircuit,
   GitCompareArrows,
   GitFork,
-  Info,
   ListChecks,
   Repeat2,
   ShieldAlert,
@@ -80,7 +79,7 @@ function StateBadge({ state }: { state: string | null }) {
         stateClassName(state),
       )}
     >
-      {state}
+      {state.replaceAll("_", " ")}
     </Badge>
   );
 }
@@ -153,8 +152,8 @@ function Selectors({ data }: { data: ComparisonPageData }) {
           Select reconstructed sessions
         </h2>
         <p className="mt-1 text-xs leading-5 text-neutral-600">
-          Selections are stored in the URL. Each pair is rebuilt on the server
-          from the validated result.
+          Choose the two sessions to inspect side by side. Your selection is
+          preserved in the URL.
         </p>
       </div>
       <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
@@ -170,7 +169,7 @@ function Selectors({ data }: { data: ComparisonPageData }) {
           >
             {data.options.map((option) => (
               <option key={option.sessionId} value={option.sessionId}>
-                {option.protocol.toUpperCase()} · stream {option.tcpStreamId} · {option.sessionId}
+                {option.protocol.toUpperCase()} · {option.sourceEndpoint} → {option.destinationEndpoint}
               </option>
             ))}
           </select>
@@ -199,7 +198,7 @@ function Selectors({ data }: { data: ComparisonPageData }) {
           >
             {data.options.map((option) => (
               <option key={option.sessionId} value={option.sessionId}>
-                {option.protocol.toUpperCase()} · stream {option.tcpStreamId} · {option.sessionId}
+                {option.protocol.toUpperCase()} · {option.sourceEndpoint} → {option.destinationEndpoint}
               </option>
             ))}
           </select>
@@ -224,11 +223,13 @@ function SessionSummaryCard({
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-neutral-500">
               {label}
             </p>
-            <CardTitle className="mt-1 break-all font-mono text-sm">
-              {summary.sessionId}
+            <CardTitle className="mt-1 text-base">
+              {summary.highlights.find((item) => item.label === "Protocol")?.value ??
+                "Reconstructed"}{" "}
+              session
             </CardTitle>
             <CardDescription className="mt-1 break-all">
-              {summary.captureName} · {summary.captureId}
+              {summary.captureName}
             </CardDescription>
           </div>
           <Link
@@ -248,9 +249,9 @@ function SessionSummaryCard({
                 {item.label}
               </dt>
               <dd className="mt-1 min-w-0">
-                <code className="block break-all font-mono text-xs leading-5 text-neutral-950">
+                <span className="block break-words text-xs font-medium leading-5 text-neutral-950">
                   {item.value}
-                </code>
+                </span>
                 <div className="mt-1.5">
                   <StateBadge state={item.state} />
                 </div>
@@ -258,14 +259,27 @@ function SessionSummaryCard({
             </div>
           ))}
         </dl>
-        <div className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-            Capture SHA-256
-          </p>
-          <code className="mt-1 block break-all font-mono text-[10px] leading-4 text-neutral-700">
-            {summary.captureSha256}
-          </code>
-        </div>
+        <details className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
+          <summary className="cursor-pointer text-xs font-medium text-neutral-700">
+            Technical identifiers
+          </summary>
+          <dl className="mt-3 space-y-2 text-xs">
+            <div>
+              <dt className="text-neutral-500">Session ID</dt>
+              <dd className="break-all font-mono">{summary.sessionId}</dd>
+            </div>
+            <div>
+              <dt className="text-neutral-500">Capture ID</dt>
+              <dd className="break-all font-mono">{summary.captureId}</dd>
+            </div>
+            <div>
+              <dt className="text-neutral-500">Capture SHA-256</dt>
+              <dd className="break-all font-mono text-[10px] leading-4">
+                {summary.captureSha256}
+              </dd>
+            </div>
+          </dl>
+        </details>
       </CardContent>
     </Card>
   );
@@ -285,14 +299,14 @@ function AssessmentBoundary({ data }: { data: ComparisonPageData }) {
               <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-violet-700">
                 Analysis-wide Policy Risk
               </p>
-              <p className="mt-1 font-mono text-sm font-semibold text-violet-950">
+              <p className="mt-1 text-sm font-semibold text-violet-950">
                 {data.policyRisk.status === "available"
-                  ? `capped ${data.policyRisk.cappedScore} · uncapped ${data.policyRisk.uncappedScore}`
-                  : "not_present"}
+                  ? `${data.policyRisk.cappedScore} / 100`
+                  : "Not available"}
               </p>
               <p className="mt-1 text-xs leading-5 text-violet-900/80">
                 {data.policyRisk.status === "available"
-                  ? `Profile ${data.policyRisk.profileId}. Per-session rows show declared contributions, not a browser-derived score.`
+                  ? "Analysis-wide deterministic risk. Per-session rows show declared contributions only."
                   : "No Policy Risk summary was supplied by the validated result."}
               </p>
             </div>
@@ -459,6 +473,21 @@ function ComparisonCategorySection({
 }
 
 export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
+  const [showMatching, setShowMatching] = useState(false);
+  const totalRowCount = data.categories.reduce(
+    (count, category) => count + category.rows.length,
+    0,
+  );
+  const matchingCount = totalRowCount - data.differenceCount;
+  const visibleCategories = data.categories
+    .map((category) => ({
+      ...category,
+      rows: showMatching
+        ? category.rows
+        : category.rows.filter((row) => row.differs),
+    }))
+    .filter((category) => category.rows.length > 0);
+
   return (
     <div
       className="mx-auto min-w-0 w-full max-w-[100rem] space-y-6"
@@ -474,8 +503,11 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
               Session Comparison
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-              Compare declared session posture and evidence side by side. A
-              difference means only that validated values or states differ.
+              Compare two reconstructed sessions to see where their transport
+              security posture differs.
+            </p>
+            <p className="mt-2 break-all font-mono text-xs text-neutral-500">
+              Analysis ID: {data.analysisId}
             </p>
           </div>
           <Link
@@ -487,31 +519,26 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
           </Link>
         </div>
 
-        <div className="grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
-          <div className="bg-white px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Analysis ID
-            </p>
-            <code className="mt-1 block break-all font-mono text-xs text-neutral-950">
-              {data.analysisId}
-            </code>
+        <div className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <strong>{data.differenceCount} security-relevant differences</strong>
+            <span className="ml-2 text-neutral-600">
+              Analysis {data.analysisStatus.replaceAll("_", " ")}
+            </span>
           </div>
-          <div className="bg-white px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Analysis status
-            </p>
-            <code className="mt-1 block font-mono text-xs text-neutral-950">
-              {data.analysisStatus}
-            </code>
-          </div>
-          <div className="bg-white px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-              Exact displayed differences
-            </p>
-            <code className="mt-1 block font-mono text-xs text-neutral-950">
-              {data.differenceCount}
-            </code>
-          </div>
+          {matchingCount > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMatching((current) => !current)}
+              aria-pressed={showMatching}
+            >
+              {showMatching
+                ? "Hide matching fields"
+                : `Show ${matchingCount} matching field${matchingCount === 1 ? "" : "s"}`}
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -543,10 +570,21 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
         </AlertDescription>
       </Alert>
 
-      <div className="space-y-4" aria-label="Exact comparison matrix">
-        {data.categories.map((category) => (
-          <ComparisonCategorySection key={category.key} category={category} />
-        ))}
+      <div className="space-y-4" aria-label="Security comparison matrix">
+        {visibleCategories.length > 0 ? (
+          visibleCategories.map((category) => (
+            <ComparisonCategorySection key={category.key} category={category} />
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed border-neutral-300 bg-white px-5 py-10 text-center">
+            <h2 className="text-sm font-semibold text-neutral-950">
+              No differences between the selected sessions
+            </h2>
+            <p className="mt-2 text-xs leading-5 text-neutral-600">
+              Show matching fields to inspect the complete side-by-side record.
+            </p>
+          </div>
+        )}
       </div>
 
       <nav
@@ -583,12 +621,6 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
         </Link>
       </nav>
 
-      <footer className="flex items-start gap-2 border-t border-neutral-200 pt-5 text-xs leading-5 text-neutral-500">
-        <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-        Comparison values were built on the server from the revalidated
-        AnalysisDataSource result. The browser only changes URL-backed session
-        selections and renders the supplied display model.
-      </footer>
     </div>
   );
 }
