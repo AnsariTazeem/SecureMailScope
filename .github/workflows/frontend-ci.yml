@@ -1,0 +1,73 @@
+name: Frontend CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_API_BASE_URL: https://securemailscope-production.up.railway.app
+
+jobs:
+  frontend-quality:
+    name: Frontend quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: web
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22.22.3"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate route types
+        run: npx --no-install next typegen
+
+      - name: Check TypeScript
+        run: npx --no-install tsc --noEmit
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run frontend regression tests
+        run: node --test tests/*.test.cjs
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      # Development tooling has an unpatched braces advisory; keep its report visible.
+      - name: Report development dependency warnings
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Create production build
+        run: npm run build
+
+      - name: Check whitespace
+        run: git diff --check
