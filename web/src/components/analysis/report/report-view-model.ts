@@ -7,14 +7,7 @@ type CryptoObservation = Chain["crypto_observations"][number];
 type DerivedFact = Chain["derived_facts"][number];
 type Limitation = Chain["analysis"]["limitations"][number];
 
-type SafeReportObservationKind = Extract<
-  CryptoObservation["kind"],
-  | "tls_negotiated_version"
-  | "selected_cipher_suite"
-  | "key_share_group"
-  | "psk_key_exchange_mode"
-  | "tls13_certificate_unavailable"
->;
+type SafeReportObservationKind = CryptoObservation["kind"];
 
 type SafeReportFactType =
   | "tls_upgrade_completed"
@@ -38,6 +31,7 @@ export type ReportCryptoDimension = {
   key: string;
   label: string;
   description: string;
+  notes: ReportNoteGroup[];
   values: Array<{
     value: string;
     state: string;
@@ -53,6 +47,14 @@ export type ReportFinding = {
   rationale: string;
   evidenceCount: number;
   factCount: number;
+  impact: string;
+  confidence: string;
+  observability: string;
+  sessionLabel: string;
+  recommendationId: string;
+  limitations: Limitation[];
+  source: Chain["findings"][number];
+  evidence: Chain["evidence"];
 };
 
 export type ReportRecommendation = {
@@ -65,9 +67,16 @@ export type ReportRecommendation = {
   affectedFindingIds: string[];
   actionSteps: string[];
   verificationSteps: string[];
+  affectedFindings: Array<{ id: string; title: string }>;
+  affectedSessions: Array<{ id: string; label: string }>;
+  standardsReferences: Chain["recommendations"][number]["standards_references"];
 };
 
+export type ReportNoteGroup = Limitation & { owners: string[] };
+
 export type ReportPageData = {
+  chain: Chain;
+  affectedSessionCount: number;
   analysisId: string;
   analysisStatus: string;
   analysisTimestamp: string | null;
@@ -80,6 +89,9 @@ export type ReportPageData = {
   cryptoCoverageSessionCount: number;
   protocolCoverage: ReportProtocolCoverage[];
   cryptoDimensions: ReportCryptoDimension[];
+  additionalCryptoDimensions: ReportCryptoDimension[];
+  coverageNotes: ReportNoteGroup[];
+  anomalyNotes: ReportNoteGroup[];
   importantFindings: ReportFinding[];
   totalFindings: number;
   graphCounts: {
@@ -92,6 +104,7 @@ export type ReportPageData = {
   policyRisk: {
     engineStatus: string;
     available: boolean;
+    score: number | null;
     profileId: string | null;
     contributionCount: number;
     findingCount: number;
@@ -107,7 +120,7 @@ export type ReportPageData = {
     modelVersion: string | null;
     bandDistribution: Array<{ band: string; count: number }>;
   };
-  limitations: Array<{ code: string; summary: string }>;
+  limitations: Array<Limitation & { owner: string }>;
   recommendations: ReportRecommendation[];
   links: {
     overview: string;
@@ -115,6 +128,7 @@ export type ReportPageData = {
     proofMap: string;
     findings: string;
     compare: string;
+    recommendations: string;
   };
 };
 
@@ -156,12 +170,6 @@ const cryptoDimensions: Array<{
     label: "Forward Secrecy",
     description: "Declared Forward Secrecy facts only.",
     factType: "forward_secrecy",
-  },
-  {
-    key: "tls-upgrade-completion",
-    label: "TLS upgrade completion",
-    description: "Declared completion facts; no event is promoted to success.",
-    factType: "tls_upgrade_completed",
   },
   {
     key: "certificate-observability",
@@ -285,8 +293,9 @@ function buildCryptoDimensions(
   sessions: Session[],
   observations: CryptoObservation[],
   facts: DerivedFact[],
+  dimensions = cryptoDimensions,
 ): ReportCryptoDimension[] {
-  return cryptoDimensions.flatMap((dimension) => {
+  return dimensions.flatMap((dimension) => {
     const explicitRecords = sessions.map((session) => ({
       session,
       records: dimensionRecordsForSession(
@@ -326,6 +335,18 @@ function buildCryptoDimensions(
         key: dimension.key,
         label: dimension.label,
         description: dimension.description,
+        notes: groupReportNotes(sessions.flatMap((session) => {
+          const matchingFacts = dimension.factType
+            ? facts.filter((fact) => fact.session_id === session.session_id && fact.fact_type === dimension.factType)
+            : [];
+          if (matchingFacts.length) {
+            return matchingFacts.flatMap((fact) => fact.limitations.map((note) => ({ ...note, owner: fact.fact_id })));
+          }
+          const kinds = new Set(dimension.observationKinds ?? []);
+          return observations
+            .filter((observation) => observation.session_id === session.session_id && kinds.has(observation.kind))
+            .flatMap((observation) => observation.limitations.map((note) => ({ ...note, owner: observation.observation_id })));
+        })),
         values: [...counts.values()]
           .sort(
             (left, right) =>
@@ -342,15 +363,85 @@ function buildCryptoDimensions(
   });
 }
 
-function uniqueLimitations(limitations: Limitation[]): Limitation[] {
-  return [
-    ...new Map(
-      limitations.map((limitation) => [
-        `${limitation.code}:${limitation.summary}`,
-        limitation,
-      ]),
-    ).values(),
-  ];
+export function reportNoteKey(note: Limitation): string {
+  return JSON.stringify([note.code, note.summary, note.detail]);
+}
+
+/** Only exact duplicate notes are grouped; differing details remain distinct. */
+export function groupReportNotes(notes: ReportPageData["limitations"]): ReportNoteGroup[] {
+  const groups = new Map<string, ReportNoteGroup>();
+  for (const { owner, ...note } of notes) {
+    const key = reportNoteKey(note);
+    const existing = groups.get(key);
+    if (existing) {
+      if (!existing.owners.includes(owner)) existing.owners.push(owner);
+    } else {
+      groups.set(key, { ...note, owners: [owner] });
+    }
+  }
+  return [...groups.values()];
+}
+
+function additionalObservationDimensions(observations: CryptoObservation[]) {
+  const primaryKinds = new Set(cryptoDimensions.flatMap((dimension) => dimension.observationKinds ?? []));
+  const labels: Partial<Record<CryptoObservation["kind"], string>> = {
+    record_layer_legacy_version: "Record-layer legacy version",
+    supported_versions: "Advertised TLS versions",
+    signature_algorithm: "Signature algorithm",
+    public_key_algorithm: "Public-key algorithm",
+    public_key_length: "Public-key length",
+    certificate_subject: "Certificate subject",
+    certificate_issuer: "Certificate issuer",
+    certificate_san: "Certificate subject alternative names",
+    certificate_validity_window: "Certificate validity period",
+    certificate_fingerprint: "Certificate fingerprint",
+    certificate_chain_structure: "Certificate chain structure",
+    certificate_serial_number: "Certificate serial number",
+    certificate_basic_constraints: "Certificate basic constraints",
+    certificate_key_usage: "Certificate key usage",
+    certificate_structure_parsed: "Certificate structure parsing",
+    certificate_signature_chain_checked: "Certificate signature-chain check",
+    certificate_trusted_path_validated: "Certificate trusted-path validation",
+    certificate_service_identity_validated: "Certificate service-identity validation",
+    certificate_revocation_checked: "Certificate revocation check",
+    session_resumption_indicator: "Session resumption indicator",
+  };
+  return [...new Set(observations.map((observation) => observation.kind))]
+    .filter((kind) => !primaryKinds.has(kind))
+    .map((kind) => ({
+      key: "observation-" + kind,
+      label: labels[kind] ?? kind.replaceAll("_", " "),
+      description: kind === "record_layer_legacy_version"
+        ? "Record-layer value; this is not the negotiated TLS version."
+        : "Supplied observations with their recorded evidence states.",
+      observationKinds: [kind],
+    }));
+}
+
+export function reportSessionLabel(session: Session): string {
+  const endpoint = ({ ip, port }: Session["source_endpoint"]) =>
+    (ip.includes(":") ? "[" + ip + "]" : ip) + ":" + port;
+  return session.protocol.toUpperCase() + " · stream " + session.tcp_stream_id +
+    " · " + endpoint(session.source_endpoint) + " → " + endpoint(session.destination_endpoint);
+}
+
+function collectLimitations(chain: Chain): ReportPageData["limitations"] {
+  const limitations: ReportPageData["limitations"] = [];
+  const collect = (owner: string, records: Limitation[]) => {
+    for (const limitation of records) limitations.push({ ...limitation, owner });
+  };
+  collect(chain.analysis.analysis_id, chain.analysis.limitations);
+  for (const session of chain.sessions) collect(session.session_id, session.limitations);
+  for (const event of chain.protocol_events) collect(event.event_id, event.limitations);
+  for (const observation of chain.crypto_observations) collect(observation.observation_id, observation.limitations);
+  for (const fact of chain.derived_facts) collect(fact.fact_id, fact.limitations);
+  for (const finding of chain.findings) collect(finding.finding_id, finding.limitations);
+  if (chain.policy_risk) collect(chain.policy_risk.policy_risk_id, chain.policy_risk.limitations);
+  for (const anomaly of chain.anomaly_results) collect(anomaly.anomaly_result_id, anomaly.limitations);
+  chain.execution.stage_diagnostics.forEach((stage, index) => {
+    if (stage.limitation) collect("Stage " + stage.stage + " · record " + (index + 1), [stage.limitation]);
+  });
+  return limitations;
 }
 
 export function buildReportPageData(result: AnalysisResult): ReportPageData {
@@ -416,20 +507,18 @@ export function buildReportPageData(result: AnalysisResult): ReportPageData {
       .map((fact) => fact.session_id),
   ]);
 
-  const declaredLimitations = uniqueLimitations([
-    ...analysis.limitations,
-    ...crypto_observations
-      .filter(
-        (observation) =>
-          observation.kind === "tls13_certificate_unavailable",
-      )
-      .flatMap((observation) => observation.limitations),
-    ...derived_facts
-      .filter((fact) => fact.fact_type === "certificate_observability")
-      .flatMap((fact) => fact.limitations),
+  const declaredLimitations = collectLimitations(result.chain);
+  const sessionById = new Map(sessions.map((session) => [session.session_id, session]));
+  const anomalyNoteKeys = new Set(anomaly_results.flatMap((anomaly) => anomaly.limitations).map(reportNoteKey));
+  const anomalyIds = new Set(anomaly_results.map((anomaly) => anomaly.anomaly_result_id));
+  const locallyDisplayedOwners = new Set([
+    ...findings.map((finding) => finding.finding_id),
+    ...anomalyIds,
   ]);
 
   return {
+    chain: result.chain,
+    affectedSessionCount: new Set(findings.map((finding) => finding.session_id)).size,
     analysisId,
     analysisStatus: analysis.analysis_status,
     analysisTimestamp: analysis.completed_at,
@@ -455,7 +544,16 @@ export function buildReportPageData(result: AnalysisResult): ReportPageData {
       crypto_observations,
       derived_facts,
     ),
-    importantFindings: sortedFindings.slice(0, 5).map((finding) => ({
+    additionalCryptoDimensions: buildCryptoDimensions(
+      sessions, crypto_observations, [],
+      additionalObservationDimensions(crypto_observations),
+    ),
+    coverageNotes: groupReportNotes(declaredLimitations.filter((note) =>
+      !locallyDisplayedOwners.has(note.owner) &&
+      !((note.owner === analysisId || note.owner.startsWith("Stage ")) && anomalyNoteKeys.has(reportNoteKey(note)))
+    )),
+    anomalyNotes: groupReportNotes(declaredLimitations.filter((note) => anomalyIds.has(note.owner))),
+    importantFindings: sortedFindings.map((finding) => ({
       findingId: finding.finding_id,
       title: finding.title,
       severity: finding.severity,
@@ -463,6 +561,14 @@ export function buildReportPageData(result: AnalysisResult): ReportPageData {
       rationale: finding.rationale,
       evidenceCount: finding.evidence_ids.length,
       factCount: finding.fact_ids.length,
+      impact: finding.impact,
+      confidence: finding.evidence_confidence,
+      observability: finding.observability,
+      sessionLabel: reportSessionLabel(sessionById.get(finding.session_id)!),
+      recommendationId: finding.recommendation_id,
+      limitations: finding.limitations,
+      source: finding,
+      evidence: evidence.filter((record) => finding.evidence_ids.includes(record.evidence_id)),
     })),
     totalFindings: findings.length,
     graphCounts: {
@@ -475,6 +581,7 @@ export function buildReportPageData(result: AnalysisResult): ReportPageData {
     policyRisk: {
       engineStatus: analysis.rule_engine_status,
       available: policy_risk !== null,
+      score: policy_risk?.capped_score ?? null,
       profileId: policy_risk?.profile_id ?? null,
       contributionCount: policy_risk?.contributions.length ?? 0,
       findingCount: findings.length,
@@ -494,10 +601,7 @@ export function buildReportPageData(result: AnalysisResult): ReportPageData {
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([band, count]) => ({ band, count })),
     },
-    limitations: declaredLimitations.map((limitation) => ({
-      code: limitation.code,
-      summary: limitation.summary,
-    })),
+    limitations: declaredLimitations,
     recommendations: recommendations.map((recommendation) => ({
       recommendationId: recommendation.recommendation_id,
       title: recommendation.title,
@@ -508,12 +612,22 @@ export function buildReportPageData(result: AnalysisResult): ReportPageData {
       affectedFindingIds: [...recommendation.affected_finding_ids],
       actionSteps: [...recommendation.action_steps],
       verificationSteps: [...recommendation.verification_steps],
+      affectedFindings: findings
+        .filter((finding) => recommendation.affected_finding_ids.includes(finding.finding_id))
+        .map((finding) => ({ id: finding.finding_id, title: finding.title })),
+      affectedSessions: sessions
+        .filter((session) => findings.some((finding) =>
+          recommendation.affected_finding_ids.includes(finding.finding_id) &&
+          finding.session_id === session.session_id))
+        .map((session) => ({ id: session.session_id, label: reportSessionLabel(session) })),
+      standardsReferences: recommendation.standards_references,
     })),
     links: {
       overview: `/analysis/${analysisId}/overview`,
       sessions: `/analysis/${analysisId}/sessions`,
       proofMap: `/analysis/${analysisId}/proof-map`,
       findings: `/analysis/${analysisId}/findings?view=policy`,
+      recommendations: '/analysis/' + analysisId + '/recommendations',
       compare: `/analysis/${analysisId}/compare`,
     },
   };
