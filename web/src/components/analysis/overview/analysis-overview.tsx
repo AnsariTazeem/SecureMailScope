@@ -835,9 +835,7 @@ export function OverviewDataSourceFailure({
     <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center py-12 sm:py-20">
       <section className="w-full space-y-5">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Analysis / Overview
-          </p>
+          <AnalysisBreadcrumbs />
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
             Analysis result unavailable
           </h1>

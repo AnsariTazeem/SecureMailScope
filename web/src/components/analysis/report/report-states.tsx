@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 
@@ -13,9 +15,7 @@ export function ReportDataSourceFailure({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / Report
-        </p>
+        <AnalysisBreadcrumbs />
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
           SecureMailScope Assessment Report
         </h1>

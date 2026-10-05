@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { CircleAlert, SearchX } from "lucide-react";
 
@@ -13,9 +15,7 @@ export function SessionXRayDataSourceFailure({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center py-12 sm:py-20">
       <section className="w-full rounded-lg border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / Sessions / Session X-Ray
-        </p>
+        <AnalysisBreadcrumbs />
         <h1 className="mt-2 text-xl font-semibold text-neutral-950">
           Session evidence is unavailable
         </h1>
@@ -65,9 +65,7 @@ export function SessionRecordNotFound({
         <span className="mx-auto flex size-11 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-800">
           <SearchX className="size-5" aria-hidden />
         </span>
-        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / Sessions / Session X-Ray
-        </p>
+        <AnalysisBreadcrumbs className="mt-4" />
         <h1 className="mt-2 text-xl font-semibold text-neutral-950">
           Session not found
         </h1>

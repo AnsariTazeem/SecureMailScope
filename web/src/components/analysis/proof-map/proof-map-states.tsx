@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { CircleAlert } from "lucide-react";
 
@@ -13,9 +15,7 @@ export function ProofMapDataSourceFailure({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center py-12 sm:py-20">
       <section className="w-full rounded-lg border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / Proof Map
-        </p>
+        <AnalysisBreadcrumbs />
         <h1 className="mt-2 text-xl font-semibold text-neutral-950">
           Proof Map is unavailable
         </h1>

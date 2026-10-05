@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
@@ -13,7 +15,7 @@ export function RecommendationsDataSourceFailure({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <header>
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">Analysis / Recommendations</p>
+        <AnalysisBreadcrumbs />
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">Recommendations unavailable</h1>
       </header>
       <Alert className="border-red-200 bg-red-50/70 px-4 py-3 text-red-950">

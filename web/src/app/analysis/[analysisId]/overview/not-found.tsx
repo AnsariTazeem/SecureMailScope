@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { CircleAlert } from "lucide-react";
 
@@ -8,9 +10,7 @@ export default function OverviewNotFound() {
         <span className="mx-auto flex size-11 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-800">
           <CircleAlert className="size-5" aria-hidden />
         </span>
-        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / Overview
-        </p>
+        <AnalysisBreadcrumbs className="mt-4" />
         <h1 className="mt-2 text-xl font-semibold text-neutral-950">
           Analysis ID is invalid or unavailable
         </h1>
