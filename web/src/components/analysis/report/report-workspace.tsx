@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import {
   Brain,
@@ -818,9 +820,7 @@ export function ReportWorkspace({
     <div data-assessment-report className={cn(styles.report, "report-print-root mx-auto min-w-0 w-full max-w-[92rem] space-y-8")}>
       <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Analysis / Report
-          </p>
+          <AnalysisBreadcrumbs />
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
             SecureMailScope Assessment Report
           </h1>

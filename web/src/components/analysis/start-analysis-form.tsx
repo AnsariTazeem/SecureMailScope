@@ -1,5 +1,7 @@
 "use client";
 
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleAlert, Database, Info, Play } from "lucide-react";
@@ -97,9 +99,7 @@ export function StartAnalysisForm() {
   return (
     <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-600">
-          Capture intake
-        </p>
+        <AnalysisBreadcrumbs />
         <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
           Start Analysis
         </h1>

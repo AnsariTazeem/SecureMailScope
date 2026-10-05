@@ -1,7 +1,8 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { Construction, Database, Info } from "lucide-react";
 
-import { DatasetBanner } from "@/components/layout/dataset-banner";
 
 type FutureRoutePlaceholderProps = {
   analysisId: string;
@@ -19,9 +20,7 @@ export function FutureRoutePlaceholder({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-          Analysis / {title}
-        </p>
+        <AnalysisBreadcrumbs />
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">{title}</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">{description}</p>
       </div>
@@ -32,7 +31,6 @@ export function FutureRoutePlaceholder({
             <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">Analysis ID</p>
             <p className="mt-1 font-mono text-xs text-neutral-950">{analysisId}</p>
           </div>
-          <DatasetBanner />
         </div>
         <div className="flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center">
           <span className="flex size-12 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-neutral-600">

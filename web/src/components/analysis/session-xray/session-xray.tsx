@@ -1,3 +1,5 @@
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -159,9 +161,7 @@ function IdentityHeader({ data }: { data: SessionXRayData }) {
     <header className="space-y-4">
       <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Analysis / Sessions
-          </p>
+          <AnalysisBreadcrumbs />
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
             Session investigation
           </h1>

@@ -1,5 +1,7 @@
 "use client";
 
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
@@ -638,9 +640,7 @@ export function FindingsWorkspace({
     <div className="mx-auto min-w-0 w-full max-w-[96rem] space-y-6">
       <header className="min-w-0">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Analysis / Findings
-          </p>
+          <AnalysisBreadcrumbs />
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
             Findings
           </h1>

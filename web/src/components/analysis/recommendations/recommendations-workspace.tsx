@@ -1,5 +1,7 @@
 "use client";
 
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import { useLayoutEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -170,7 +172,7 @@ export function RecommendationsWorkspace({
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
       <header>
-        <p className="text-xs text-muted-foreground">Analysis / Recommendations</p>
+        <AnalysisBreadcrumbs />
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Recommendations</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           See what to fix, why it matters, and how to verify the change.

@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
+import { ANALYSIS_ID } from "@/lib/contracts/ids";
+import { cn } from "@/lib/utils";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -43,17 +46,18 @@ function crumbsForPath(pathname: string): Crumb[] {
   }
 
   const analysisId = parts[1];
-  if (!analysisId?.startsWith("ana_")) return [];
+  if (!analysisId) return [];
+  const validAnalysisId = ANALYSIS_ID.test(analysisId);
 
   const section = parts[2] ?? "overview";
   const crumbs: Crumb[] = [
-    { label: "Analysis", href: `/analysis/${analysisId}/overview` },
+    { label: "Analysis", href: validAnalysisId ? `/analysis/${analysisId}/overview` : "/analysis/new" },
   ];
 
   if (section === "sessions" && parts[3]) {
     crumbs.push({
       label: "Sessions",
-      href: `/analysis/${analysisId}/sessions`,
+      href: validAnalysisId ? `/analysis/${analysisId}/sessions` : "/analysis/new",
     });
     crumbs.push({ label: "Session X-Ray" });
     return crumbs;
@@ -62,7 +66,7 @@ function crumbsForPath(pathname: string): Crumb[] {
   if (section === "compare") {
     crumbs.push({
       label: "Sessions",
-      href: `/analysis/${analysisId}/sessions`,
+      href: validAnalysisId ? `/analysis/${analysisId}/sessions` : "/analysis/new",
     });
     crumbs.push({ label: "Compare" });
     return crumbs;
@@ -72,20 +76,23 @@ function crumbsForPath(pathname: string): Crumb[] {
   return crumbs;
 }
 
-export function AnalysisBreadcrumbs() {
+export function AnalysisBreadcrumbs({ className }: { className?: string }) {
   const pathname = usePathname();
   const crumbs = crumbsForPath(pathname);
   if (crumbs.length === 0) return null;
 
   return (
-    <Breadcrumb className="min-w-0">
+    <Breadcrumb className={cn("min-w-0", className)}>
       <BreadcrumbList className="flex-nowrap overflow-hidden text-xs">
         {crumbs.map((crumb, index) => (
           <Fragment key={`${crumb.label}:${index}`}>
             {index > 0 ? <BreadcrumbSeparator /> : null}
             <BreadcrumbItem className="min-w-0">
               {crumb.href && index < crumbs.length - 1 ? (
-                <BreadcrumbLink render={<Link href={crumb.href} />}>
+                <BreadcrumbLink
+                  render={<Link href={crumb.href} />}
+                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+                >
                   {crumb.label}
                 </BreadcrumbLink>
               ) : (

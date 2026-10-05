@@ -1,12 +1,13 @@
 "use client";
 
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   BrainCircuit,
-  Database,
   GitCompareArrows,
   GitFork,
   Info,
@@ -468,9 +469,7 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
       <header className="space-y-4">
         <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-              Analysis / Compare
-            </p>
+            <AnalysisBreadcrumbs />
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
               Session Comparison
             </h1>
@@ -487,17 +486,6 @@ export function ComparisonWorkspace({ data }: { data: ComparisonPageData }) {
             Overview
           </Link>
         </div>
-
-        {data.dataSource === "mock" ? (
-          <Alert className="border-blue-200 bg-blue-50/70 px-4 py-3 text-blue-950">
-            <Database className="size-4" aria-hidden />
-            <AlertTitle>Prototype Analysis Dataset</AlertTitle>
-            <AlertDescription className="text-blue-900/80">
-              {data.datasetLabel ?? "Prototype Analysis Dataset"} is a labelled,
-              validated synthetic fixture. It is not a production analyzer run.
-            </AlertDescription>
-          </Alert>
-        ) : null}
 
         <div className="grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
           <div className="bg-white px-4 py-3">

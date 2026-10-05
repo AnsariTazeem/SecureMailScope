@@ -1,5 +1,7 @@
 "use client";
 
+import { AnalysisBreadcrumbs } from "@/components/layout/analysis-breadcrumbs";
+
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { FilterX, Search, TableProperties } from "lucide-react";
@@ -162,9 +164,7 @@ export function SessionsExplorer({ data }: { data: SessionsExplorerData }) {
     <div className="mx-auto min-w-0 w-full max-w-[96rem] space-y-6">
       <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
-            Analysis / Sessions
-          </p>
+          <AnalysisBreadcrumbs />
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
             Sessions Explorer
           </h1>
