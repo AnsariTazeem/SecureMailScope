@@ -337,3 +337,63 @@ Commit 5A completed deterministic presentation and in-memory artifacts. Commit 5
 ## Production blockers and status
 
 No production blockers are recorded through Commit 5B. No subsequent backend milestone has been architecturally selected or authorized. The next backend milestone is pending explicit architectural selection and remains **UNVERIFIED**. IMAP/POP3 expansion, ML anomaly execution, upload/analysis orchestration, persistence, authentication and deployment remain separate, unimplemented candidates and are not authorized by this documentation update. Frontend implementation remains separate from the backend repository and is not a backend capability claim.
+
+## Render packaging for the verified V1 API — 2026-10-19
+
+- Explicitly authorized isolated worktree: `SecureMailScope-render`, branch
+  `deploy/render-v1`, based on `backend-v1-public-deployed` at
+  `f81bcc43ec660bfa32a40076bfe5c9f146d61339`. Backend V2 remains separate.
+- Added Docker/Render composition, strict deployment settings, offline startup
+  checks and bounded analysis-thread execution. Existing V1 analyzer, Chain,
+  policy, presentation and API response contracts are unchanged.
+- Render defaults: exact frontend origin
+  `https://secure-mail-scope.vercel.app`, 1 MiB upload, 16 in-memory analyses,
+  one active analysis. Excess submissions fail immediately with the existing
+  503 capacity envelope. No job API or persistent queue is introduced.
+- Clean baseline: `uv sync --locked`, Ruff lint/format and diff check passed;
+  pytest **772 passed, 4 skipped in 28.29s**. The isolated worktree does not
+  contain the ignored frozen T01 capture; no fixture was copied or altered.
+- Final Python verification: Ruff lint passed; **103 files** already formatted;
+  focused deployment tests **108 passed in 3.21s**; full suite **880 passed,
+  4 skipped in 27.50s**; `git diff --check` passed.
+- Separate real-tool ASGI check read the existing frozen synthetic capture
+  without changing it (SHA-256
+  `772d166b5e2b32516c76833357ff309af0d99d7bc962cf4c685279fc662ab086`).
+  Local TShark/capinfos **4.2.2** processed 6,604 bytes: upload 201, summary and
+  Chain 200, one session, 15 evidence records, zero findings, repeat upload 409,
+  empty scratch directory after requests, and prior-result 404 in a fresh app.
+  Finding artifacts were checked separately using injected deterministic test
+  analysis, not claimed as findings in this real T01 capture.
+- Python wheel includes the policy YAML and HTML template. Blueprint validated
+  against Render's official JSON Schema. Concurrency, responsive health and
+  cancellation cleanup passed injected-thread tests.
+- **Container build/runtime remain UNTESTED:** WSL Docker integration is
+  unavailable and the Windows Docker engine is not running. Docker was not
+  installed. No cloud resource, Vercel change, staging, commit, push or
+  deployment was performed. See `docs/RENDER_DEPLOYMENT.md` for the handoff.
+
+### Final V1 deployment review and publication checkpoint — 2026-10-19
+
+- Rechecked exact baseline/branch and the ten-file scope. Backend V2 remains on
+  `feat/backend-v2` at `f6d5984be1fb334ccf8ca8a0686cc28b01511bf1` with its
+  existing user changes preserved. No V2 implementation was copied or merged.
+- Closed a test-coverage gap: validation rejection paths now prove admission
+  is released for the next valid upload. Added the typed invalid-capture
+  failure case and explicit artifact scratch-cleanup assertions.
+- Ruff check and formatting passed (**103 files**); diff check passed.
+  Focused tests: **109 passed in 3.18s**. Full tests: **881 passed, 4 skipped
+  in 19.09s**. The same frozen-input skips remain; no test was weakened.
+- Independently ran the actual deployment entrypoint over local TCP HTTP in
+  a temporary working directory with real TShark/capinfos **4.2.2**. Approved
+  T01 input hash remained unchanged. Health/upload/summary/Chain/session/
+  evidence checks passed (200/201); repeat 409; invalid/empty/oversized
+  rejection 415/422/413; temporary files removed; actual process restart
+  returned prior-result 404. Only the test's own processes were stopped.
+- Revalidated the Blueprint against Render's current official JSON Schema.
+  Docker engine availability was rechecked: unavailable; no installation or
+  host configuration change was made. Docker build/container runtime and
+  actual Render deployment remain **UNTESTED**.
+- This follow-up explicitly authorizes committing and pushing only
+  `deploy/render-v1` after verification. No main merge, tag change, Render
+  resource, Vercel change or frontend API URL change is authorized here.
+  Frontend API configuration must wait for successful Render service checks.

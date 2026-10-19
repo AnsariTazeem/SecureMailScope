@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
+from functools import partial
 from typing import Annotated
 
 from fastapi import FastAPI, Path, Request
@@ -18,6 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
 
 from securemailscope.api.errors import ApiErrorCode, ErrorDetail, ErrorResponse
+from securemailscope.api.execution import BoundedAnalysisExecution
 from securemailscope.api.models import (
     AnalysisSubmissionResponse,
     AnalysisSummary,
@@ -94,6 +97,7 @@ class _AppState:
     orchestration_dependencies: OrchestrationDependencies | None
     source_configuration_digest: str
     clock: Callable[[], datetime]
+    analysis_execution: BoundedAnalysisExecution | None
 
 
 def _get_state(request: Request) -> _AppState:
@@ -264,6 +268,13 @@ async def health(request: Request) -> Response:
 async def submit_analysis(request: Request) -> Response:
     """Accept one bounded capture and delegate once to Commit 6A orchestration."""
     state = _get_state(request)
+    execution = state.analysis_execution
+    with execution.admit() if execution is not None else nullcontext():
+        return await _submit_admitted_analysis(request)
+
+
+async def _submit_admitted_analysis(request: Request) -> Response:
+    state = _get_state(request)
     async with parse_capture_upload(
         request,
         max_upload_bytes=state.settings.max_upload_bytes,
@@ -272,13 +283,19 @@ async def submit_analysis(request: Request) -> Response:
             parsed,
             max_upload_bytes=state.settings.max_upload_bytes,
         ) as capture_path:
-            result = analyze_capture_to_chain(
+            operation = partial(
+                analyze_capture_to_chain,
                 capture_path,
                 registry=state.repository,
                 policy_pack=state.policy_pack,
                 context=_execution_context(state),
                 settings=state.orchestration_settings,
                 dependencies=state.orchestration_dependencies,
+            )
+            result = (
+                await state.analysis_execution.run(operation)
+                if state.analysis_execution is not None
+                else operation()
             )
 
     body = AnalysisSubmissionResponse(
@@ -537,6 +554,8 @@ def create_app(
     policy_pack: PolicyPack | None = None,
     orchestration_dependencies: OrchestrationDependencies | None = None,
     clock: Callable[[], datetime] | None = None,
+    analysis_execution: BoundedAnalysisExecution | None = None,
+    cors_allowed_headers: tuple[str, ...] = ("*",),
 ) -> FastAPI:
     """Build the API over injected storage and orchestration boundaries.
 
@@ -568,6 +587,7 @@ def create_app(
         orchestration_dependencies=orchestration_dependencies,
         source_configuration_digest=_source_configuration_digest(settings),
         clock=clock or _utc_now,
+        analysis_execution=analysis_execution,
     )
 
     if settings.allowed_origins:
@@ -577,7 +597,7 @@ def create_app(
             CORSMiddleware,
             allow_origins=list(settings.allowed_origins),
             allow_methods=["GET", "POST"],
-            allow_headers=["*"],
+            allow_headers=list(cors_allowed_headers),
             allow_credentials=False,
         )
 

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: securemailscope-api
+    runtime: docker
+    plan: free
+    region: singapore
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SECUREMAILSCOPE_ALLOWED_ORIGINS
+        value: https://secure-mail-scope.vercel.app
+      - key: SECUREMAILSCOPE_MAX_UPLOAD_BYTES
+        value: "1048576"
+      - key: SECUREMAILSCOPE_MAX_REPOSITORY_ENTRIES
+        value: "16"
+      - key: SECUREMAILSCOPE_MAX_CONCURRENT_ANALYSES
+        value: "1"
+      - key: TMPDIR
+        value: /tmp/securemailscope
+      - key: PORT
+        value: "10000"
