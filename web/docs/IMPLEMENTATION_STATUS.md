@@ -555,3 +555,33 @@ uploads were not automated. The local production preview is running on port
 - Evidence: local headless audit JSON and PNGs outside the repository. This is
   browser/static/frontend proof, not production backend end-to-end or a manual
   assistive-technology certification. Frozen POC evidence is unchanged.
+
+
+## Upload recovery and dependency patch verification (2026-10-20)
+
+- Added an accessible upload waiting message and a neutral recovery panel with
+  explicit Explore Demo action and expandable upload diagnostics. Demo selection
+  remains explicit and separate from real uploaded-capture results.
+- Bounded the upload POST to 120 seconds with AbortSignal.timeout. A timed-out
+  request does not prove that server processing stopped; no automatic POST retry
+  or mock-result substitution occurs.
+- Patched existing locked production dependencies: sharp 0.35.4 -> 0.35.5
+  (including its platform/libvips packages), source-map-js 1.2.1 -> 1.2.2.
+  package.json and the application framework versions are unchanged.
+- Passed: node --test tests/*.test.cjs (17 tests), next typegen,
+  npx --no-install tsc --noEmit, npm run lint, npm run build, and
+  npm audit --omit=dev --audit-level=high (zero vulnerabilities).
+- Full npm audit still reports 11 development-only dependency entries:
+  1 critical, 9 high, 1 moderate. No claim of a clean full dependency audit.
+- Repository checks: uv run --locked --offline pytest -q (342 passed,
+  2 existing missing-T01-capture skips, 18.37 seconds), both locked/offline Ruff
+  checks (65 formatted files), and git diff --check passed.
+- Browser verification used a temporary local API returning 503 after 12 seconds.
+  Verified waiting copy, neutral failure UI, retained diagnostics, explicit demo
+  recovery through completion, and no horizontal overflow at the tested phone
+  width. This was controlled frontend behavior proof, not a new live Render run;
+  the timeout branch was verified with mocked fetch/abort behavior.
+- Vercel project secure-mail-scope: disabled Preview Branch Tracking as explicitly
+  requested; Production still tracks main and auto-assigns the existing submitted
+  domain. Manual previews remain available. No new production deployment.
+- Source changes remain unstaged and uncommitted.
