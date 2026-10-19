@@ -149,11 +149,40 @@ export function StartAnalysisForm() {
             onConfirmedChange={setAuthorizationConfirmed}
           />
 
+          {submitting ? (
+            <p role="status" className="text-sm leading-6 text-neutral-700">
+              Your capture is being submitted for analysis. The service may take
+              a little longer when waking up. Please keep this page open.
+              If the request cannot complete within two minutes, you can retry
+              or explore the sample analysis.
+            </p>
+          ) : null}
+
           {lastError ? (
-            <Alert variant="destructive">
+            <Alert className="border-neutral-200 bg-neutral-50">
               <Info aria-hidden />
-              <AlertTitle>Analysis could not start</AlertTitle>
-              <AlertDescription>{lastError}</AlertDescription>
+              <AlertTitle>Continue with a sample analysis</AlertTitle>
+              <AlertDescription className="space-y-3 text-neutral-700">
+                <p>
+                  This upload could not be completed. Explore Demo to review the
+                  sample analysis and its full workflow, or try your upload again.
+                  The sample is separate from your capture.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11"
+                  onClick={handlePrototypeSelection}
+                >
+                  Explore Demo
+                </Button>
+                <details className="text-xs">
+                  <summary className="cursor-pointer rounded-sm py-2 focus-visible:outline-2 focus-visible:outline-offset-2">
+                    Upload details
+                  </summary>
+                  <p className="mt-1 break-words">{lastError}</p>
+                </details>
+              </AlertDescription>
             </Alert>
           ) : null}
 

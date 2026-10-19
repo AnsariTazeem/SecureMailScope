@@ -129,6 +129,12 @@ async function requestJson(
   try {
     response = await fetch(url, { cache: "no-store", ...init });
   } catch {
+    if (init?.signal?.aborted) {
+      throw new ApiRequestError(
+        "The upload request timed out. The service may still be processing the capture; no completed result was received. Explore Demo or try again later.",
+        "backend_timeout",
+      );
+    }
     throw new ApiRequestError(
       "The production backend is unavailable. Check the configured API URL and backend service, then try again.",
       "backend_unavailable",
@@ -222,6 +228,7 @@ export class ApiAnalysisDataSource implements AnalysisSubmissionDataSource {
       await requestJson(endpoint("api/v1/analyses"), {
         method: "POST",
         body: formData,
+        signal: AbortSignal.timeout(120_000),
       }),
       "The backend returned an invalid analysis submission response. No successful result was assumed.",
     );
