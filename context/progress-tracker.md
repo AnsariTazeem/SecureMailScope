@@ -1,6 +1,6 @@
 # SecureMailScope — Progress Tracker
 
-**Last updated:** 17 September 2026
+**Last updated:** 20 October 2026
 
 **Current phase:** Backend V2 on `feat/backend-v2`. Backend V1 ends at `f81bcc4`, tagged `backend-v1-public-deployed`; Backend V2 CI begins at `94b6ac9`. The authoritative plan is `context/backend-v2-implementation-plan.md`. The selection POC remains CLOSED/GO at `cf055cf`; historical verification records below are preserved.
 
@@ -108,24 +108,27 @@ deterministic SMTP transition facts; deterministic policy evaluation;
 JSON/HTML/PDF artifacts; `/api/v1` HTTP analysis and read endpoints; the
 776-test Backend V1 baseline; V2-1 identity/result/job contracts; the V2-2
 relational schema/migration foundation and unwired durable analysis-result
-repository adapter; and read-only Backend V2 CI.
+repository adapter; V2-2 Slice 3 indexed relational analysis-result projections,
+implemented and independently verified on 20 October 2026; and read-only
+Backend V2 CI.
 
 SELECTED: the Backend V2 architecture and milestone sequence documented in the
 authoritative implementation plan.
 
-PLANNED and UNVERIFIED: a durable job lifecycle and bounded background
-executor; complete IMAP/POP3 transition analysis; production ML;
-authentication, authorization and tenant isolation; staging; and a
-repository-controlled Docker runtime.
+PLANNED and UNVERIFIED: a durable job lifecycle and bounded background executor;
+complete IMAP/POP3 transition analysis; production ML; authentication,
+authorization and tenant isolation; staging; and a repository-controlled Docker
+runtime.
 
 DEFERRED: scale-out workers/queues/search and optional ledger anchoring until
 prerequisites and measurements justify them. Blockchain is not implemented or
 required.
 
 CURRENT LIMITATIONS: analysis executes synchronously and may block the FastAPI
-event loop; Backend V1 still stores completed results only in its bounded
-in-memory repository because the durable adapter is not wired to FastAPI or
-orchestration; there is no durable job lifecycle; and
+event loop; deployed Render Backend V1 still stores completed results only in
+its bounded in-memory repository because the relational adapter and projections
+remain unwired to default application composition, FastAPI and orchestration;
+durable persistence is not publicly deployed; there is no durable job lifecycle; and
 `ml_engine_status=not_run` with no production ML execution.
 
 Deployed Backend V1 and Frontend V1 remain unchanged. Do not modify either
@@ -585,7 +588,7 @@ Chain persistence/read logic, job or audit table, background execution, API V2,
 authentication/tenant ownership, PostgreSQL driver/configuration, deployment,
 staging, Docker, fingerprint wiring or production database access was added.
 
-### Implementation record — V2-2 Slice 2: durable relational analysis-result repository (pending independent re-review)
+### Verified milestone — V2-2 Slice 2: durable relational analysis-result repository (PASS)
 
 Milestone V2-2 Slice 2 added an insert-only SQLAlchemy adapter for completed
 analysis results without wiring it into Backend V1 FastAPI or orchestration:
@@ -650,11 +653,148 @@ RED-01 correction evidence recorded on 2026-09-17:
   `9f5b0f1f7a4ff16ea5c413d8c17f071498b2997ee832eaaa48fe10688a8b2f7f`;
 - no dependency, lock-file, relational schema or Alembic revision change.
 
-Scope of this implementation record is the unwired relational completed-result
+The historical Slice 2 OpenAPI value above is preserved as recorded evidence,
+but that entry did not record its exact serialization command. It therefore
+must not be compared as though it used the reproducible Slice 3 procedure
+documented below.
+
+Scope of this verified milestone is the unwired relational completed-result
 adapter and its durable read/write behavior. Restart persistence is tested for
 that adapter only. Backend V1 continues to use the in-memory repository; no
 FastAPI or orchestration wiring, PostgreSQL driver/runtime, job or audit table,
 durable job lifecycle, background worker/executor, API V2,
 authentication/tenant ownership, staging, Docker, deployment or
-production-service change was added. The corrected snapshot remains pending
-independent re-review and is not approved for commit by this record.
+production-service change was added. The corrected snapshot was committed at
+`f6d5984` after independent re-review.
+
+### Verified milestone — V2-2 Slice 3: indexed relational analysis-result projections (PASS, 20 October 2026)
+
+Implemented and independently verified on 20 October 2026, with independent
+source review and final verification completed before commit. V2-2 Slice 3
+implements the indexed relational projection boundary without wiring the
+relational adapter or projections into default application composition,
+Backend V1 FastAPI or orchestration:
+
+- added a persistence-neutral, strict immutable `AnalysisResultProjection` and
+  deterministic builder over a strictly reconstructed, completely
+  invariant-validated `ChainOfProof`;
+- projects only analysis ID, analysis status, analysis creation/completion
+  timestamps, maximum deterministic finding severity and distinct canonical
+  protocol membership; `unknown` remains a legitimate protocol and no-finding
+  results project a null maximum severity;
+- added `analysis_result_projections` and `analysis_result_protocols` with
+  portable identifiers, enum/timestamp checks, cascading foreign keys and only
+  the selected created/status/severity/protocol indexes for bounded relational
+  querying; no catalog/search service or API was added;
+- added the single Alembic revision `c7a91d4e2b60` on historical revision
+  `9f3c2a1b7d4e`; it validates and deterministically backfills projection state
+  from every pre-existing valid canonical Chain before creating the projection
+  schema, and fails closed without advancing the revision on unprojectable
+  stored data; a one-revision downgrade removes only projection structures
+  while preserving `analysis_results`, and re-upgrade recreates projections
+  from those preserved canonical results;
+- persists the canonical result, projection parent and distinct protocol rows
+  in one transaction, with rollback of the canonical insert if projection
+  persistence fails; validated backfill is transactional;
+- preserves insert-only idempotency and conflict behavior while requiring
+  exact stored projection equivalence during collision inspection; missing,
+  malformed, wrong or extra projection state raises
+  `StoredResultCorruptionError` and is never repaired or replaced;
+- lets operational database failures during projection SELECTs reach the
+  existing sanitized `StorageInternalError` boundary, preserving the distinct
+  corruption classification for malformed or inconsistent stored data;
+- keeps canonical `get()` independent from projection state: canonical reads
+  continue to verify stored bytes/digest/schema, strict Chain reconstruction,
+  complete invariants and byte-identical recanonicalization without consulting
+  projection tables;
+- keeps projection content inside the approved privacy boundary: no fingerprint,
+  canonical Chain, capture digest/name/path, endpoint, packet/email/credential,
+  evidence, score or ML field is duplicated into the projection;
+- preserves database constraints/transactions as concurrency authority and
+  verifies identical/conflicting concurrent writers leave one complete
+  canonical-plus-projection state.
+
+Historical implementation verification recorded on 2026-09-17 before RED-01:
+
+- pre-change baseline: 1,112 tests passed in 61.42 seconds;
+- projection suite: 6 passed in 0.36 seconds;
+- relational schema suite: 51 passed in 4.03 seconds;
+- relational migration suite: 10 passed in 2.46 seconds;
+- relational repository suite: 55 passed in 14.74 seconds;
+- Backend V1 storage/API/orchestration compatibility suite: 159 passed in
+  13.86 seconds;
+- complete suite: 1,138 passed in 49.16 seconds;
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed (131 files checked);
+- `git diff --check`: passed;
+- current Alembic head: `c7a91d4e2b60`;
+- canonical OpenAPI SHA-256 was unchanged from the exact pre-change HEAD using
+  the same reproducible procedure:
+  `d3f4e133158d307dd93f02c2ca95a383ebb96afb65460e2ea3397f88026d7df3`;
+- `pyproject.toml` and `uv.lock` hashes remain unchanged from preflight and no
+  dependency was added.
+
+Historical RED-01 correction verification recorded on 2026-09-17; independent
+re-review was pending at that checkpoint:
+
+- projection suite: 6 passed in 0.26 seconds;
+- relational schema suite: 51 passed in 2.51 seconds;
+- relational migration suite: 14 passed in 3.59 seconds;
+- relational repository suite: 55 passed in 8.55 seconds;
+- combined projection/schema/migration/repository suite: 126 passed in 12.51
+  seconds;
+- Backend V1 storage/API/orchestration compatibility suite: 159 passed in 8.16
+  seconds;
+- complete suite: 1,142 passed in 34.96 seconds;
+- `uv lock --check`: passed;
+- `uv run --locked ruff check .`: passed;
+- `uv run --locked ruff format --check .`: passed (131 files checked);
+- corrupt old-result cases for digest mismatch, malformed JSON and invalid
+  projected enum each fail before projection DDL or Alembic head advancement;
+- valid old-result downgrade/re-upgrade recreates the exact projection and
+  equivalent registration remains idempotent;
+- no runtime repository, API, orchestration, dependency, lock-file, historical
+  migration, frontend or deployment change was made by RED-01.
+
+RED-01 OpenAPI reconciliation uses
+`SHA-256(canonical_response_bytes(create_app().openapi()))`. That exact procedure
+produces
+`d3f4e133158d307dd93f02c2ca95a383ebb96afb65460e2ea3397f88026d7df3`
+for both exact Slice 3 baseline HEAD `f6d5984be1fb334ccf8ca8a0686cc28b01511bf1`
+and the corrected working tree. The older Slice 2 `9f5b...` value has no recorded
+serialization command and is historical non-comparable evidence, not an API
+contract difference. API Python source remains unchanged.
+
+Final independent review and acceptance-correction verification on 20 October
+2026 (uncommitted Slice 3 snapshot):
+
+- independently source-reviewed before commit, including RED-01 and the bounded
+  projection SELECT error-classification acceptance correction;
+- focused relational repository suite: 57 passed in 16.21 seconds;
+- projections/migrations/schema/storage-contract suite: 84 passed in 7.89 seconds;
+- complete backend suite: 1,144 passed in 53.68 seconds;
+- Ruff check: passed;
+- Ruff formatting check: passed for 131 files;
+- `git diff --check`: passed;
+- only `src/securemailscope/storage/relational/repository.py` and
+  `tests/test_relational_repository.py` changed during the acceptance correction;
+- all other 12 protected pre-existing dirty-file SHA-256 hashes remained unchanged;
+- operational failures in both projection parent and protocol SELECTs produce
+  sanitized `StorageInternalError`, preserve stored canonical/projection rows,
+  and leave canonical retrieval usable; malformed projection controls continue
+  to produce `StoredResultCorruptionError`;
+- no public upload, deployment or frontend change occurred.
+
+Scope of this verified milestone is the backend-only indexed relational
+analysis-result projection foundation. The relational adapter stores canonical
+validated Chain JSON as the sole authoritative result; canonical reads remain
+independent from projection reads. The adapter and projections remain unwired
+to default application composition. Deployed Render Backend V1 still uses its
+bounded in-memory repository; durable persistence is not publicly deployed.
+No catalog/search service or route, Coverage projection, TLS/cipher/certificate
+projection, event-loop isolation, durable jobs or lifecycle, API V2 routes,
+upload orchestration, authentication, frontend integration, PostgreSQL
+runtime/driver or runtime proof, staging, Docker, deployment or
+production-service change was added. Later Backend V2 milestones remain
+planned; this verification does not authorize their implementation.

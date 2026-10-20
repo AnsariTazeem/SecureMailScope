@@ -16,6 +16,8 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import Connection
 
 BASELINE_REVISION = "9f3c2a1b7d4e"
+FIRST_DURABLE_RESULT_REVISION = BASELINE_REVISION
+PROJECTION_REVISION = "c7a91d4e2b60"
 MIGRATIONS_PATH = Path(__file__).with_name("migrations")
 
 

@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
-from sqlalchemy import inspect, select
+from sqlalchemy import func, inspect, select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError, StatementError
 from sqlalchemy.schema import CreateTable
@@ -20,7 +20,11 @@ from securemailscope.storage.relational.config import (
     SQLiteDatabaseConfig,
     create_sqlite_engine,
 )
-from securemailscope.storage.relational.entities import AnalysisResultEntity
+from securemailscope.storage.relational.entities import (
+    AnalysisResultEntity,
+    AnalysisResultProjectionEntity,
+    AnalysisResultProtocolEntity,
+)
 
 
 def _valid_row(**overrides: object) -> dict[str, object]:
@@ -273,6 +277,76 @@ def test_metadata_declares_exact_columns_constraints_and_indexes() -> None:
     }
 
 
+def test_projection_metadata_declares_only_approved_columns_constraints_and_indexes() -> None:
+    parent = AnalysisResultProjectionEntity.__table__
+    protocols = AnalysisResultProtocolEntity.__table__
+
+    assert list(parent.columns.keys()) == [
+        "analysis_id",
+        "analysis_status",
+        "created_at",
+        "completed_at",
+        "max_policy_severity",
+    ]
+    assert list(protocols.columns.keys()) == ["analysis_id", "protocol"]
+    assert [column.name for column in parent.primary_key.columns] == ["analysis_id"]
+    assert [column.name for column in protocols.primary_key.columns] == [
+        "analysis_id",
+        "protocol",
+    ]
+    assert not parent.c.analysis_id.nullable
+    assert not parent.c.analysis_status.nullable
+    assert not parent.c.created_at.nullable
+    assert parent.c.completed_at.nullable
+    assert parent.c.max_policy_severity.nullable
+    assert not protocols.c.analysis_id.nullable
+    assert not protocols.c.protocol.nullable
+    assert {index.name for index in parent.indexes} == {
+        "ix_analysis_result_projections_created_at",
+        "ix_analysis_result_projections_analysis_status",
+        "ix_analysis_result_projections_max_policy_severity",
+    }
+    assert {index.name for index in protocols.indexes} == {"ix_analysis_result_protocols_protocol"}
+    assert {constraint.name for constraint in parent.constraints} == {
+        "pk_analysis_result_projections",
+        "fk_analysis_result_projections_analysis_id_analysis_results",
+        "ck_analysis_result_projections_analysis_id_shape",
+        "ck_analysis_result_projections_analysis_status_allowed",
+        "ck_analysis_result_projections_max_policy_severity_allowed",
+        "ck_analysis_result_projections_completion_not_before_creation",
+    }
+    assert {constraint.name for constraint in protocols.constraints} == {
+        "pk_analysis_result_protocols",
+        "fk_analysis_result_protocols_analysis_id_analysis_result_projections",
+        "ck_analysis_result_protocols_protocol_allowed",
+    }
+    parent_fk = next(iter(parent.foreign_key_constraints))
+    protocol_fk = next(iter(protocols.foreign_key_constraints))
+    assert parent_fk.referred_table is AnalysisResultEntity.__table__
+    assert parent_fk.ondelete == "CASCADE"
+    assert protocol_fk.referred_table is parent
+    assert protocol_fk.ondelete == "CASCADE"
+
+    forbidden = {
+        "analysis_fingerprint",
+        "canonical_chain",
+        "chain_sha256",
+        "capture_sha256",
+        "filename",
+        "temporary_path",
+        "source_endpoint",
+        "destination_endpoint",
+        "packet_payload",
+        "email_content",
+        "credentials",
+        "evidence_excerpt",
+        "ml_anomaly_score",
+        "policy_risk_score",
+    }
+    assert forbidden.isdisjoint(parent.columns.keys())
+    assert forbidden.isdisjoint(protocols.columns.keys())
+
+
 def test_metadata_compiles_for_postgresql_without_postgresql_driver() -> None:
     table = AnalysisResultEntity.__table__
     ddl = str(CreateTable(table).compile(dialect=postgresql.dialect()))
@@ -280,6 +354,122 @@ def test_metadata_compiles_for_postgresql_without_postgresql_driver() -> None:
     assert "BYTEA" in ddl
     assert ddl.count("TIMESTAMP WITH TIME ZONE") == 2
     assert "analysis_results" in ddl
+
+    projection_ddl = str(
+        CreateTable(AnalysisResultProjectionEntity.__table__).compile(dialect=postgresql.dialect())
+    )
+    protocol_ddl = str(
+        CreateTable(AnalysisResultProtocolEntity.__table__).compile(dialect=postgresql.dialect())
+    )
+    assert projection_ddl.count("TIMESTAMP WITH TIME ZONE") == 2
+    assert "analysis_result_projections" in projection_ddl
+    assert "ON DELETE CASCADE" in projection_ddl
+    assert "analysis_result_protocols" in protocol_ddl
+    assert "ON DELETE CASCADE" in protocol_ddl
+
+
+def test_projection_foreign_keys_cascade_from_authoritative_result(tmp_path: Path) -> None:
+    engine = create_sqlite_engine(SQLiteDatabaseConfig.from_path(tmp_path / "cascade.sqlite3"))
+    AnalysisResultEntity.metadata.create_all(engine)
+    created_at = datetime(2026, 9, 16, 12, 0, tzinfo=UTC)
+
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                AnalysisResultEntity.__table__.insert(),
+                _valid_row(created_at=created_at, expires_at=None),
+            )
+            connection.execute(
+                AnalysisResultProjectionEntity.__table__.insert(),
+                {
+                    "analysis_id": "ana_0123456789abcdef",
+                    "analysis_status": "complete",
+                    "created_at": created_at,
+                    "completed_at": created_at,
+                    "max_policy_severity": "high",
+                },
+            )
+            connection.execute(
+                AnalysisResultProtocolEntity.__table__.insert(),
+                {
+                    "analysis_id": "ana_0123456789abcdef",
+                    "protocol": "smtp",
+                },
+            )
+            connection.execute(AnalysisResultEntity.__table__.delete())
+            assert (
+                connection.execute(
+                    select(func.count()).select_from(AnalysisResultProjectionEntity.__table__)
+                ).scalar_one()
+                == 0
+            )
+            assert (
+                connection.execute(
+                    select(func.count()).select_from(AnalysisResultProtocolEntity.__table__)
+                ).scalar_one()
+                == 0
+            )
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.parametrize(
+    ("table", "values"),
+    [
+        (
+            AnalysisResultProjectionEntity,
+            {
+                "analysis_id": "ana_0123456789abcdef",
+                "analysis_status": "queued",
+                "created_at": datetime(2026, 9, 16, 12, 0, tzinfo=UTC),
+                "completed_at": None,
+                "max_policy_severity": None,
+            },
+        ),
+        (
+            AnalysisResultProjectionEntity,
+            {
+                "analysis_id": "ana_0123456789abcdef",
+                "analysis_status": "complete",
+                "created_at": datetime(2026, 9, 16, 12, 0, tzinfo=UTC),
+                "completed_at": datetime(2026, 9, 16, 11, 59, tzinfo=UTC),
+                "max_policy_severity": "urgent",
+            },
+        ),
+        (
+            AnalysisResultProtocolEntity,
+            {"analysis_id": "ana_0123456789abcdef", "protocol": "http"},
+        ),
+    ],
+)
+def test_projection_checks_reject_unapproved_values(
+    tmp_path: Path,
+    table: type[AnalysisResultProjectionEntity] | type[AnalysisResultProtocolEntity],
+    values: dict[str, object],
+) -> None:
+    engine = create_sqlite_engine(SQLiteDatabaseConfig.from_path(tmp_path / "projection.sqlite3"))
+    AnalysisResultEntity.metadata.create_all(engine)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                AnalysisResultEntity.__table__.insert(),
+                _valid_row(expires_at=None),
+            )
+            if table is AnalysisResultProtocolEntity:
+                connection.execute(
+                    AnalysisResultProjectionEntity.__table__.insert(),
+                    {
+                        "analysis_id": "ana_0123456789abcdef",
+                        "analysis_status": "complete",
+                        "created_at": datetime(2026, 9, 16, 12, 0, tzinfo=UTC),
+                        "completed_at": None,
+                        "max_policy_severity": None,
+                    },
+                )
+            with pytest.raises(IntegrityError):
+                connection.execute(table.__table__.insert(), values)
+    finally:
+        engine.dispose()
 
 
 def test_aware_utc_timestamps_round_trip_through_sqlite(tmp_path: Path) -> None:

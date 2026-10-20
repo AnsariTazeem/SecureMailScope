@@ -34,15 +34,24 @@ These POSIX mode-bit guarantees are not a claim of equivalent Windows ACL
 enforcement. Non-POSIX deployments require a separately reviewed platform ACL
 policy before persistent use.
 
-The reviewed baseline downgrade drops only `analysis_results`. Run it only on
-an intentionally disposable database:
+The first durable-result revision is `9f3c2a1b7d4e`. The current projection
+revision adds only `analysis_result_projections`, `analysis_result_protocols`,
+their portable constraints and their bounded catalog indexes. During upgrade it
+validates each existing canonical schema-1.0.0 Chain and backfills its complete
+deterministic projection in the migration transaction; an unprojectable stored
+result fails the upgrade instead of being skipped. A one-revision downgrade to
+`9f3c2a1b7d4e` removes those projection structures and preserves
+`analysis_results`, and re-upgrade derives them again from the preserved
+canonical results. The full downgrade to `base` then drops
+`analysis_results`; run that only on an intentionally disposable database:
 
 ```bash
 uv run alembic -c alembic.ini downgrade base
 ```
 
-SQLite foreign-key enforcement is enabled on every connection even though the
-baseline has no foreign keys yet. A 5-second DBAPI lock timeout bounds ordinary
+SQLite foreign-key enforcement is enabled on every connection. Projection
+membership cascades from its projection parent, which in turn cascades from the
+authoritative `analysis_results` row. A 5-second DBAPI lock timeout bounds ordinary
 lock contention. WAL is not enabled: this milestone has no measured concurrent
 workload or durable queue, WAL adds checkpoint and sidecar-file operations, and
 it is unsuitable for network-filesystem/multi-host use. SQLite remains a local,
@@ -53,5 +62,6 @@ Relational timestamps use one infrastructure-only UTC type. Bind values must be
 `datetime` instances (or `None` for nullable `expires_at`), must be timezone
 aware, and must have zero UTC offset. Naive and non-UTC values are rejected.
 SQLite's timezone-naive `DATETIME` result is reconstructed as an aware UTC
-`datetime`; PostgreSQL continues to compile both timestamp columns as
-`TIMESTAMP WITH TIME ZONE`. The baseline revision and DDL are unchanged.
+`datetime`; PostgreSQL continues to compile relational timestamps as
+`TIMESTAMP WITH TIME ZONE`. The historical `9f3c2a1b7d4e` revision remains
+unchanged.

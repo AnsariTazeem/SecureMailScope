@@ -9,14 +9,16 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from typing import Any, NoReturn
 
-from sqlalchemy import Engine, Select, select, type_coerce
+from sqlalchemy import Connection, Engine, Select, select, type_coerce
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.types import NullType
 
 from securemailscope.chain.canonical import canonical_json
+from securemailscope.chain.enums import AnalysisStatus, SeverityLevel
 from securemailscope.chain.ids import PREFIX_ANALYSIS, is_compact_id, is_sha256_digest
 from securemailscope.chain.invariants import assert_chain_valid
 from securemailscope.chain.models import CHAIN_SCHEMA_VERSION, ChainOfProof
+from securemailscope.models import Protocol
 from securemailscope.storage.errors import (
     AnalysisResultConflictError,
     InvalidAnalysisResultError,
@@ -26,7 +28,15 @@ from securemailscope.storage.errors import (
     UnsupportedStoredSchemaVersionError,
 )
 from securemailscope.storage.models import AnalysisResultRegistration
-from securemailscope.storage.relational.entities import AnalysisResultEntity
+from securemailscope.storage.projections import (
+    AnalysisResultProjection,
+    build_analysis_result_projection,
+)
+from securemailscope.storage.relational.entities import (
+    AnalysisResultEntity,
+    AnalysisResultProjectionEntity,
+    AnalysisResultProtocolEntity,
+)
 from securemailscope.storage.relational.revisions import (
     DatabaseRevisionError,
     assert_database_at_head,
@@ -95,7 +105,9 @@ class RelationalAnalysisResultRepository:
 
     def register(self, registration: AnalysisResultRegistration) -> None:
         """Insert a validated immutable result or resolve a uniqueness race."""
-        validated, canonical_bytes, chain_sha256 = self._validated_registration(registration)
+        validated, canonical_bytes, chain_sha256, projection = self._validated_registration(
+            registration
+        )
         created_at = self._created_at()
         chain = validated.chain
         values = {
@@ -112,6 +124,21 @@ class RelationalAnalysisResultRepository:
             with self._engine.begin() as connection:
                 assert_database_at_head(connection)
                 connection.execute(AnalysisResultEntity.__table__.insert(), values)
+                connection.execute(
+                    AnalysisResultProjectionEntity.__table__.insert(),
+                    self._projection_values(projection),
+                )
+                if projection.protocols:
+                    connection.execute(
+                        AnalysisResultProtocolEntity.__table__.insert(),
+                        [
+                            {
+                                "analysis_id": projection.analysis_id,
+                                "protocol": protocol.value,
+                            }
+                            for protocol in projection.protocols
+                        ],
+                    )
             return
         except IntegrityError:
             # The failed transaction has rolled back before collision resolution.
@@ -178,6 +205,10 @@ class RelationalAnalysisResultRepository:
                         by_id,
                         expected_analysis_id=incoming.chain.analysis.analysis_id,
                     )
+                    self._validated_stored_projection(
+                        connection,
+                        self._projection_for_stored_chain(stored),
+                    )
                     if (
                         self._row_value(by_id, "analysis_fingerprint")
                         == incoming.analysis_fingerprint
@@ -195,9 +226,13 @@ class RelationalAnalysisResultRepository:
                     row_analysis_id = self._row_value(by_fingerprint, "analysis_id")
                     if not isinstance(row_analysis_id, str):
                         raise StoredResultCorruptionError(_CORRUPT)
-                    self._validated_stored_chain(
+                    stored = self._validated_stored_chain(
                         by_fingerprint,
                         expected_analysis_id=row_analysis_id,
+                    )
+                    self._validated_stored_projection(
+                        connection,
+                        self._projection_for_stored_chain(stored),
                     )
                     raise AnalysisResultConflictError(_CONFLICT)
                 raise StorageInternalError(_UNAVAILABLE)
@@ -216,7 +251,7 @@ class RelationalAnalysisResultRepository:
     def _validated_registration(
         cls,
         registration: AnalysisResultRegistration,
-    ) -> tuple[AnalysisResultRegistration, bytes, str]:
+    ) -> tuple[AnalysisResultRegistration, bytes, str, AnalysisResultProjection]:
         try:
             if not isinstance(registration, AnalysisResultRegistration):
                 raise TypeError("wrong registration type")
@@ -233,6 +268,7 @@ class RelationalAnalysisResultRepository:
                 raise ValueError("unsupported incoming schema")
             canonical_bytes = cls._canonical_chain_bytes(chain)
             digest = hashlib.sha256(canonical_bytes).hexdigest()
+            projection = build_analysis_result_projection(chain)
             return (
                 AnalysisResultRegistration(
                     analysis_fingerprint=reconstructed.analysis_fingerprint,
@@ -240,11 +276,116 @@ class RelationalAnalysisResultRepository:
                 ),
                 canonical_bytes,
                 digest,
+                projection,
             )
         except (KeyboardInterrupt, SystemExit, GeneratorExit):
             raise
         except Exception:
             raise InvalidAnalysisResultError(_INVALID_REGISTRATION) from None
+
+    @staticmethod
+    def _projection_values(projection: AnalysisResultProjection) -> dict[str, object]:
+        return {
+            "analysis_id": projection.analysis_id,
+            "analysis_status": projection.analysis_status.value,
+            "created_at": projection.created_at.astimezone(UTC),
+            "completed_at": (
+                projection.completed_at.astimezone(UTC)
+                if projection.completed_at is not None
+                else None
+            ),
+            "max_policy_severity": (
+                projection.max_policy_severity.value
+                if projection.max_policy_severity is not None
+                else None
+            ),
+        }
+
+    @staticmethod
+    def _projection_for_stored_chain(chain: ChainOfProof) -> AnalysisResultProjection:
+        try:
+            return build_analysis_result_projection(chain)
+        except (KeyboardInterrupt, SystemExit, GeneratorExit):
+            raise
+        except Exception:
+            raise StoredResultCorruptionError(_CORRUPT) from None
+
+    def _validated_stored_projection(
+        self,
+        connection: Connection,
+        expected: AnalysisResultProjection,
+    ) -> None:
+        """Validate auxiliary indexed state without affecting canonical reads."""
+        try:
+            projection_table = AnalysisResultProjectionEntity.__table__
+            projection_row = (
+                connection.execute(
+                    select(
+                        *(
+                            type_coerce(column, NullType()).label(column.name)
+                            for column in projection_table.c
+                        )
+                    ).where(projection_table.c.analysis_id == expected.analysis_id)
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if projection_row is None:
+                raise ValueError("missing stored projection")
+
+            row_analysis_id = self._row_value(projection_row, "analysis_id")
+            status_value = self._row_value(projection_row, "analysis_status")
+            created_at = self._stored_utc_datetime(self._row_value(projection_row, "created_at"))
+            completed_raw = self._row_value(projection_row, "completed_at")
+            completed_at = (
+                None if completed_raw is None else self._stored_utc_datetime(completed_raw)
+            )
+            severity_value = self._row_value(projection_row, "max_policy_severity")
+            if not isinstance(row_analysis_id, str) or not isinstance(status_value, str):
+                raise ValueError("malformed stored projection")
+            if severity_value is not None and not isinstance(severity_value, str):
+                raise ValueError("malformed stored projection severity")
+
+            protocol_table = AnalysisResultProtocolEntity.__table__
+            protocol_rows = connection.execute(
+                select(
+                    type_coerce(protocol_table.c.analysis_id, NullType()).label("analysis_id"),
+                    type_coerce(protocol_table.c.protocol, NullType()).label("protocol"),
+                ).where(protocol_table.c.analysis_id == expected.analysis_id)
+            ).mappings()
+            protocol_values: list[str] = []
+            for row in protocol_rows:
+                if self._row_value(row, "analysis_id") != expected.analysis_id:
+                    raise ValueError("stored protocol identity mismatch")
+                value = self._row_value(row, "protocol")
+                if not isinstance(value, str):
+                    raise ValueError("malformed stored protocol")
+                protocol_values.append(value)
+
+            stored_protocols = tuple(Protocol(value) for value in protocol_values)
+            if len(stored_protocols) != len(expected.protocols) or set(stored_protocols) != set(
+                expected.protocols
+            ):
+                raise ValueError("stored protocol membership mismatch")
+
+            actual = AnalysisResultProjection(
+                analysis_id=row_analysis_id,
+                analysis_status=AnalysisStatus(status_value),
+                created_at=created_at,
+                completed_at=completed_at,
+                max_policy_severity=(
+                    None if severity_value is None else SeverityLevel(severity_value)
+                ),
+                protocols=expected.protocols,
+            )
+            if actual != expected:
+                raise ValueError("stored projection does not match canonical result")
+        except SQLAlchemyError:
+            raise
+        except (KeyboardInterrupt, SystemExit, GeneratorExit):
+            raise
+        except Exception:
+            raise StoredResultCorruptionError(_CORRUPT) from None
 
     def _validated_stored_chain(
         self,

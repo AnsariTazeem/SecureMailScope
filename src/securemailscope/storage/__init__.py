@@ -13,6 +13,11 @@ from securemailscope.storage.errors import (
     UnsupportedStoredSchemaVersionError,
 )
 from securemailscope.storage.models import AnalysisResultRegistration
+from securemailscope.storage.projections import (
+    AnalysisResultProjection,
+    build_analysis_result_projection,
+    maximum_policy_severity,
+)
 from securemailscope.storage.protocols import (
     AnalysisResultReader,
     AnalysisResultRegistry,
@@ -26,6 +31,7 @@ __all__ = [
     "AnalysisResultNotFoundError",
     "AnalysisResultReader",
     "AnalysisResultRegistration",
+    "AnalysisResultProjection",
     "AnalysisResultRegistry",
     "AnalysisResultRepository",
     "DurableAnalysisResultRepository",
@@ -38,4 +44,6 @@ __all__ = [
     "StorageInternalError",
     "StoredResultCorruptionError",
     "UnsupportedStoredSchemaVersionError",
+    "build_analysis_result_projection",
+    "maximum_policy_severity",
 ]

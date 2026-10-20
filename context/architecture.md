@@ -416,7 +416,7 @@ implementation plan. Backend V2 starts from `f81bcc4`; read-only CI begins at
 Railway/Vercel settings, production URLs and production API behavior remain
 unchanged.
 
-## Current verified baseline
+## Current implementation baseline
 
 - bounded PCAP/PCAPNG upload with capture validation, capinfos metadata and
   SHA-256 provenance;
@@ -426,13 +426,20 @@ unchanged.
 - deterministic SMTP transition facts and deterministic policy evaluation;
 - JSON, HTML and PDF artifacts;
 - `POST /api/v1/analyses` plus the existing `/api/v1` read endpoints;
-- 776 tests and read-only Backend V2 CI.
+- the V2-1 identity/result/job contracts;
+- the VERIFIED V2-2 relational schema, first durable-result migration and
+  durable canonical result adapter;
+- the VERIFIED V2-2 Slice 3 indexed relational analysis-result projections,
+  implemented and independently verified on 20 October 2026;
+- 776 tests at the protected Backend V1 boundary and read-only Backend V2 CI.
 
 ## Selected target and current limitations
 
-SELECTED architecture introduces durable repository interfaces, explicit job
-identity/lifecycle and bounded execution while preserving `/api/v1`. These are
-not yet verified implementations.
+The durable canonical-result boundary and indexed relational projections are
+VERIFIED as an unwired Backend V2 adapter. Slice 3 was independently
+source-reviewed and verified on 20 October 2026 before commit. Explicit job
+lifecycle and bounded execution remain SELECTED/PLANNED while preserving
+`/api/v1`.
 
 ```text
 FastAPI boundary
@@ -440,12 +447,28 @@ FastAPI boundary
   -> durable job repository                 PLANNED
   -> bounded executor/event-loop isolation  PLANNED
   -> verified analysis pipeline             VERIFIED (synchronous)
-  -> durable Chain repository               PLANNED
+  -> durable Chain repository adapter       VERIFIED (unwired)
+       -> canonical Chain result             VERIFIED
+       -> safe indexed result projection     VERIFIED (unwired)
 ```
 
-Results currently exist only in the bounded in-memory repository, and analysis
-may block the FastAPI event loop. There is no durable database, durable job
-lifecycle, bounded background executor, complete verified IMAP/POP3 transition
+The relational adapter stores canonical validated Chain JSON as the sole
+authoritative result. Indexed projection tables support bounded relational
+querying; projection writes and validated backfill are transactional. Canonical
+reads remain independent from projection reads. Malformed or inconsistent
+stored projection data raises `StoredResultCorruptionError`; operational
+database failures during projection SELECTs reach the existing sanitized
+`StorageInternalError` boundary.
+
+The relational adapter and projections remain unwired to default application
+composition. The deployed Render Backend V1 still uses its bounded in-memory
+repository; durable persistence is not publicly deployed. The projection is
+auxiliary indexed state, not the source of truth, an API response, or a
+catalog/search implementation. Slice 3 adds no API V2 routes, durable jobs,
+upload orchestration, authentication, deployment changes, PostgreSQL runtime
+proof or frontend integration. Analysis may still block the FastAPI event
+loop. There is no durable job lifecycle, bounded
+background executor, catalog/search API, complete verified IMAP/POP3 transition
 analysis, production ML, authentication, authorization, tenant isolation,
 staging deployment or repository-controlled Docker runtime.
 `ml_engine_status` remains `not_run`.

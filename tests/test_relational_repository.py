@@ -14,6 +14,7 @@ from alembic import command
 from presentation_helpers import build_evaluated_chain
 from pydantic import ValidationError
 from sqlalchemy import Engine, event, func, select, text
+from sqlalchemy.exc import OperationalError
 
 from securemailscope.chain.canonical import canonical_json
 from securemailscope.chain.invariants import assert_chain_valid
@@ -36,7 +37,11 @@ from securemailscope.storage.relational.config import (
     SQLiteDatabaseConfig,
     create_sqlite_engine,
 )
-from securemailscope.storage.relational.entities import AnalysisResultEntity
+from securemailscope.storage.relational.entities import (
+    AnalysisResultEntity,
+    AnalysisResultProjectionEntity,
+    AnalysisResultProtocolEntity,
+)
 from securemailscope.storage.relational.repository import RelationalAnalysisResultRepository
 from securemailscope.storage.relational.revisions import alembic_config
 
@@ -101,6 +106,27 @@ def _row_count(engine: Engine) -> int:
     with engine.connect() as connection:
         return connection.execute(
             select(func.count()).select_from(AnalysisResultEntity.__table__)
+        ).scalar_one()
+
+
+def _projection_row(engine: Engine) -> dict[str, object]:
+    with engine.connect() as connection:
+        return dict(
+            connection.execute(select(AnalysisResultProjectionEntity.__table__)).mappings().one()
+        )
+
+
+def _protocol_values(engine: Engine) -> set[str]:
+    with engine.connect() as connection:
+        return set(
+            connection.execute(select(AnalysisResultProtocolEntity.__table__.c.protocol)).scalars()
+        )
+
+
+def _projection_row_count(engine: Engine) -> int:
+    with engine.connect() as connection:
+        return connection.execute(
+            select(func.count()).select_from(AnalysisResultProjectionEntity.__table__)
         ).scalar_one()
 
 
@@ -211,6 +237,15 @@ def test_register_persists_exact_canonical_chain_digest_and_metadata(
     }
     assert row["created_at"].tzinfo is UTC  # type: ignore[union-attr]
 
+    assert _projection_row(migrated_engine) == {
+        "analysis_id": chain.analysis.analysis_id,
+        "analysis_status": chain.analysis.analysis_status.value,
+        "created_at": chain.analysis.created_at,
+        "completed_at": chain.analysis.completed_at,
+        "max_policy_severity": "high",
+    }
+    assert _protocol_values(migrated_engine) == {"smtp"}
+
 
 def test_register_and_get_return_strict_isolated_snapshots(
     chain: ChainOfProof,
@@ -245,6 +280,8 @@ def test_result_survives_engine_disposal_and_repository_reconstruction(
     try:
         second = RelationalAnalysisResultRepository(second_engine, clock=lambda: CREATED_AT)
         assert _canonical_bytes(second.get(chain.analysis.analysis_id)) == _canonical_bytes(chain)
+        assert _projection_row(second_engine)["analysis_id"] == chain.analysis.analysis_id
+        assert _protocol_values(second_engine) == {"smtp"}
     finally:
         second_engine.dispose()
 
@@ -509,6 +546,8 @@ def test_row_and_chain_analysis_id_mismatch_is_corruption(
 ) -> None:
     repository.register(_registration(chain))
     replacement_id = "ana_0123456789abcdef"
+    with migrated_engine.begin() as connection:
+        connection.execute(AnalysisResultProjectionEntity.__table__.delete())
     _replace_row_values(migrated_engine, analysis_id=replacement_id)
 
     with pytest.raises(StoredResultCorruptionError, match="stored analysis result is corrupted"):
@@ -596,6 +635,245 @@ def test_corrupted_existing_row_blocks_idempotent_registration_and_is_not_replac
     assert _row_count(migrated_engine) == 1
 
 
+def test_projection_insert_failure_rolls_back_canonical_result(
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    private_detail = "projection INSERT private detail"
+
+    def fail_projection_insert(
+        connection: object,
+        cursor: object,
+        statement: str,
+        parameters: object,
+        context: object,
+        executemany: bool,
+    ) -> None:
+        del connection, cursor, parameters, context, executemany
+        if statement.lstrip().upper().startswith("INSERT INTO ANALYSIS_RESULT_PROJECTIONS"):
+            raise RuntimeError(private_detail)
+
+    event.listen(migrated_engine, "before_cursor_execute", fail_projection_insert)
+    try:
+        with pytest.raises(StorageInternalError, match="storage is unavailable") as captured:
+            repository.register(_registration(chain))
+    finally:
+        event.remove(migrated_engine, "before_cursor_execute", fail_projection_insert)
+
+    assert private_detail not in str(captured.value)
+    assert _row_count(migrated_engine) == 0
+    assert _projection_row_count(migrated_engine) == 0
+    assert _protocol_values(migrated_engine) == set()
+
+
+@pytest.mark.parametrize("table_name", ["analysis_result_projections", "analysis_result_protocols"])
+def test_projection_select_failure_is_internal_and_preserves_stored_state(
+    table_name: str,
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    registration = _registration(chain)
+    repository.register(registration)
+
+    def stored_state() -> dict[str, list[dict[str, object]]]:
+        with migrated_engine.connect() as connection:
+            return {
+                table.name: [
+                    dict(row)
+                    for row in connection.execute(
+                        select(table).order_by(*table.primary_key.columns)
+                    ).mappings()
+                ]
+                for table in (
+                    AnalysisResultEntity.__table__,
+                    AnalysisResultProjectionEntity.__table__,
+                    AnalysisResultProtocolEntity.__table__,
+                )
+            }
+
+    before = stored_state()
+    private_detail = "database failure /private/results.sqlite3 password=synthetic-secret"
+    failed_selects: list[str] = []
+
+    def fail_projection_select(
+        connection: object,
+        cursor: object,
+        statement: str,
+        parameters: object,
+        context: object,
+        executemany: bool,
+    ) -> None:
+        del connection, cursor, context, executemany
+        if statement.lstrip().upper().startswith("SELECT") and f"FROM {table_name}" in statement:
+            failed_selects.append(statement)
+            raise OperationalError(statement, parameters, RuntimeError(private_detail))
+
+    event.listen(migrated_engine, "before_cursor_execute", fail_projection_select)
+    try:
+        with pytest.raises(StorageInternalError) as captured:
+            repository.register(registration)
+    finally:
+        event.remove(migrated_engine, "before_cursor_execute", fail_projection_select)
+
+    assert len(failed_selects) == 1
+    assert not isinstance(captured.value, StoredResultCorruptionError)
+    assert str(captured.value) == "analysis result storage is unavailable"
+    assert private_detail not in str(captured.value)
+    assert failed_selects[0] not in str(captured.value)
+    assert captured.value.__cause__ is None
+    assert captured.value.__suppress_context__ is True
+    assert stored_state() == before
+    recovered = repository.get(chain.analysis.analysis_id)
+    assert recovered is not None
+    assert _canonical_bytes(recovered) == _canonical_bytes(chain)
+
+
+def test_missing_projection_is_corruption_during_idempotency_validation(
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    registration = _registration(chain)
+    repository.register(registration)
+    with migrated_engine.begin() as connection:
+        connection.execute(AnalysisResultProjectionEntity.__table__.delete())
+
+    with pytest.raises(StoredResultCorruptionError):
+        repository.register(registration)
+
+    assert _row_count(migrated_engine) == 1
+    assert _projection_row_count(migrated_engine) == 0
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("analysis_status", "failed"),
+        ("created_at", datetime(2026, 1, 16, 1, 0, tzinfo=UTC)),
+        ("completed_at", datetime(2026, 9, 16, 2, 0, tzinfo=UTC)),
+        ("max_policy_severity", "critical"),
+    ],
+)
+def test_wrong_projection_parent_value_is_corruption(
+    column: str,
+    value: object,
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    registration = _registration(chain)
+    repository.register(registration)
+    with migrated_engine.begin() as connection:
+        connection.execute(
+            AnalysisResultProjectionEntity.__table__.update().values(**{column: value})
+        )
+
+    with pytest.raises(StoredResultCorruptionError):
+        repository.register(registration)
+
+
+@pytest.mark.parametrize("mutation", ["missing", "extra", "wrong", "malformed"])
+def test_protocol_projection_mismatch_is_corruption(
+    mutation: str,
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    registration = _registration(chain)
+    repository.register(registration)
+    with migrated_engine.begin() as connection:
+        if mutation == "missing":
+            connection.execute(AnalysisResultProtocolEntity.__table__.delete())
+        elif mutation == "extra":
+            connection.execute(
+                AnalysisResultProtocolEntity.__table__.insert(),
+                {"analysis_id": chain.analysis.analysis_id, "protocol": "unknown"},
+            )
+        elif mutation == "wrong":
+            connection.execute(
+                AnalysisResultProtocolEntity.__table__.update().values(protocol="imap")
+            )
+        else:
+            connection.exec_driver_sql("PRAGMA ignore_check_constraints = ON")
+            connection.execute(
+                AnalysisResultProtocolEntity.__table__.update().values(protocol="http")
+            )
+
+    with pytest.raises(StoredResultCorruptionError):
+        repository.register(registration)
+
+
+def test_wrong_projection_identity_is_corruption(
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    registration = _registration(chain)
+    repository.register(registration)
+    with migrated_engine.begin() as connection:
+        connection.execute(AnalysisResultProtocolEntity.__table__.delete())
+    with migrated_engine.connect() as connection:
+        connection.exec_driver_sql("PRAGMA foreign_keys = OFF")
+        connection.execute(
+            AnalysisResultProjectionEntity.__table__.update().values(
+                analysis_id="ana_0123456789abcdef"
+            )
+        )
+        connection.commit()
+
+    with pytest.raises(StoredResultCorruptionError):
+        repository.register(registration)
+
+
+def test_canonical_get_remains_independent_from_projection_corruption(
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    repository.register(_registration(chain))
+    with migrated_engine.begin() as connection:
+        connection.execute(AnalysisResultProtocolEntity.__table__.delete())
+
+    recovered = repository.get(chain.analysis.analysis_id)
+
+    assert recovered is not None
+    assert _canonical_bytes(recovered) == _canonical_bytes(chain)
+    assert_chain_valid(recovered)
+
+
+def test_projection_corruption_precedes_same_id_content_conflict(
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    repository.register(_registration(chain))
+    with migrated_engine.begin() as connection:
+        connection.execute(AnalysisResultProtocolEntity.__table__.delete())
+    conflicting = chain.model_copy(
+        update={"execution": chain.execution.model_copy(update={"note": "conflict"})}
+    )
+    assert_chain_valid(conflicting)
+
+    with pytest.raises(StoredResultCorruptionError):
+        repository.register(_registration(conflicting, SECOND_FINGERPRINT))
+
+
+def test_projection_corruption_precedes_fingerprint_conflict(
+    chain: ChainOfProof,
+    repository: RelationalAnalysisResultRepository,
+    migrated_engine: Engine,
+) -> None:
+    repository.register(_registration(chain))
+    with migrated_engine.begin() as connection:
+        connection.execute(AnalysisResultProtocolEntity.__table__.delete())
+    different_analysis = build_evaluated_chain(with_anomaly=True)
+
+    with pytest.raises(StoredResultCorruptionError):
+        repository.register(_registration(different_analysis))
+
+
 def test_storage_errors_use_fixed_path_sql_and_content_safe_messages(
     chain: ChainOfProof,
     repository: RelationalAnalysisResultRepository,
@@ -678,6 +956,8 @@ def test_concurrent_identical_registration_has_one_row_and_all_succeed(
 
     assert outcomes == ["success"] * callers
     assert _row_count(migrated_engine) == 1
+    assert _projection_row_count(migrated_engine) == 1
+    assert _protocol_values(migrated_engine) == {"smtp"}
     assert _canonical_bytes(repository.get(chain.analysis.analysis_id)) == _canonical_bytes(chain)
 
 
@@ -715,4 +995,6 @@ def test_concurrent_conflicting_registration_has_one_winner_and_typed_conflicts(
     winners = [outcome for outcome in outcomes if outcome is not None]
     assert len(winners) == 1
     assert _row_count(migrated_engine) == 1
+    assert _projection_row_count(migrated_engine) == 1
+    assert _protocol_values(migrated_engine) == {"smtp"}
     assert _canonical_bytes(repository.get(chain.analysis.analysis_id)) == winners[0]
